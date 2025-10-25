@@ -45,3 +45,16 @@ Thumbs.db
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+
+
+
+#env files
+.env
+.env.local
+.env.test
+.env.example
+.env.example.local
+.env.example.test
+.env.example.production
+.env.example.development
