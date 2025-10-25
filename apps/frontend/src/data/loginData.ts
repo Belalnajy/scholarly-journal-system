@@ -1,0 +1,22 @@
+export const loginPageData = {
+  logo: {
+    src: '/logo.png',
+    alt: 'شعار وزارة التعليم العالي والبحث العلمي',
+  },
+  title: 'مجلة البحوث والدراسات',
+  subtitle: 'مرحباً بك في نظام إدارة الأبحاث',
+  formTitle: 'تسجيل الدخول',
+  formDescription: 'أدخل إلى حسابك للوصول إلى لوحة التحكم',
+  emailLabel: 'البريد الإلكتروني',
+  emailPlaceholder: 'example@university.com',
+  passwordLabel: 'كلمة المرور',
+  passwordPlaceholder: '••••••••••••',
+  forgotPasswordText: 'نسيت كلمة المرور؟',
+  rememberMeText: 'تذكرني',
+  submitButtonText: 'تسجيل الدخول',
+  orDividerText: 'أو',
+  noAccountText: 'ليس لديك حساب؟',
+  createAccountText: 'إنشاء حساب جديد',
+  loginIssueText: 'هل تواجه مشكلة في تسجيل الدخول؟',
+  contactUsText: 'اتصل بنا',
+};
