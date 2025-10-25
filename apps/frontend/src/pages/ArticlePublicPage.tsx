@@ -1,0 +1,283 @@
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Download, User, FileText, AlertCircle, Loader2, BookOpen, Mail, Eye } from 'lucide-react';
+import articlesService from '../services/articlesService';
+import type { Article } from '../services/articlesService';
+import { NewsletterSection } from '../components';
+
+export function ArticlePublicPage() {
+  const { id } = useParams<{ id: string }>();
+  const [article, setArticle] = useState<Article | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (id) {
+      loadArticle();
+    }
+  }, [id]);
+
+  const loadArticle = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const data = await articlesService.getArticleById(id!);
+      setArticle(data);
+
+      // Increment views
+      try {
+        await articlesService.incrementArticleViews(id!);
+      } catch (err) {
+        console.error('Failed to increment views:', err);
+      }
+    } catch (err: any) {
+      setError(err.message || 'فشل في تحميل تفاصيل المقال');
+      console.error('Error loading article:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!article?.pdf_url) return;
+    
+    try {
+      // Increment download count
+      try {
+        await articlesService.incrementDownloads(article.id);
+        console.log('✅ Download counted');
+      } catch (err) {
+        console.error('Failed to increment downloads:', err);
+      }
+
+      // Download the PDF
+      const response = await fetch(article.pdf_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${article.article_number || 'article'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      window.open(article.pdf_url, '_blank');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-[130px] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-[#093059] mx-auto mb-4 animate-spin" />
+          <p className="text-[#666666]" dir="rtl">جاري تحميل تفاصيل المقال...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !article) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-[130px]">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+            <div className="text-center">
+              <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              <h1 className="text-2xl font-bold text-[#093059] mb-4" dir="rtl">
+                فشل في تحميل المقال
+              </h1>
+              <p className="text-[#666666] mb-6" dir="rtl">
+                {error || 'المقال غير موجود'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Format dates helper
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'غير محدد';
+    return new Date(dateString).toLocaleDateString('ar-EG', { 
+      year: 'numeric', 
+      month: '2-digit',
+      day: '2-digit'
+    });
+  };
+
+  const publishedDate = formatDate(article.published_date);
+  const acceptanceDate = formatDate(article.research?.evaluation_date);
+  const submissionDate = formatDate(article.research?.submission_date);
+
+  return (
+    <div className="min-h-screen bg-gray-50 pt-[130px]">
+      {/* Article Details */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto">
+          {/* Main Card with QR Code */}
+          <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6 shadow-sm">
+            <div className="flex items-start gap-8">
+              {/* QR Code - Left */}
+              <div className="flex-shrink-0">
+                {article.qr_code_url ? (
+                  <img 
+                    src={article.qr_code_url} 
+                    alt="QR Code" 
+                    className="w-36 h-36 border-2 border-gray-300 rounded-lg"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gray-100 border-2 border-gray-300 rounded-lg flex items-center justify-center">
+                    <FileText className="w-12 h-12 text-gray-400" />
+                  </div>
+                )}
+              </div>
+
+              {/* Content - Right */}
+              <div className="flex-1">
+                {/* Titles */}
+                <h1 className="text-2xl font-bold text-gray-900 mb-2 text-right" dir="rtl">
+                  {article.title}
+                </h1>
+                {article.title_en && (
+                  <h2 className="text-lg text-gray-500 mb-6 text-left" dir="ltr">
+                    {article.title_en}
+                  </h2>
+                )}
+
+                {/* Authors */}
+                <div className="space-y-4 mb-6">
+                  {article.authors.map((author, index) => (
+                    <div key={index} className="text-right" dir="rtl">
+                      <div className="flex items-center justify-start gap-2 mb-1">
+                        <span className="font-bold text-gray-900">{author.name}</span>
+                        <User className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div className="flex items-center justify-start gap-2 text-sm text-gray-600 mb-1">
+                        <span>{author.email}</span>
+                        <Mail className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <div className="flex items-center justify-start gap-2 text-sm text-gray-600">
+                        <span>{author.affiliation}</span>
+                        <BookOpen className="w-4 h-4 text-gray-400" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Stats Row */}
+                <div className="flex items-center justify-start gap-6 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200" dir="rtl">
+                  <div className="flex items-center gap-2">
+                    <span>{publishedDate}</span>
+                    <span className="text-gray-500">:تاريخ النشر</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>{article.views_count || 0}</span>
+                    <span className="text-gray-500">مشاهدة</span>
+                    <Eye className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>{article.downloads_count || 0}</span>
+                    <span className="text-gray-500">تحميل</span>
+                    <Download className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>{article.pages}</span>
+                    <span className="text-gray-500">:الصفحات</span>
+                    <FileText className="w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* Download Button */}
+                {article.pdf_url && (
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#093059] text-white rounded-lg hover:bg-[#0a3d6b] transition-colors font-medium"
+                  >
+                    <Download className="w-5 h-5" />
+                    <span dir="rtl">تحميل البحث (PDF)</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Abstract Section */}
+          <div dir="rtl" className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 text-right">
+              الملخص:
+            </h3>
+            <p className="text-gray-700 leading-relaxed text-right">
+              {article.abstract}
+            </p>
+          </div>
+
+          {/* Keywords */}
+          {article.keywords && article.keywords.length > 0 && (
+            <div dir="rtl" className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 text-right">
+                الكلمات المفتاحية:
+              </h3>
+              <div className="flex flex-wrap gap-3 justify-start" dir='rtl'>
+                {article.keywords.map((keyword, index) => (
+                  <span
+                    key={index}
+                    className="px-4 py-2 bg-blue-100 text-gray-700 rounded-lg text-sm border"
+                  >
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Publication Info */}
+          <div dir="rtl" className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 text-right">
+              معلومات النشر:
+            </h3>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">{publishedDate}</span>
+                <span className="font-medium text-gray-900">:تاريخ النشر</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">{acceptanceDate}</span>
+                <span className="font-medium text-gray-900">:تاريخ القبول</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">-</span>
+                <span className="font-medium text-gray-900">:تاريخ المراجعة</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">{submissionDate}</span>
+                <span className="font-medium text-gray-900">:تاريخ الاستلام</span>
+              </div>
+              <div className="flex justify-between items-center col-span-2">
+                <span className="text-gray-600">{article.pages}</span>
+                <span className="font-medium text-gray-900">:الصفحات</span>
+              </div>
+            </div>
+          </div>
+
+          {/* References Section */}
+          <div dir="rtl" className="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 text-right">
+              المراجع:
+            </h3>
+            <div className="space-y-3 text-sm text-gray-700 text-right">
+              <p className="leading-relaxed">
+                المراجع الكاملة متوفرة في ملف PDF. يمكنك تحميل البحث للاطلاع على قائمة المراجع الكاملة.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <NewsletterSection />
+    </div>
+  );
+}

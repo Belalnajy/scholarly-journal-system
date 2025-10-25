@@ -1,0 +1,17 @@
+// Editor & Admin Shared Pages
+export { ManageResearchPage } from './ManageResearchPage';
+export { EditorResearchDetailsPage } from './EditorResearchDetailsPage';
+export { PendingRevisionDetailsPage } from './PendingRevisionDetailsPage';
+export { PendingDecisionPage } from './PendingDecisionPage';
+export { AssignReviewerPage } from './AssignReviewerPage';
+export { ManageReviewersPage } from './ManageReviewersPage';
+export { EditorReviewDetailsPage } from './EditorReviewDetailsPage';
+export { ReviewDetailsPage } from './ReviewDetailsPage';
+export { ManageIssuesPage } from './ManageIssuesPage';
+export { AddArticleToIssuePage } from './AddArticleToIssuePage';
+export { EditIssuePage } from './EditIssuePage';
+export { ViewIssueArticlesPage } from './ViewIssueArticlesPage';
+export { ManageReportsPage } from './ManageReportsPage';
+export { ManageArticlesPage } from './ManageArticlesPage';
+export { ArticleDetailsPage } from './ArticleDetailsPage';
+export { EditArticlePage } from './EditArticlePage';
