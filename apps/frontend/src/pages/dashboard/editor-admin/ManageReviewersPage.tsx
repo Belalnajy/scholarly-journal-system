@@ -19,6 +19,7 @@ interface Reviewer {
   activeReviews: number;
   bio: string;
   interests: string[];
+  avatar_url?: string;
 }
 
 
@@ -54,9 +55,20 @@ function ReviewerDetailsModal({
         <div className="p-6 space-y-6" dir="rtl">
           {/* Profile Section */}
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+            {reviewer.avatar_url ? (
+              <img
+                src={reviewer.avatar_url}
+                alt={reviewer.name}
+                className="w-20 h-20 rounded-full object-cover border-4 border-blue-200 flex-shrink-0"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+            ) : null}
+            <div className={`w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 ${reviewer.avatar_url ? 'hidden' : ''}`}>
               <span className="text-3xl text-blue-600 font-bold">
-                {reviewer.name.split(' ')[1]?.charAt(0) || 'م'}
+                {reviewer.name.charAt(0)}
               </span>
             </div>
             <div className="flex-1">
@@ -145,9 +157,20 @@ function ReviewerCard({ reviewer, onViewDetails }: { reviewer: Reviewer; onViewD
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-            <span className="text-blue-600 font-bold">
-              {reviewer.name.split(' ')[1]?.charAt(0) || 'م'}
+          {reviewer.avatar_url ? (
+            <img
+              src={reviewer.avatar_url}
+              alt={reviewer.name}
+              className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <div className={`w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center ${reviewer.avatar_url ? 'hidden' : ''}`}>
+            <span className="text-blue-600 font-bold text-lg">
+              {reviewer.name.charAt(0)}
             </span>
           </div>
           <div>
@@ -238,6 +261,7 @@ export function ManageReviewersPage() {
               activeReviews: (stats.assigned || 0) + (stats.accepted || 0),
               bio: user.bio || 'لا توجد سيرة ذاتية',
               interests: user.specialization ? [user.specialization] : [],
+              avatar_url: user.avatar_url || undefined,
             };
           } catch (err) {
             // If stats fetch fails, return with 0 values
@@ -253,6 +277,7 @@ export function ManageReviewersPage() {
               activeReviews: 0,
               bio: user.bio || 'لا توجد سيرة ذاتية',
               interests: user.specialization ? [user.specialization] : [],
+              avatar_url: user.avatar_url || undefined,
             };
           }
         })
