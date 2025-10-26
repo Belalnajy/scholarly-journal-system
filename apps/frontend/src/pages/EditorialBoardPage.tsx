@@ -223,31 +223,56 @@ export function EditorialBoardPage() {
         `}</style>
 
         {/* Editorial Board Members Grid */}
-        <div className="mb-16 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence mode="popLayout">
-            {filteredMembers.map((member: any, index: number) => (
-              <motion.div
-                key={member.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <EditorCard
-              name={member.name}
-              title={member.specialization || member.title || 'عضو هيئة التحرير'}
-              role={member.role === 'editor' ? 'عضو هيئة التحرير' : member.role}
-              university={member.affiliation || member.university || 'غير محدد'}
-              country={member.country || 'المملكة العربية السعودية'}
-              email={member.email}
-              orcid={member.orcid || ''}
-              image={member.avatar_url || member.image || '/test-profile/image 14.png'}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        {filteredMembers.length > 0 ? (
+          <div className="mb-16 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <AnimatePresence mode="popLayout">
+              {filteredMembers.map((member: any, index: number) => (
+                <motion.div
+                  key={member.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <EditorCard
+                name={member.name}
+                title={member.specialization || member.title || 'عضو هيئة التحرير'}
+                role={member.role === 'editor' ? 'عضو هيئة التحرير' : member.role}
+                university={member.affiliation || member.university || 'غير محدد'}
+                country={member.country || 'المملكة العربية السعودية'}
+                email={member.email}
+                orcid={member.orcid || ''}
+                image={member.avatar_url || member.image || '/test-profile/image 14.png'}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-16 text-center py-16 px-4"
+          >
+            <div className="max-w-md mx-auto">
+              <div className="mb-6 flex justify-center">
+                <div className="rounded-full bg-gray-100 p-6">
+                  <Users className="h-16 w-16 text-gray-400" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3" dir="rtl">
+                لا يوجد أعضاء في هيئة التحرير حالياً
+              </h3>
+              <p className="text-gray-600 text-lg" dir="rtl">
+                {selectedCategory === 'all' 
+                  ? 'لم يتم إضافة أعضاء لهيئة التحرير بعد.'
+                  : 'لا يوجد أعضاء في هذا التخصص حالياً.'}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Join Section */}
         <motion.div 
