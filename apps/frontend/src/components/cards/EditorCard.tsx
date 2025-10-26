@@ -1,4 +1,5 @@
 import { Mail, ExternalLink, Building2, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface EditorCardProps {
   name: string;
@@ -28,7 +29,11 @@ export function EditorCard({
   };
 
   return (
-    <div className="group relative overflow-visible rounded-2xl bg-white shadow-md transition-all duration-300 hover:shadow-xl">
+    <motion.div 
+      whileHover={{ y: -8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
+      transition={{ duration: 0.3 }}
+      className="group relative overflow-visible rounded-2xl bg-white shadow-md"
+    >
       {/* Header with Image and Role Badge */}
       <div className="relative h-40 overflow-visible rounded-t-2xl bg-gradient-to-br from-[#093059] to-[#0a4a7a]">
         {/* Profile Image - positioned to overflow */}
@@ -80,7 +85,9 @@ export function EditorCard({
         {/* Contact Info */}
         <div className="space-y-2">
           {/* ORCID */}
-          <a
+          <motion.a
+            whileHover={{ x: -5 }}
+            transition={{ duration: 0.2 }}
             href={`https://orcid.org/${orcid}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -89,18 +96,20 @@ export function EditorCard({
             <span className="font-mono">{orcid}</span>
             <ExternalLink className="h-4 w-4" />
             <span className="font-medium">ORCID:</span>
-          </a>
+          </motion.a>
 
           {/* Email */}
-          <a
+          <motion.a
+            whileHover={{ x: -5 }}
+            transition={{ duration: 0.2 }}
             href={`mailto:${email}`}
             className="flex items-center justify-end gap-2 text-sm text-gray-600 transition-colors hover:text-[#b2823e]"
           >
             <span className="truncate">{email}</span>
             <Mail className="h-4 w-4 flex-shrink-0" />
-          </a>
+          </motion.a>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

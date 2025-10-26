@@ -1,6 +1,7 @@
 import { ArrowRight, BookOpen, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ArticleCard } from '../components/cards';
 import { NewsletterSection } from '../components';
 import issuesService from '../services/issuesService';
@@ -143,29 +144,50 @@ export function IssueDetailsPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa] pt-[130px]">{/* Header Section */}
-      <div className="bg-[#e8f0f8] py-12">
+      <motion.div 
+        className="bg-[#e8f0f8] py-12"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="container mx-auto px-4">
           <div className="flex flex-col gap-6">
             {/* Back Button */}
-            <Link
-              to="/issues"
-              className="flex w-fit items-center gap-2 text-[#093059] transition-colors hover:text-[#b2823e]"
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <ArrowRight className="size-5" />
-              <span className="text-base font-medium" dir="rtl">
-                العودة إلى الأعداد والأرشيف
-              </span>
-            </Link>
+              <Link
+                to="/issues"
+                className="flex w-fit items-center gap-2 text-[#093059] transition-colors hover:text-[#b2823e]"
+              >
+                <ArrowRight className="size-5" />
+                <span className="text-base font-medium" dir="rtl">
+                  العودة إلى الأعداد والأرشيف
+                </span>
+              </Link>
+            </motion.div>
 
             {/* Title and Info */}
             <div className="flex flex-col items-center gap-4 text-center">
-              <div className="flex items-center justify-center gap-3">
+              <motion.div 
+                className="flex items-center justify-center gap-3"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
                 <BookOpen className="size-10 text-[#093059]" />
                 <h1 className="text-3xl font-bold text-[#093059] md:text-4xl" dir="rtl">
                   الأبحاث المنشورة في هذا العدد
                 </h1>
-              </div>
-              <div className="space-y-2">
+              </motion.div>
+              <motion.div 
+                className="space-y-2"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
                 <h2 className="text-2xl font-bold text-[#093059]" dir="rtl">
                   {issue.title}
                 </h2>
@@ -180,66 +202,71 @@ export function IssueDetailsPage() {
                     {issue.description}
                   </p>
                 )}
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stats Section */}
-      <div className="container mx-auto px-4 py-8">
+      <motion.div 
+        className="container mx-auto px-4 py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div className="flex flex-col items-center gap-1 rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-3xl font-bold text-[#093059]">
-              {articles.length}
-            </p>
-            <p className="text-sm text-[#666666]" dir="rtl">
-              أبحاث منشورة
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center gap-1 rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-3xl font-bold text-[#093059]">
-              {totalPages}
-            </p>
-            <p className="text-sm text-[#666666]" dir="rtl">
-              إجمالي الصفحات
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center gap-1 rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-3xl font-bold text-[#093059]">
-              {totalDownloads}
-            </p>
-            <p className="text-sm text-[#666666]" dir="rtl">
-              إجمالي التحميلات
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center gap-1 rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-3xl font-bold text-[#093059]">
-              {totalViews}
-            </p>
-            <p className="text-sm text-[#666666]" dir="rtl">
-              إجمالي المشاهدات
-            </p>
-          </div>
+          {[
+            { value: articles.length, label: 'أبحاث منشورة', delay: 0.6 },
+            { value: totalPages, label: 'إجمالي الصفحات', delay: 0.7 },
+            { value: totalDownloads, label: 'إجمالي التحميلات', delay: 0.8 },
+            { value: totalViews, label: 'إجمالي المشاهدات', delay: 0.9 },
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              className="flex flex-col items-center gap-1 rounded-xl bg-white p-5 shadow-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: stat.delay }}
+              whileHover={{ y: -5, boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+            >
+              <p className="text-3xl font-bold text-[#093059]">
+                {stat.value}
+              </p>
+              <p className="text-sm text-[#666666]" dir="rtl">
+                {stat.label}
+              </p>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Articles List */}
       <div className="container mx-auto px-4 pb-16">
         {articles.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl">
+          <motion.div 
+            className="text-center py-12 bg-white rounded-xl"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-[#666666] text-lg" dir="rtl">
               لا توجد مقالات في هذا العدد بعد
             </p>
-          </div>
+          </motion.div>
         ) : (
           <div className="space-y-6">
             {articles.map((article, index) => (
-              <ArticleCard key={article.id} article={article} articleNumber={index + 1} />
+              <motion.div
+                key={article.id}
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
+                whileHover={{ x: 5 }}
+              >
+                <ArticleCard article={article} articleNumber={index + 1} />
+              </motion.div>
             ))}
           </div>
         )}

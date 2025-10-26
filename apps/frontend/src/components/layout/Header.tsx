@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard } from 'lucide-react';
 import { useSiteSettings } from '../../contexts';
 
 interface NavigationItem {
@@ -15,6 +15,7 @@ interface HeaderProps {
 
 export function Header({ navigation, logoSrc = '../../public/journal-logo.png' }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,14 +26,20 @@ export function Header({ navigation, logoSrc = '../../public/journal-logo.png' }
   const siteName = settings?.site_name || 'مجلة البحوث والدراسات';
 
   // Check if user is logged in
-  const isLoggedIn = () => {
-    return !!localStorage.getItem('token');
+  const checkLoginStatus = () => {
+    const token = localStorage.getItem('token');
+    setIsUserLoggedIn(!!token);
   };
+
+  // Check login status on mount and location change
+  useEffect(() => {
+    checkLoginStatus();
+  }, [location.pathname]);
 
   // Handle submit research click
   const handleSubmitResearchClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (isLoggedIn()) {
+    if (isUserLoggedIn) {
       // If logged in, go to dashboard submit page
       navigate('/dashboard/submit-research');
     } else {
@@ -40,6 +47,16 @@ export function Header({ navigation, logoSrc = '../../public/journal-logo.png' }
       navigate('/register');
     }
     setIsMenuOpen(false);
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsUserLoggedIn(false);
+    setIsMenuOpen(false);
+    // Force full page reload to clear all state
+    window.location.href = '/';
   };
 
   // Close menu when clicking outside
@@ -72,14 +89,39 @@ export function Header({ navigation, logoSrc = '../../public/journal-logo.png' }
             {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
           </button>
 
-          {/* Desktop Navigation and Login Button */}
-          <div className="hidden lg:flex items-center gap-8 xl:gap-[148px]">
-            {/* Login Button */}
-            <Link to="/login" className="flex h-12 items-center justify-center gap-2 rounded-[40px] border-2 border-[#093059] px-4 xl:px-6 transition-colors hover:bg-[#093059] hover:text-white group">
-              <span className="text-nowrap text-sm xl:text-base text-[#093059] group-hover:text-white transition-colors" dir="auto">
-                تسجيل الدخول
-              </span>
-            </Link>
+          {/* Desktop Navigation and Buttons */}
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+            {/* Dashboard Button (only when logged in) */}
+            {isUserLoggedIn && (
+              <Link 
+                to="/dashboard"
+                className="flex h-12 items-center justify-center gap-2 rounded-[40px] bg-[#b2823e] px-4 xl:px-6 transition-colors hover:bg-[#9a6f35] group"
+              >
+                <LayoutDashboard className="size-4 text-white" />
+                <span className="text-nowrap text-sm xl:text-base text-white" dir="auto">
+                  لوحة التحكم
+                </span>
+              </Link>
+            )}
+            
+            {/* Login/Logout Button */}
+            {isUserLoggedIn ? (
+              <button 
+                onClick={handleLogout}
+                className="flex h-12 items-center justify-center gap-2 rounded-[40px] border-2 border-[#093059] px-4 xl:px-6 transition-colors hover:bg-[#093059] hover:text-white group"
+              >
+                <LogOut className="size-4 text-[#093059] group-hover:text-white transition-colors" />
+                <span className="text-nowrap text-sm xl:text-base text-[#093059] group-hover:text-white transition-colors" dir="auto">
+                  تسجيل الخروج
+                </span>
+              </button>
+            ) : (
+              <Link to="/login" className="flex h-12 items-center justify-center gap-2 rounded-[40px] border-2 border-[#093059] px-4 xl:px-6 transition-colors hover:bg-[#093059] hover:text-white group">
+                <span className="text-nowrap text-sm xl:text-base text-[#093059] group-hover:text-white transition-colors" dir="auto">
+                  تسجيل الدخول
+                </span>
+              </Link>
+            )}
 
             {/* Navigation Links */}
             <nav className="flex items-center gap-6 xl:gap-16 " dir="rtl">
@@ -164,11 +206,42 @@ export function Header({ navigation, logoSrc = '../../public/journal-logo.png' }
                 </Link>
               );
             })}
-            <Link to="/login" className="mx-4 mt-2 flex h-12 items-center justify-center gap-2 rounded-[40px] border-2 border-[#093059] px-4 transition-colors hover:bg-[#093059] hover:text-white group" onClick={() => setIsMenuOpen(false)}>
-              <span className="text-nowrap text-[#093059] group-hover:text-white transition-colors" dir="auto">
-                تسجيل الدخول
-              </span>
-            </Link>
+            {/* Mobile Dashboard Button (only when logged in) */}
+            {isUserLoggedIn && (
+              <Link 
+                to="/dashboard"
+                className="mx-4 mt-2 flex h-12 items-center justify-center gap-2 rounded-[40px] bg-[#b2823e] px-4 transition-colors hover:bg-[#9a6f35]"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <LayoutDashboard className="size-4 text-white" />
+                <span className="text-nowrap text-white" dir="auto">
+                  لوحة التحكم
+                </span>
+              </Link>
+            )}
+            
+            {/* Mobile Login/Logout Button */}
+            {isUserLoggedIn ? (
+              <button 
+                onClick={handleLogout}
+                className="mx-4 mt-2 flex h-12 items-center justify-center gap-2 rounded-[40px] border-2 border-[#093059] px-4 transition-colors hover:bg-[#093059] hover:text-white group"
+              >
+                <LogOut className="size-4 text-[#093059] group-hover:text-white transition-colors" />
+                <span className="text-nowrap text-[#093059] group-hover:text-white transition-colors" dir="auto">
+                  تسجيل الخروج
+                </span>
+              </button>
+            ) : (
+              <Link 
+                to="/login" 
+                className="mx-4 mt-2 flex h-12 items-center justify-center gap-2 rounded-[40px] border-2 border-[#093059] px-4 transition-colors hover:bg-[#093059] hover:text-white group" 
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <span className="text-nowrap text-[#093059] group-hover:text-white transition-colors" dir="auto">
+                  تسجيل الدخول
+                </span>
+              </Link>
+            )}
           </nav>
         </div>
       </div>

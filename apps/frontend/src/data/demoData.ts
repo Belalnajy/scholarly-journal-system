@@ -91,15 +91,11 @@ export const footerLinks = {
     { label: 'اتصل بنا', href: '/contact' },
   ],
   forResearchers: [
-    { label: 'تقديم بحث', href: '#' },
+    { label: 'تقديم بحث', href: '/login' },
     { label: 'الشروط والأحكام', href: '/terms' },
-    { label: 'دليل الباحث', href: '#' },
-    { label: 'الأسئلة الشائعة', href: '#' },
   ],
   content: [
     { label: 'الأعداد السابقة', href: '/issues' },
-    { label: 'الأبحاث', href: '#' },
-    { label: 'المقالات', href: '#' },
     { label: 'سياسة الخصوصية', href: '/privacy' },
   ],
 };
@@ -316,6 +312,6 @@ export const editorialBoardData = {
     title: 'للانضمام إلى هيئة التحرير',
     description:
       'للاستفسار عن إمكانية الانضمام إلى هيئة التحرير يرجى التواصل معنا عبر البريد الإلكتروني مع إرفاق السيرة الذاتية وقائمة المنشورات.',
-    email: 'editorial@journal.com',
+    email: 'info@journal.com',
   },
 };

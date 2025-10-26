@@ -2,7 +2,7 @@ export const termsAndConditionsData = {
   title: 'الشروط والأحكام',
   subtitle: 'شروط استخدام موقع مجلة البحوث والدراسات',
   lastUpdate: 'آخر تحديث: 2 أكتوبر 2025',
-  
+
   sections: [
     {
       id: 'publishing-rules',
@@ -32,10 +32,11 @@ export const termsAndConditionsData = {
       ],
     },
   ],
-  
+
   contact: {
     title: 'التواصل معنا',
-    description: 'إذا كان لديك أي استفسارات حول الشروط والأحكام، يرجى التواصل معنا عبر البريد الإلكتروني:',
-    email: 'info@research-journal.edu',
+    description:
+      'إذا كان لديك أي استفسارات حول الشروط والأحكام، يرجى التواصل معنا عبر البريد الإلكتروني:',
+    email: 'info@journal.com',
   },
 };

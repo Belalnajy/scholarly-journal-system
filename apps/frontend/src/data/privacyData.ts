@@ -1,7 +1,7 @@
 export const privacyPolicyData = {
   title: 'سياسة الخصوصية',
   lastUpdate: 'آخر تحديث: 2 أكتوبر 2025',
-  
+
   sections: [
     {
       id: 'intro',
@@ -66,10 +66,11 @@ export const privacyPolicyData = {
       ],
     },
   ],
-  
+
   contact: {
     title: 'التواصل معنا',
-    description: 'إذا كان لديك أي استفسارات حول سياسة الخصوصية أو كيفية تعاملنا مع بياناتك الشخصية، يرجى التواصل معنا عبر البريد الإلكتروني:',
-    email: 'privacy@research-journal.edu',
+    description:
+      'إذا كان لديك أي استفسارات حول سياسة الخصوصية أو كيفية تعاملنا مع بياناتك الشخصية، يرجى التواصل معنا عبر البريد الإلكتروني:',
+    email: 'info@journal.com',
   },
 };

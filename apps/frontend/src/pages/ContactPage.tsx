@@ -1,8 +1,9 @@
-import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 import { ContactForm } from '../components/sections';
 import { NewsletterSection } from '../components';
 import { contactData } from '../data/contactData';
 import { useSiteSettings } from '../contexts';
+import { motion } from 'framer-motion';
 
 export function ContactPage() {
   const { settings } = useSiteSettings();
@@ -13,137 +14,151 @@ export function ContactPage() {
   const displayAddress = settings?.contact_info?.address || contactData.contactInfo.address.items.join(', ');
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f5f7fa]">
       <section className="py-8 sm:py-12 lg:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl space-y-8 sm:space-y-10 lg:space-y-12">
             {/* Page Header */}
-            <div className="mt-28 overflow-hidden rounded-2xl bg-white shadow-md">
-              <div className="bg-[#b3b3b3] px-6 py-6 text-center sm:px-8 sm:py-8">
-                <h1 className="mb-3 text-3xl font-bold text-[#093059] sm:text-4xl lg:text-5xl" dir="rtl">
-                  {contactData.title}
-                </h1>
-                <p className="text-base text-[#093059] sm:text-lg lg:text-xl" dir="rtl">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mt-28 overflow-hidden rounded-2xl bg-[#e8f0f8] shadow-sm"
+            >
+              <div className="px-6 py-8 text-center sm:px-8 sm:py-10">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="flex items-center justify-center gap-3 mb-4"
+                >
+                  <Mail className="size-10 text-[#093059]" />
+                  <h1 className="text-3xl font-bold text-[#093059] sm:text-4xl lg:text-5xl" dir="rtl">
+                    {contactData.title}
+                  </h1>
+                </motion.div>
+                <motion.p 
+                  className="text-base text-[#666666] sm:text-lg lg:text-xl max-w-2xl mx-auto" 
+                  dir="rtl"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
                   {contactData.subtitle}
-                </p>
+                </motion.p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Contact Form and Info Grid */}
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-1">
               {/* Contact Form */}
-              <ContactForm formData={contactData.form} />
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <ContactForm formData={contactData.form} />
+              </motion.div>
 
               {/* Contact Information */}
-              <div className="space-y-6" >
+              <motion.div 
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="space-y-6"
+              >
                 {/* Contact Info Card */}
-                <div className="overflow-hidden rounded-2xl bg-white shadow-md"> 
-                  <div className="bg-[#b3b3b3] px-6 py-4 text-center sm:px-8">
-                    <h2 className="text-xl font-bold text-[#093059] sm:text-2xl lg:text-3xl" >
-                      {contactData.contactInfo.email.title}
-                    </h2>
+                <motion.div 
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden rounded-xl bg-white shadow-sm"
+                > 
+                  <div className="bg-[#e8f0f8] px-6 py-4 sm:px-8">
+                    <div className="flex items-center justify-center gap-3">
+                      <Mail className="size-6 text-[#093059]" />
+                      <h2 className="text-xl font-bold text-[#093059] sm:text-2xl" dir="rtl">
+                        {contactData.contactInfo.email.title}
+                      </h2>
+                    </div>
                   </div>
-                  <div className="space-y-4 p-6 sm:p-8" dir="rtl">
-                    <div className="flex items-start justify-start gap-3">
-                      <div className="text-right">
-                        <p className="text-lg text-[#666666]">البريد الإلكتروني</p>
+                  <div className="p-6 sm:p-8" dir="rtl">
+                    <div className="flex items-center gap-3">
+                      <Mail className="size-5 text-[#b2823e]" />
+                      <div className="text-right flex-1">
+                        <p className="text-sm text-[#666666] mb-1">البريد الإلكتروني</p>
                         <a
                           href={`mailto:${displayEmail}`}
-                          className="text-base font-medium text-[#093059] hover:text-[#b2823e] sm:text-lg"
+                          className="text-base font-medium text-[#093059] hover:text-[#b2823e] sm:text-lg transition-colors"
                         >
                           {displayEmail}
                         </a>
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Phone Info Card */}
-                <div className="overflow-hidden rounded-2xl bg-white shadow-md">
-                  <div className="bg-[#b3b3b3] px-6 py-4 text-center sm:px-8">
-                    <h2 className="text-xl font-bold text-[#093059] sm:text-2xl lg:text-3xl" dir="rtl">
-                      {contactData.contactInfo.phone.title}
-                    </h2>
+                <motion.div 
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden rounded-xl bg-white shadow-sm"
+                >
+                  <div className="bg-[#e8f0f8] px-6 py-4 sm:px-8">
+                    <div className="flex items-center justify-center gap-3">
+                      <Phone className="size-6 text-[#093059]" />
+                      <h2 className="text-xl font-bold text-[#093059] sm:text-2xl" dir="rtl">
+                        {contactData.contactInfo.phone.title}
+                      </h2>
+                    </div>
                   </div>
-                  <div className="space-y-4 p-6 sm:p-8" dir="rtl">
-                    <div className="flex items-start justify-start gap-3">
-                      <div className="text-right">
-                        <p className="text-sm text-[#666666]">رقم الهاتف</p>
+                  <div className="p-6 sm:p-8" dir="rtl">
+                    <div className="flex items-center gap-3">
+                      <Phone className="size-5 text-[#b2823e]" />
+                      <div className="text-right flex-1">
+                        <p className="text-sm text-[#666666] mb-1">رقم الهاتف</p>
                         <a
                           href={`tel:${displayPhone?.replace(/\s/g, '')}`}
-                          className="text-base font-medium text-[#093059] hover:text-[#b2823e] sm:text-lg"
+                          className="text-base font-medium text-[#093059] hover:text-[#b2823e] sm:text-lg transition-colors"
                         >
                           {displayPhone}
                         </a>
                       </div>
-                      <Phone className="mt-1 size-5 flex-shrink-0 text-[#b2823e]" />
                     </div>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             </div>
 
-            {/* Address and Working Hours */}
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              {/* Address Card */}
-              <div className="overflow-hidden rounded-2xl bg-white shadow-md">
-                <div className="bg-[#b3b3b3] px-6 py-4 text-center sm:px-8">
-                  <div className="flex items-center justify-center gap-3">
-                    <h2 className="text-xl font-bold text-[#093059] sm:text-2xl lg:text-3xl" dir="rtl">
-                      {contactData.contactInfo.address.title}
-                    </h2>
-                    <MapPin className="size-8 text-[#093059]" />
-                  </div>
+            {/* Address Card */}
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+              whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+              className="overflow-hidden rounded-xl bg-white shadow-sm"
+            >
+              <div className="bg-[#e8f0f8] px-6 py-4 sm:px-8">
+                <div className="flex items-center justify-center gap-3">
+                  <MapPin className="size-6 text-[#093059]" />
+                  <h2 className="text-xl font-bold text-[#093059] sm:text-2xl" dir="rtl">
+                    {contactData.contactInfo.address.title}
+                  </h2>
                 </div>
-                <div className="p-6 sm:p-8" dir="rtl">
-                  <div className="space-y-2 text-right">
-                    <p className="text-base leading-relaxed text-[#093059] sm:text-lg">
+              </div>
+              <div className="p-6 sm:p-8" dir="rtl">
+                <div className="flex items-start gap-3">
+                  <MapPin className="size-5 text-[#b2823e] mt-1" />
+                  <div className="text-right flex-1">
+                    <p className="text-base leading-relaxed text-[#666666] sm:text-lg">
                       {displayAddress}
                     </p>
                   </div>
                 </div>
               </div>
+            </motion.div>
 
-              {/* Working Hours Card */}
-              <div className="overflow-hidden rounded-2xl bg-white shadow-md">
-                <div className="bg-[#b3b3b3] px-6 py-4 text-center sm:px-8">
-                  <div className="flex items-center justify-center gap-3">
-                    <h2 className="text-xl font-bold text-[#093059] sm:text-2xl lg:text-3xl" dir="rtl">
-                      {contactData.workingHours.title}
-                    </h2>
-                    <Clock className="size-8 text-[#093059]" />
-                  </div>
-                </div>
-                <div className="p-6 sm:p-8" dir="rtl">
-                  <div className="space-y-4">
-                    {contactData.workingHours.schedule.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <p className="text-base font-medium text-[#666666] sm:text-lg">{item.hours}</p>
-                        <p className="text-base font-bold text-[#093059] sm:text-lg">{item.days}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Location Map */}
-            <div className="overflow-hidden rounded-2xl bg-white shadow-md">
-              <div className="bg-[#b3b3b3] px-6 py-4 text-center sm:px-8">
-                <h2 className="text-xl font-bold text-[#093059] sm:text-2xl lg:text-3xl" dir="rtl">
-                  {contactData.location.title}
-                </h2>
-              </div>
-              <div className="p-6 sm:p-8">
-                <div className="flex h-[400px] items-center justify-center rounded-xl bg-[#f5f7fa]">
-                  <div className="text-center" dir="rtl">
-                    <MapPin className="mx-auto mb-4 size-16 text-[#093059]" />
-                    <p className="text-xl font-bold text-[#093059]">{contactData.location.mapTitle}</p>
-                    <p className="mt-2 text-lg text-[#666666]">{contactData.location.address}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>

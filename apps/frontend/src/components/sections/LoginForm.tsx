@@ -13,7 +13,8 @@ interface LoginFormProps {
   orDividerText: string;
   noAccountText: string;
   createAccountText: string;
-  onSubmit?: (email: string, password: string, rememberMe: boolean) => void;
+  isLoading?: boolean;
+  onSubmit?: (email: string, password: string, rememberMe: boolean) => void | Promise<void>;
 }
 
 export function LoginForm({
@@ -27,6 +28,7 @@ export function LoginForm({
   orDividerText,
   noAccountText,
   createAccountText,
+  isLoading = false,
   onSubmit,
 }: LoginFormProps) {
   const [email, setEmail] = useState('');
@@ -34,10 +36,12 @@ export function LoginForm({
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     if (onSubmit) {
-      onSubmit(email, password, rememberMe);
+      await onSubmit(email, password, rememberMe);
     }
   };
 
@@ -59,8 +63,9 @@ export function LoginForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={emailPlaceholder}
-              className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               required
+              disabled={isLoading}
               dir="rtl"
             />
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -82,8 +87,9 @@ export function LoginForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={passwordPlaceholder}
-              className="w-full px-4 py-3 pr-12 pl-12 bg-gray-50 border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 pr-12 pl-12 bg-gray-50 border border-gray-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               required
+              disabled={isLoading}
               dir="rtl"
             />
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -129,7 +135,8 @@ export function LoginForm({
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+          disabled={isLoading}
+          className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span>{submitButtonText}</span>
           <ArrowLeft className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
