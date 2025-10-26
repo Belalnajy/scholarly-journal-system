@@ -79,6 +79,39 @@ ALTER DATABASE journal_db OWNER TO journal_user;
 \q
 ```
 
+### 2.1 إنشاء حساب Admin (بعد أول تشغيل للـ Backend)
+```bash
+# الاتصال بالـ Database
+sudo -u postgres psql -d journal_db
+
+# إنشاء حساب Admin
+INSERT INTO "user" (
+  id, 
+  email, 
+  password, 
+  name, 
+  role, 
+  status,
+  created_at, 
+  updated_at
+) VALUES (
+  gen_random_uuid(),
+  'journalresearchut@gmail.com',
+  '$2b$10$mOyKjx46iiDGQwMuvwihpOYrAIEBJIdh6COPcXJc9V4TxGgzQXM2W',
+  'Admin User',
+  'admin',
+  'active',
+  NOW(),
+  NOW()
+);
+
+\q
+```
+
+**بيانات الدخول:**
+- Email: `journalresearchut@gmail.com`
+- Password: `Aa@@06430023`
+
 ### 3️⃣ رفع المشروع
 ```bash
 # Create directory

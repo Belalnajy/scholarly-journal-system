@@ -41,8 +41,6 @@ export class CloudinaryService {
         api_secret: apiSecret,
         secure: true,
       });
-
-      console.log('✅ Cloudinary configured successfully:', cloudName);
     } catch (error) {
       throw new Error(`Failed to configure Cloudinary: ${error.message}`);
     }

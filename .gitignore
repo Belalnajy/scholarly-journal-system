@@ -80,3 +80,13 @@ pids/
 *.pid
 *.seed
 *.pid.lock
+
+# Temporary scripts and test files
+test-*.js
+test-*.ts
+*-temp.sh
+check-*.sh
+fix-*.sh
+deploy-demo-*.sh
+reset-*.sh
+setup-local-*.sh
