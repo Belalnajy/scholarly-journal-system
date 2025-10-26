@@ -2,9 +2,13 @@ import { useState, useRef, KeyboardEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { forgotPasswordData } from '../data/forgotPasswordData';
+import { authService } from '../services/auth.service';
+import toast from 'react-hot-toast';
 
 export function VerifyCodePage() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,24 +27,63 @@ export function VerifyCodePage() {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, ''); // Remove non-digits
+    
+    if (pastedData.length === 6) {
+      const newCode = pastedData.split('').slice(0, 6);
+      setCode(newCode);
+      // Focus on last input
+      inputRefs.current[5]?.focus();
+      toast.success('تم لصق الرمز بنجاح!');
+    } else if (pastedData.length > 0) {
+      toast.error('الرمز يجب أن يكون 6 أرقام');
+    }
+  };
+
   const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const verificationCode = code.join('');
-    console.log('Verification code:', verificationCode);
-    // Navigate to reset password page
-    navigate('/reset-password', { state: { email, code: verificationCode } });
+    
+    if (verificationCode.length !== 6) {
+      toast.error('يرجى إدخال رمز التحقق كاملاً');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await authService.verifyResetCode(email, verificationCode);
+      toast.success('رمز التحقق صحيح');
+      // Navigate to reset password page
+      navigate('/reset-password', { state: { email, code: verificationCode } });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'رمز التحقق غير صحيح');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResend = () => {
-    console.log('Resending code to:', email);
-    setCode(['', '', '', '', '', '']);
-    inputRefs.current[0]?.focus();
+  const handleResend = async () => {
+    setResending(true);
+
+    try {
+      const response = await authService.resendResetCode(email);
+      toast.success(response.message);
+      setCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ في إعادة إرسال الرمز');
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -102,6 +145,7 @@ export function VerifyCodePage() {
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value.replace(/\D/g, ''))}
                   onKeyDown={(e) => handleKeyDown(index, e)}
+                  onPaste={handlePaste}
                   className="w-12 h-12 sm:w-14 sm:h-14 text-center text-xl font-bold bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   required
                 />
@@ -111,10 +155,17 @@ export function VerifyCodePage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>{forgotPasswordData.step2.submitButton}</span>
-              <ArrowLeft className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {loading ? (
+                <span>جاري التحقق...</span>
+              ) : (
+                <>
+                  <span>{forgotPasswordData.step2.submitButton}</span>
+                  <ArrowLeft className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
 
@@ -123,9 +174,10 @@ export function VerifyCodePage() {
             <p className="text-sm text-gray-600">{forgotPasswordData.step2.didNotReceive}</p>
             <button
               onClick={handleResend}
-              className="text-[#093059] hover:text-[#0a4070] font-medium transition-colors"
+              disabled={resending}
+              className="text-[#093059] hover:text-[#0a4070] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {forgotPasswordData.step2.resendCode}
+              {resending ? 'جاري الإرسال...' : forgotPasswordData.step2.resendCode}
             </button>
           </div>
 

@@ -109,27 +109,32 @@ export const authService = {
 
   /**
    * Register new user
-   * Uses the users.create endpoint
+   * Uses the users.create endpoint and auto-login with JWT
    */
   async register(data: RegisterData): Promise<RegisterResponse> {
     try {
       // Create user using users service
       const user = await usersService.create(data);
 
-      // Auto-login after registration
-      localStorage.setItem('userId', user.id);
+      // Auto-login after registration using the real login endpoint
+      const loginResult = await this.login({
+        email: data.email,
+        password: data.password,
+      });
 
-      // Store user object for activity logging
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // Generate a mock token
-      const mockToken = btoa(`${user.id}:${Date.now()}`);
-      localStorage.setItem('token', mockToken);
-
-      return {
-        success: true,
-        user,
-      };
+      if (loginResult.success) {
+        return {
+          success: true,
+          user: loginResult.user,
+        };
+      } else {
+        // If auto-login fails, return success but with a note
+        return {
+          success: true,
+          user,
+          error: 'تم إنشاء الحساب بنجاح. يرجى تسجيل الدخول.',
+        };
+      }
     } catch (error) {
       return {
         success: false,
@@ -180,6 +185,62 @@ export const authService = {
    */
   isAuthenticated(): boolean {
     return !!localStorage.getItem('userId') && !!localStorage.getItem('token');
+  },
+
+  /**
+   * Request password reset
+   * Sends a 6-digit verification code to user's email
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  /**
+   * Verify reset code
+   * Validates the 6-digit code sent to user's email
+   */
+  async verifyResetCode(email: string, code: string): Promise<{ message: string; valid: boolean }> {
+    try {
+      const response = await api.post('/auth/verify-reset-code', { email, code });
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  /**
+   * Reset password
+   * Changes user's password using the verification code
+   */
+  async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/auth/reset-password', { 
+        email, 
+        code, 
+        newPassword 
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  /**
+   * Resend reset code
+   * Sends a new verification code to user's email
+   */
+  async resendResetCode(email: string): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/auth/resend-reset-code', { email });
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
   },
 };
 

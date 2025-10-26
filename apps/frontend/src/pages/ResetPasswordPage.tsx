@@ -2,30 +2,47 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff, ArrowLeft, Lightbulb } from 'lucide-react';
 import { forgotPasswordData } from '../data/forgotPasswordData';
+import { authService } from '../services/auth.service';
+import toast from 'react-hot-toast';
 
 export function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || '';
+  const code = location.state?.code || '';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (newPassword !== confirmPassword) {
-      alert('كلمات المرور غير متطابقة');
+      toast.error('كلمات المرور غير متطابقة');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
       return;
     }
     
-    console.log('Reset password for:', email);
-    console.log('New password:', newPassword);
-    
-    // Navigate to login page after successful reset
-    alert('تم تغيير كلمة المرور بنجاح!');
-    navigate('/login');
+    setLoading(true);
+
+    try {
+      const response = await authService.resetPassword(email, code, newPassword);
+      toast.success(response.message);
+      // Navigate to login page after successful reset
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ في تغيير كلمة المرور');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -140,10 +157,17 @@ export function ResetPasswordPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>{forgotPasswordData.step3.submitButton}</span>
-              <ArrowLeft className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {loading ? (
+                <span>جاري التغيير...</span>
+              ) : (
+                <>
+                  <span>{forgotPasswordData.step3.submitButton}</span>
+                  <ArrowLeft className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
         </div>

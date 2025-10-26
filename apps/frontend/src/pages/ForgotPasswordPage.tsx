@@ -2,16 +2,28 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, Lightbulb } from 'lucide-react';
 import { forgotPasswordData } from '../data/forgotPasswordData';
+import { authService } from '../services/auth.service';
+import toast from 'react-hot-toast';
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Forgot password request for:', email);
-    // Navigate to verification code page
-    navigate('/verify-code', { state: { email } });
+    setLoading(true);
+
+    try {
+      const response = await authService.forgotPassword(email);
+      toast.success(response.message);
+      // Navigate to verification code page
+      navigate('/verify-code', { state: { email } });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ في إرسال رمز التحقق');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -92,10 +104,17 @@ export function ForgotPasswordPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-800 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>{forgotPasswordData.step1.submitButton}</span>
-              <ArrowLeft className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {loading ? (
+                <span>جاري الإرسال...</span>
+              ) : (
+                <>
+                  <span>{forgotPasswordData.step1.submitButton}</span>
+                  <ArrowLeft className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
 
