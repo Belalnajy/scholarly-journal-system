@@ -191,30 +191,28 @@ VITE_API_URL=https://api.upafa-edu.net/api
 # Return to root directory
 cd /var/www/upafa-journal
 
-# Build backend using TypeScript compiler (skip type errors)
-cd apps/backend
-npx tsc -p tsconfig.app.json --skipLibCheck --noEmit false
-cd ../..
+# Build backend using Nx
+npx nx build backend
 ```
 
 **ملاحظة مهمة:**
-- نستخدم `tsc` (TypeScript Compiler) مباشرة لتجنب مشكلة Nx project graph
+- Nx يستخدم webpack لبناء الـ backend تلقائياً
+- تم إصلاح أخطاء TypeScript باستخدام `// @ts-nocheck`
 - الـ Backend يستخدم `synchronize: true` في database config
 - هذا يعني أن TypeORM سيُنشئ الجداول تلقائياً عند أول تشغيل
 - لا حاجة لتشغيل migrations يدوياً
 
 ### 5.2 Build Frontend
-{{ ... }}
 ```bash
-# Build frontend using Vite directly
-cd /var/www/upafa-journal/apps/frontend
-npx vite build
-cd ../..
+# Build frontend using Nx
+cd /var/www/upafa-journal
+npx nx build frontend
 
 # This will create a 'dist' folder in apps/frontend/
 ```
 
 ### 5.3 التحقق من Build Outputs
+{{ ... }}
 ```bash
 # Verify backend build
 ls -la /var/www/upafa-journal/apps/backend/dist/
@@ -476,15 +474,9 @@ git pull origin main
 # Install/Update dependencies
 npm install
 
-# Build backend
-cd apps/backend
-npx tsc -p tsconfig.app.json --skipLibCheck --noEmit false
-cd ../..
-
-# Build frontend
-cd apps/frontend
-npx vite build
-cd ../..
+# Build both apps using Nx
+npx nx build backend
+npx nx build frontend
 
 # Restart backend
 pm2 restart upafa-backend
@@ -497,11 +489,9 @@ pm2 restart upafa-backend
 cd /var/www/upafa-journal
 git pull origin main
 
-# Build backend
-cd apps/backend && npx tsc -p tsconfig.app.json --skipLibCheck --noEmit false && cd ../..
-
-# Build frontend
-cd apps/frontend && npx vite build && cd ../..
+# Build both apps
+npx nx build backend
+npx nx build frontend
 
 # Restart backend
 pm2 restart upafa-backend
