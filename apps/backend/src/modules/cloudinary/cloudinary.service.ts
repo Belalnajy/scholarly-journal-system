@@ -22,6 +22,30 @@ export class CloudinaryService {
     if (!cloudinaryUrl) {
       throw new Error('CLOUDINARY_URL is not defined in environment variables');
     }
+
+    // Parse CLOUDINARY_URL: cloudinary://api_key:api_secret@cloud_name
+    try {
+      const url = new URL(cloudinaryUrl);
+      const cloudName = url.hostname;
+      const apiKey = url.username;
+      const apiSecret = url.password;
+
+      if (!cloudName || !apiKey || !apiSecret) {
+        throw new Error('Invalid CLOUDINARY_URL format. Expected: cloudinary://api_key:api_secret@cloud_name');
+      }
+
+      // Configure Cloudinary with parsed credentials
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        secure: true,
+      });
+
+      console.log('✅ Cloudinary configured successfully:', cloudName);
+    } catch (error) {
+      throw new Error(`Failed to configure Cloudinary: ${error.message}`);
+    }
   }
 
   /**
