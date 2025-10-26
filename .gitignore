@@ -49,12 +49,34 @@ vitest.config.*.timestamp*
 
 
 
-#env files
+# Environment files
 .env
 .env.local
 .env.test
-.env.example
-.env.example.local
-.env.example.test
-.env.example.production
-.env.example.development
+.env.development
+.env.staging
+
+# Keep production env files for deployment reference
+# But make sure to update sensitive values on server
+# .env.production files are tracked for deployment templates
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Backups
+backups/
+*.sql
+*.sql.gz
+
+# PM2
+.pm2/
+pids/
+*.pid
+*.seed
+*.pid.lock
