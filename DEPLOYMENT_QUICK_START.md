@@ -51,9 +51,12 @@
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install Node.js 18
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Install Node.js 20 (مهم جداً!)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
+
+# Verify Node.js version (يجب أن يكون 20.x)
+node --version
 
 # Install PostgreSQL, Nginx, Git
 sudo apt install -y postgresql postgresql-contrib nginx git
@@ -61,6 +64,8 @@ sudo apt install -y postgresql postgresql-contrib nginx git
 # Install PM2
 sudo npm install -g pm2
 ```
+
+**⚠️ مهم جداً:** يجب استخدام Node.js 20 أو أعلى لتجنب مشاكل Vite/ESM
 
 ### 2️⃣ إعداد Database
 ```bash
@@ -243,6 +248,22 @@ sudo tail -f /var/log/nginx/error.log
 ---
 
 ## 📞 في حالة وجود مشاكل
+
+### ❌ خطأ: "require() of ES Module not supported"
+```bash
+# المشكلة: Node.js قديم جداً
+# الحل: تحديث Node.js إلى 20+
+
+# Check current version
+node --version
+
+# If less than 20.x, update:
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Verify
+node --version  # Should be v20.x or higher
+```
 
 ### Backend لا يعمل:
 ```bash

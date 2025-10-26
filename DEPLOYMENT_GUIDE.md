@@ -24,16 +24,18 @@
 sudo apt update && sudo apt upgrade -y
 ```
 
-### 1.2 تثبيت Node.js 18+
+### 1.2 تثبيت Node.js 20+
 ```bash
-# Install Node.js 18.x
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Install Node.js 20.x (مهم جداً!)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 # Verify installation
-node --version  # Should be v18.x or higher
+node --version  # Should be v20.x or higher
 npm --version
 ```
+
+**⚠️ مهم:** يجب استخدام Node.js 20 أو أعلى لتجنب مشاكل ESM/Vite
 
 ### 1.3 تثبيت PostgreSQL
 ```bash
