@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { RegistrationForm, RegistrationFormData } from '../components/sections/RegistrationForm';
 import { registrationPageData } from '../data/registrationData';
 import { useAuth } from '../contexts';
 import activityLogsService, { ActivityAction } from '../services/activity-logs.service';
 import { CreateUserDto, UserRole } from '../types/user.types';
+import { Home, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function RegistrationPage() {
@@ -67,7 +68,21 @@ export function RegistrationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative">
+      {/* Back to Home Button - Fixed Top Left */}
+      <Link
+        to="/"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10 group flex items-center gap-2 sm:gap-3 px-3 py-3 sm:px-6 sm:py-3 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+        title="العودة للصفحة الرئيسية"
+      >
+        <Home className="w-5 h-5 sm:w-5 sm:h-5 text-[#093059] group-hover:text-[#b2823e] transition-colors" />
+        <span className="hidden sm:inline text-sm font-medium text-[#093059] group-hover:text-[#b2823e] transition-colors">
+          الصفحة الرئيسية
+        </span>
+        <ArrowRight className="w-4 h-4 sm:w-4 sm:h-4 text-[#093059] group-hover:text-[#b2823e] group-hover:translate-x-1 transition-all" />
+      </Link>
+
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl w-full">
         {/* Logo and Branding - Outside Container */}
         <div className="flex flex-col items-center mb-10">
@@ -114,6 +129,7 @@ export function RegistrationPage() {
           {/* Registration Form Component */}
           <RegistrationForm onSubmit={handleRegistration} isLoading={isLoading} />
         </div>
+      </div>
       </div>
     </div>
   );
