@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { DashboardSidebar } from './DashboardSidebar';
 import { SidebarNavItem } from '../../types';
 import notificationsService from '../../services/notifications.service';
+import { Menu } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, navItems, userInfo, onLogout }: DashboardLayoutProps) {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     // Fetch unread notifications count
@@ -55,11 +57,26 @@ export function DashboardLayout({ children, navItems, userInfo, onLogout }: Dash
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardSidebar navItems={navItemsWithBadge} userInfo={userInfo} onLogout={onLogout} />
+      <DashboardSidebar 
+        navItems={navItemsWithBadge} 
+        userInfo={userInfo} 
+        onLogout={onLogout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="fixed top-4 right-4 z-30 lg:hidden p-3 bg-[#0D3B66] text-white rounded-lg shadow-lg hover:bg-[#0D3B66]/90 transition-colors"
+        aria-label="فتح القائمة"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
       
       {/* Main Content */}
-      <main className="mr-64 min-h-screen">
-        <div className="p-8">
+      <main className="lg:mr-64 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
           {children}
         </div>
       </main>

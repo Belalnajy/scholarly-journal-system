@@ -11,9 +11,11 @@ interface DashboardSidebarProps {
     avatar?: string;
   };
   onLogout?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function DashboardSidebar({ navItems, userInfo, onLogout }: DashboardSidebarProps) {
+export function DashboardSidebar({ navItems, userInfo, onLogout, isOpen, onClose }: DashboardSidebarProps) {
   const location = useLocation();
   const { settings } = useSiteSettings();
 
@@ -31,7 +33,25 @@ export function DashboardSidebar({ navItems, userInfo, onLogout }: DashboardSide
   const siteName = settings?.site_name || 'مجلة البحوث والدراسات';
 
   return (
-    <aside className="fixed right-0 top-0 h-screen w-64 bg-[#0D3B66] text-white flex flex-col shadow-lg" dir='rtl'>
+    <>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside 
+        className={`
+          fixed right-0 top-0 h-screen w-64 bg-[#0D3B66] text-white flex flex-col shadow-lg z-50
+          transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+          lg:translate-x-0
+        `} 
+        dir='rtl'
+      >
       {/* Logo Section */}
       <div className="p-6 border-b border-white/10">
         <Link to="/" className="flex items-center justify-center mb-2">
@@ -108,5 +128,6 @@ export function DashboardSidebar({ navItems, userInfo, onLogout }: DashboardSide
         </button>
       </div>
     </aside>
+    </>
   );
 }
