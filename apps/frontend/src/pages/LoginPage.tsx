@@ -4,7 +4,7 @@ import { LoginForm } from '../components/sections/LoginForm';
 import { loginPageData } from '../data/loginData';
 import { useAuth } from '../contexts';
 import activityLogsService, { ActivityAction } from '../services/activity-logs.service';
-import { User, Shield, FileEdit, Search, Home, ArrowRight } from 'lucide-react';
+import { Home, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function LoginPage() {
@@ -54,35 +54,6 @@ export function LoginPage() {
     }
   };
 
-  const handleDemoLogin = async (email: string) => {
-    setError(null);
-    setIsLoading(true);
-
-    try {
-      const result = await login(email, 'Demo@123');
-      
-      if (result.success) {
-        toast.success('تم تسجيل الدخول بنجاح!');
-        navigate('/dashboard');
-      } else {
-        const errorMessage = result.error || 'فشل تسجيل الدخول';
-        setError(errorMessage);
-        toast.error(errorMessage, {
-          duration: 4000,
-          position: 'top-center',
-        });
-      }
-    } catch (err) {
-      const errorMessage = 'حدث خطأ غير متوقع';
-      setError(errorMessage);
-      toast.error(errorMessage, {
-        duration: 4000,
-        position: 'top-center',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative">
@@ -144,63 +115,6 @@ export function LoginPage() {
               <p className="text-red-600 text-sm text-center">{error}</p>
             </div>
           )}
-
-          {/* Demo Accounts */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="text-sm font-bold text-blue-900 mb-3 text-center">حسابات تجريبية - اضغط للدخول مباشرة</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => handleDemoLogin('admin@demo.com')}
-                disabled={isLoading}
-                className="flex items-center gap-2 p-2 bg-white hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors text-right disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Shield className="w-4 h-4 text-blue-600" />
-                <div className="flex-1">
-                  <div className="text-xs font-bold text-gray-800">مدير</div>
-                  <div className="text-xs text-gray-600">admin@demo.com</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleDemoLogin('editor@demo.com')}
-                disabled={isLoading}
-                className="flex items-center gap-2 p-2 bg-white hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors text-right disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FileEdit className="w-4 h-4 text-green-600" />
-                <div className="flex-1">
-                  <div className="text-xs font-bold text-gray-800">محرر</div>
-                  <div className="text-xs text-gray-600">editor@demo.com</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleDemoLogin('reviewer@demo.com')}
-                disabled={isLoading}
-                className="flex items-center gap-2 p-2 bg-white hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors text-right disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Search className="w-4 h-4 text-purple-600" />
-                <div className="flex-1">
-                  <div className="text-xs font-bold text-gray-800">محكم</div>
-                  <div className="text-xs text-gray-600">reviewer@demo.com</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleDemoLogin('researcher@demo.com')}
-                disabled={isLoading}
-                className="flex items-center gap-2 p-2 bg-white hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors text-right disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <User className="w-4 h-4 text-orange-600" />
-                <div className="flex-1">
-                  <div className="text-xs font-bold text-gray-800">باحث</div>
-                  <div className="text-xs text-gray-600">researcher@demo.com</div>
-                </div>
-              </button>
-            </div>
-            <p className="text-xs text-blue-700 mt-2 text-center">
-              {isLoading ? 'جاري تسجيل الدخول...' : 'كلمة المرور: Demo@123'}
-            </p>
-          </div>
 
           {/* Login Form Component */}
           <LoginForm
