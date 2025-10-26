@@ -124,19 +124,12 @@ git clone https://github.com/Belalnajy/scholarly-journal-system.git .
 
 ### 3.3 تثبيت Dependencies
 ```bash
-# Install root dependencies
+# Install all dependencies (Nx Monorepo)
+# This will install dependencies for all apps in the workspace
 npm install
 
-# Install backend dependencies
-cd apps/backend
-npm install
-
-# Install frontend dependencies
-cd ../frontend
-npm install
-
-# Return to root
-cd ../..
+# Verify Nx installation
+npx nx --version
 ```
 
 ---
@@ -193,26 +186,41 @@ VITE_API_URL=https://api.upafa-edu.net/api
 ---
 
 ## 🏗️ الخطوة 5: Build المشروع
-
 ### 5.1 Build Backend
 ```bash
-cd /var/www/upafa-journal/apps/backend
+# Return to root directory
+cd /var/www/upafa-journal
 
-# Build TypeScript
-npm run build
-
-# Run database migrations
-npm run migration:run
+# Build backend using TypeScript compiler (skip type errors)
+cd apps/backend
+npx tsc -p tsconfig.app.json --skipLibCheck --noEmit false
+cd ../..
 ```
 
+**ملاحظة مهمة:**
+- نستخدم `tsc` (TypeScript Compiler) مباشرة لتجنب مشكلة Nx project graph
+- الـ Backend يستخدم `synchronize: true` في database config
+- هذا يعني أن TypeORM سيُنشئ الجداول تلقائياً عند أول تشغيل
+- لا حاجة لتشغيل migrations يدوياً
+
 ### 5.2 Build Frontend
+{{ ... }}
 ```bash
+# Build frontend using Vite directly
 cd /var/www/upafa-journal/apps/frontend
+npx vite build
+cd ../..
 
-# Build for production
-npm run build
+# This will create a 'dist' folder in apps/frontend/
+```
 
-# This will create a 'dist' folder
+### 5.3 التحقق من Build Outputs
+```bash
+# Verify backend build
+ls -la /var/www/upafa-journal/apps/backend/dist/
+
+# Verify frontend build
+ls -la /var/www/upafa-journal/apps/frontend/dist/
 ```
 
 ---
@@ -465,18 +473,38 @@ cd /var/www/upafa-journal
 # Pull latest changes
 git pull origin main
 
-# Update backend
-cd apps/backend
+# Install/Update dependencies
 npm install
-npm run build
+
+# Build backend
+cd apps/backend
+npx tsc -p tsconfig.app.json --skipLibCheck --noEmit false
+cd ../..
+
+# Build frontend
+cd apps/frontend
+npx vite build
+cd ../..
+
+# Restart backend
 pm2 restart upafa-backend
 
-# Update frontend
-cd ../frontend
-npm install
-npm run build
+# No need to restart Nginx (static files updated automatically)
+```
 
-# No need to restart Nginx (static files updated)
+### تحديث سريع (بدون dependencies):
+```bash
+cd /var/www/upafa-journal
+git pull origin main
+
+# Build backend
+cd apps/backend && npx tsc -p tsconfig.app.json --skipLibCheck --noEmit false && cd ../..
+
+# Build frontend
+cd apps/frontend && npx vite build && cd ../..
+
+# Restart backend
+pm2 restart upafa-backend
 ```
 
 ---
