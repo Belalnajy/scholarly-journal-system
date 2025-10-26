@@ -1,61 +1,34 @@
-import { FileText, Users, Clock, Bell, TrendingUp, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Users, Bell, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DashboardHeader } from '../../../components/dashboard';
-
-// Demo data
-const stats = {
-  totalResearch: 156,
-  activeResearchers: 89,
-  averageReviewTime: 9, // days
-};
-
-// Monthly submissions data (last 6 months)
-const monthlySubmissions = [
-  { month: 'يناير', submitted: 18, published: 12 },
-  { month: 'فبراير', submitted: 25, published: 15 },
-  { month: 'مارس', submitted: 32, published: 20 },
-  { month: 'أبريل', submitted: 28, published: 18 },
-  { month: 'مايو', submitted: 22, published: 16 },
-  { month: 'يونيو', submitted: 31, published: 19 },
-];
-
-// Research status distribution for Pie Chart
-const researchDistribution = [
-  { name: 'قيد المراجعة', value: 45, color: '#3b82f6' },
-  { name: 'تعديلات مطلوبة', value: 28, color: '#eab308' },
-  { name: 'مرفوض', value: 18, color: '#ef4444' },
-  { name: 'مقبول', value: 65, color: '#22c55e' },
-];
-
-// Recent activities
-const recentActivities = [
-  {
-    id: '1',
-    icon: 'FileText',
-    title: 'تم تقديم بحث جديد بعنوان "تطبيقات الذكاء الاصطناعي في التعليم"',
-    author: 'د. سارة أحمد',
-    time: 'منذ ساعتين',
-    color: 'blue',
-  },
-  {
-    id: '2',
-    icon: 'Users',
-    title: 'انضم محكم جديد إلى فريق المراجعة - تخصص الهندسة',
-    author: 'د. أحمد سالم',
-    time: 'منذ 4 ساعات',
-    color: 'green',
-  },
-  {
-    id: '3',
-    icon: 'Bell',
-    title: 'تم نشر العدد الجديد من المجلة (العدد 3 - 2024)',
-    author: 'بشرى مشتبر',
-    time: 'منذ يوم واحد',
-    color: 'purple',
-  },
-];
+import dashboardService, { DashboardData } from '../../../services/dashboard.service';
+import { toast } from 'react-hot-toast';
 
 export function AdminDashboard() {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch dashboard data on mount
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await dashboardService.getAllDashboardData();
+      setDashboardData(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'فشل في تحميل بيانات لوحة التحكم';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
   // Custom tooltip for charts
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -101,6 +74,67 @@ export function AdminDashboard() {
     }
   };
 
+  // Helper function to format time ago
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'منذ لحظات';
+    if (diffInSeconds < 3600) return `منذ ${Math.floor(diffInSeconds / 60)} دقيقة`;
+    if (diffInSeconds < 86400) return `منذ ${Math.floor(diffInSeconds / 3600)} ساعة`;
+    if (diffInSeconds < 604800) return `منذ ${Math.floor(diffInSeconds / 86400)} يوم`;
+    return date.toLocaleDateString('ar-SA');
+  };
+
+  // Helper function to map activity action to icon and color
+  const getActivityDisplay = (actionType: string) => {
+    if (actionType.includes('research') || actionType.includes('submit')) {
+      return { icon: 'FileText', color: 'blue' };
+    }
+    if (actionType.includes('user') || actionType.includes('register')) {
+      return { icon: 'Users', color: 'green' };
+    }
+    if (actionType.includes('publish') || actionType.includes('article')) {
+      return { icon: 'Bell', color: 'purple' };
+    }
+    return { icon: 'AlertCircle', color: 'gray' };
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" dir="rtl">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">جاري تحميل بيانات لوحة التحكم...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !dashboardData) {
+    return (
+      <div className="space-y-6" dir="rtl">
+        <DashboardHeader title="لوحة التحكم" subtitle="نظرة عامة شاملة على النظام" />
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-red-800 mb-2">فشل في تحميل البيانات</h3>
+          <p className="text-red-600 mb-4">{error || 'حدث خطأ غير متوقع'}</p>
+          <button
+            onClick={fetchDashboardData}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { stats, monthlySubmissions, researchDistribution, recentActivities } = dashboardData;
+
   return (
     <div className="space-y-6" dir="rtl">
       {/* Header */}
@@ -128,7 +162,7 @@ export function AdminDashboard() {
           <p className="text-4xl font-bold text-[#0D3B66] mb-1">{stats.totalResearch}</p>
           <div className="flex items-center gap-1 text-xs text-gray-600">
             <TrendingUp className="w-3 h-3" />
-            <span>زيادة 12% عن الشهر الماضي</span>
+            <span>قيد المراجعة: {stats.underReview}</span>
           </div>
         </div>
 
@@ -143,22 +177,22 @@ export function AdminDashboard() {
           <p className="text-4xl font-bold text-[#0D3B66] mb-1">{stats.activeResearchers}</p>
           <div className="flex items-center gap-1 text-xs text-gray-600">
             <TrendingUp className="w-3 h-3" />
-            <span>5 باحثين جدد هذا الشهر</span>
+            <span>إجمالي المستخدمين: {stats.totalUsers}</span>
           </div>
         </div>
 
-        {/* متوسط وقت المراجعة */}
-        <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl p-6 border border-rose-200">
+        {/* المقالات المنشورة */}
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-gray-700">متوسط وقت المراجعة</h3>
-            <div className="w-10 h-10 rounded-full bg-rose-200 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-rose-600" />
+            <h3 className="text-sm font-semibold text-gray-700">المقالات المنشورة</h3>
+            <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-purple-600" />
             </div>
           </div>
-          <p className="text-4xl font-bold text-[#0D3B66] mb-1">{stats.averageReviewTime} أيام</p>
+          <p className="text-4xl font-bold text-[#0D3B66] mb-1">{stats.publishedArticles}</p>
           <div className="flex items-center gap-1 text-xs text-gray-600">
-            <AlertCircle className="w-3 h-3" />
-            <span>تحسن بنسبة 15% عن الشهر الماضي</span>
+            <TrendingUp className="w-3 h-3" />
+            <span>جاهز للنشر: {stats.readyToPublish}</span>
           </div>
         </div>
       </div>
@@ -238,24 +272,34 @@ export function AdminDashboard() {
         <p className="text-sm text-gray-600 mb-6">آخر الأحداث والتحديثات في النظام</p>
         
         <div className="space-y-3">
-          {recentActivities.map((activity) => (
-            <div 
-              key={activity.id}
-              className={`flex items-start gap-4 p-4 rounded-lg border border-gray-200 ${getActivityBgColor(activity.color)} hover:shadow-md transition-shadow`}
-            >
-              <div className={`w-10 h-10 rounded-full ${getActivityBgColor(activity.color)} flex items-center justify-center flex-shrink-0`}>
-                {getActivityIcon(activity.icon, activity.color)}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-800 mb-1">{activity.title}</p>
-                <div className="flex items-center gap-2 text-xs text-gray-600">
-                  <span>{activity.author}</span>
-                  <span>•</span>
-                  <span>{activity.time}</span>
-                </div>
-              </div>
+          {recentActivities.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <AlertCircle className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+              <p>لا توجد نشاطات حديثة</p>
             </div>
-          ))}
+          ) : (
+            recentActivities.map((activity) => {
+              const display = getActivityDisplay(activity.action_type);
+              return (
+                <div 
+                  key={activity.id}
+                  className={`flex items-start gap-4 p-4 rounded-lg border border-gray-200 ${getActivityBgColor(display.color)} hover:shadow-md transition-shadow`}
+                >
+                  <div className={`w-10 h-10 rounded-full ${getActivityBgColor(display.color)} flex items-center justify-center flex-shrink-0`}>
+                    {getActivityIcon(display.icon, display.color)}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800 mb-1">{activity.description}</p>
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <span>{activity.user?.name || 'مستخدم'}</span>
+                      <span>•</span>
+                      <span>{formatTimeAgo(activity.created_at)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

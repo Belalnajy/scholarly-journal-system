@@ -1,40 +1,38 @@
-import { TrendingUp, TrendingDown, Clock, CheckCircle, FileText, Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CheckCircle, FileText, Download, Loader2, AlertCircle } from 'lucide-react';
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DashboardHeader } from '../../../components/dashboard';
-
-// Demo data
-const stats = {
-  acceptanceRate: 73, // معدل القبول
-  rejectionRate: 18, // معدل الرفض
-  averageReviewTime: 9, // متوسط وقت المراجعة (أيام)
-  totalSubmissions: 318, // إجمالي التقديمات
-  publishedResearch: 232, // الأبحاث المنشورة
-};
-
-// Monthly review time data (last 6 months)
-const monthlyReviewTime = [
-  { month: 'يناير', days: 12 },
-  { month: 'فبراير', days: 11 },
-  { month: 'مارس', days: 8 },
-  { month: 'أبريل', days: 10 },
-  { month: 'مايو', days: 14 },
-  { month: 'يونيو', days: 9 },
-];
-
-// Monthly productivity data (last 6 months)
-const monthlyProductivity = [
-  { month: 'يناير', value: 45 },
-  { month: 'فبراير', value: 52 },
-  { month: 'مارس', value: 38 },
-  { month: 'أبريل', value: 65 },
-  { month: 'مايو', value: 48 },
-  { month: 'يونيو', value: 70 },
-];
+import dashboardService, { ReportsData } from '../../../services/dashboard.service';
+import { toast } from 'react-hot-toast';
 
 export function ReportsStatisticsPage() {
+  const [reportsData, setReportsData] = useState<ReportsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch reports data on mount
+  useEffect(() => {
+    fetchReportsData();
+  }, []);
+
+  const fetchReportsData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await dashboardService.getAllReportsData();
+      setReportsData(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'فشل في تحميل بيانات التقارير';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleExportReport = () => {
     // TODO: Implement export functionality
-    alert('سيتم تصدير التقرير قريباً...');
+    toast.success('سيتم تصدير التقرير قريباً...');
   };
 
   // Custom tooltip for charts
@@ -51,6 +49,40 @@ export function ReportsStatisticsPage() {
     }
     return null;
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" dir="rtl">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">جاري تحميل بيانات التقارير...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !reportsData) {
+    return (
+      <div className="space-y-6" dir="rtl">
+        <DashboardHeader title="التقارير والإحصاءات" subtitle="تحليل شامل لأداء النظام والإحصائيات التفصيلية" />
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-red-800 mb-2">فشل في تحميل البيانات</h3>
+          <p className="text-red-600 mb-4">{error || 'حدث خطأ غير متوقع'}</p>
+          <button
+            onClick={fetchReportsData}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { stats, monthlyReviewTime, monthlyProductivity } = reportsData;
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -72,38 +104,38 @@ export function ReportsStatisticsPage() {
           </div>
           <p className="text-4xl font-bold text-[#0D3B66] mb-1">{stats.acceptanceRate}%</p>
           <div className="flex items-center gap-1 text-xs text-green-600">
-            <TrendingUp className="w-3 h-3" />
-            <span>5% تحسن</span>
+            <CheckCircle className="w-3 h-3" />
+            <span>من {stats.totalSubmissions} بحث</span>
           </div>
         </div>
 
         {/* معدل الرفض */}
-        <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl p-6 border border-rose-200">
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-700">معدل الرفض</h3>
-            <div className="w-8 h-8 rounded-full bg-rose-200 flex items-center justify-center">
-              <span className="text-rose-600 text-lg">✕</span>
+            <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center">
+              <span className="text-orange-600 text-lg">✕</span>
             </div>
           </div>
           <p className="text-4xl font-bold text-[#0D3B66] mb-1">{stats.rejectionRate}%</p>
-          <div className="flex items-center gap-1 text-xs text-rose-600">
-            <TrendingDown className="w-3 h-3" />
-            <span>3% تحسن</span>
+          <div className="flex items-center gap-1 text-xs text-orange-600">
+            <AlertCircle className="w-3 h-3" />
+            <span>قيد المراجعة: {stats.pendingReview}</span>
           </div>
         </div>
 
-        {/* متوسط وقت المراجعة */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+        {/* الأبحاث المنشورة */}
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-gray-700">متوسط وقت المراجعة</h3>
-            <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center">
-              <Clock className="w-4 h-4 text-blue-600" />
+            <h3 className="text-sm font-semibold text-gray-700">الأبحاث المنشورة</h3>
+            <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center">
+              <CheckCircle className="w-4 h-4 text-purple-600" />
             </div>
           </div>
-          <p className="text-4xl font-bold text-[#0D3B66] mb-1">{stats.averageReviewTime} أيام</p>
-          <div className="flex items-center gap-1 text-xs text-blue-600">
-            <TrendingDown className="w-3 h-3" />
-            <span>2 أيام تحسن</span>
+          <p className="text-4xl font-bold text-[#0D3B66] mb-1">{stats.publishedResearch}</p>
+          <div className="flex items-center gap-1 text-xs text-purple-600">
+            <FileText className="w-3 h-3" />
+            <span>إجمالي: {stats.totalSubmissions}</span>
           </div>
         </div>
       </div>
