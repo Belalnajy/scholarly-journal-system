@@ -68,6 +68,25 @@ export class UsersService {
     });
   }
 
+  // Get editors (Public endpoint for editorial board page)
+  async getEditors(): Promise<UserResponse[]> {
+    const editors = await this.userRepository.find({
+      where: {
+        role: 'editor',
+        status: 'active',
+      },
+      order: {
+        created_at: 'DESC',
+      },
+    });
+
+    // Remove passwords
+    return editors.map((user) => {
+      const { password, hashPassword, comparePassword, ...result } = user;
+      return result as UserResponse;
+    });
+  }
+
   // Find one user by ID
   async findOne(id: string): Promise<UserResponse> {
     const user = await this.userRepository.findOne({ where: { id } });
@@ -308,5 +327,29 @@ export class UsersService {
       width,
       height
     );
+  }
+
+  // Update user password (for password reset)
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('المستخدم غير موجود');
+    }
+
+    user.password = hashedPassword;
+    await this.userRepository.save(user);
+
+    // Send password change notification
+    try {
+      await this.notificationsService.create({
+        user_id: user.id,
+        type: NotificationType.PASSWORD_CHANGED,
+        title: 'تم تغيير كلمة المرور',
+        message: 'تم تغيير كلمة المرور الخاصة بك بنجاح. إذا لم تقم بهذا الإجراء، يرجى التواصل مع الإدارة فوراً.',
+      });
+    } catch (error) {
+      console.error('Failed to send password change notification:', error);
+    }
   }
 }

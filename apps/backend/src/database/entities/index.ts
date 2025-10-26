@@ -11,3 +11,4 @@ export * from './reviewer-assignment.entity';
 export * from './review.entity';
 export * from './issue.entity';
 export * from './article.entity';
+export * from './password-reset-token.entity';

@@ -19,6 +19,12 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @Get('editors')
+  @Public() // Public endpoint for editorial board page
+  async getEditors() {
+    return this.usersService.getEditors();
+  }
+
   @Get()
   @Roles('admin', 'editor') // Only admin and editor can view all users
   findAll() {
