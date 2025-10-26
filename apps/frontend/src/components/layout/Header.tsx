@@ -7,13 +7,12 @@ interface NavigationItem {
   label: string;
   href: string;
 }
-
 interface HeaderProps {
   navigation: NavigationItem[];
   logoSrc?: string;
 }
 
-export function Header({ navigation, logoSrc = '../../public/journal-logo.png' }: HeaderProps) {
+export function Header({ navigation, logoSrc = '/journal-logo.png' }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
