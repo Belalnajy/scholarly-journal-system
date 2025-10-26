@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Mail } from 'lucide-react';
 import { EditorCard } from '../components/cards';
-import { editorialBoardData } from '../data/demoData';
 import { NewsletterSection } from '../components';
 import usersService from '../services/users.service';
 import { UserResponse } from '../types/user.types';
@@ -27,20 +26,18 @@ export function EditorialBoardPage() {
       
     } catch (err: any) {
       console.error('Error loading editors:', err);
-      // Fallback to demo data on error
       setEditors([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Use real data if available, otherwise fallback to demo data
-  const members = editors.length > 0 ? editors : editorialBoardData.members;
+  const members = editors;
 
   // Get unique specializations from editors
   const getUniqueSpecializations = () => {
     if (editors.length === 0) {
-      return editorialBoardData.categories;
+      return [{ id: 'all', label: 'جميع التخصصات' }];
     }
 
     const specializations = editors
@@ -111,7 +108,7 @@ export function EditorialBoardPage() {
             className="mb-4 text-4xl font-bold text-[#093059] sm:text-5xl lg:text-6xl" 
             dir="rtl"
           >
-            {editorialBoardData.title}
+            هيئة التحرير
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -120,7 +117,7 @@ export function EditorialBoardPage() {
             className="mx-auto max-w-3xl text-lg text-gray-600 sm:text-xl" 
             dir="rtl"
           >
-            {editorialBoardData.description}
+            نخبة من الأكاديميين والباحثين المتميزين في مختلف التخصصات
           </motion.p>
         </motion.div>
 
@@ -272,7 +269,12 @@ export function EditorialBoardPage() {
             >
               <h2 className="mb-6 text-2xl font-bold text-[#093059] sm:text-3xl">متطلبات العضوية</h2>
               <ul className="space-y-4">
-                {editorialBoardData.membershipRequirements.map((requirement, index) => (
+                {[
+                  'حاصل على درجة الدكتوراه في التخصص',
+                  'خبرة لا تقل عن 5 سنوات في البحث العلمي',
+                  'نشر أبحاث في مجلات علمية محكمة',
+                  'الالتزام بأخلاقيات البحث العلمي'
+                ].map((requirement, index) => (
                   <motion.li 
                     key={index}
                     initial={{ opacity: 0, x: -30 }}
@@ -302,12 +304,12 @@ export function EditorialBoardPage() {
               <div className="mb-4 flex justify-end">
                 <Mail className="h-10 w-10 text-[#b2823e]" />
               </div>
-              <h2 className="mb-4 text-2xl font-bold sm:text-3xl">{editorialBoardData.joinInfo.title}</h2>
-              <p className="mb-6 text-lg leading-relaxed opacity-90">{editorialBoardData.joinInfo.description}</p>
+              <h2 className="mb-4 text-2xl font-bold sm:text-3xl">انضم إلى هيئة التحرير</h2>
+              <p className="mb-6 text-lg leading-relaxed opacity-90">نرحب بانضمام الباحثين المتميزين إلى هيئة التحرير. للاستفسار عن متطلبات العضوية، يرجى التواصل معنا.</p>
               <motion.a
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                href={`mailto:${editorialBoardData.joinInfo.email}`}
+                href="mailto:info@journal.com"
                 className="inline-flex items-center gap-2 rounded-full bg-[#b2823e] px-6 py-3 font-bold text-white transition-all duration-300 hover:bg-[#9a6f35] hover:shadow-lg"
               >
                 <Mail className="h-5 w-5" />

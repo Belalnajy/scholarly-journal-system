@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '../../../components/dashboard';
 import usersService from '../../../services/users.service';
-import { UserResponse } from '../../../types/user.types';
 import { reviewerAssignmentsService } from '../../../services/reviewer-assignments.service';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -22,82 +21,6 @@ interface Reviewer {
   interests: string[];
 }
 
-// Demo data (fallback)
-const demoReviewers: Reviewer[] = [
-  {
-    id: '1',
-    name: 'د. محمد سالم',
-    specialization: 'علوم الحاسوب',
-    email: 'm.ahmed@ksu.edu.sa',
-    orcid: '0000-0002-1234-5678',
-    university: 'جامعة الملك سعود',
-    status: 'active',
-    completedReviews: 15,
-    activeReviews: 3,
-    bio: 'باحث متخصص في تطبيقات الذكاء الاصطناعي في التعليم مع خبرة تزيد عن 15 عاماً في مجال تقنيات التعليم',
-    interests: ['الذكاء الاصطناعي', 'التعليم الإلكتروني', 'تحليل البيانات التعليمية'],
-  },
-  {
-    id: '2',
-    name: 'د. محمد سالم',
-    specialization: 'علوم الحاسوب',
-    email: 'm.ahmed@ksu.edu.sa',
-    university: 'جامعة الملك سعود',
-    status: 'active',
-    completedReviews: 15,
-    activeReviews: 3,
-    bio: 'باحث متخصص في تطبيقات الذكاء الاصطناعي في التعليم مع خبرة تزيد عن 15 عاماً في مجال تقنيات التعليم',
-    interests: ['الذكاء الاصطناعي', 'التعليم الإلكتروني', 'تحليل البيانات التعليمية'],
-  },
-  {
-    id: '3',
-    name: 'د. محمد سالم',
-    specialization: 'علوم الحاسوب',
-    email: 'm.ahmed@ksu.edu.sa',
-    university: 'جامعة الملك سعود',
-    status: 'busy',
-    completedReviews: 15,
-    activeReviews: 3,
-    bio: 'باحث متخصص في تطبيقات الذكاء الاصطناعي في التعليم مع خبرة تزيد عن 15 عاماً في مجال تقنيات التعليم',
-    interests: ['الذكاء الاصطناعي', 'التعليم الإلكتروني', 'تحليل البيانات التعليمية'],
-  },
-  {
-    id: '4',
-    name: 'د. محمد سالم',
-    specialization: 'علوم الحاسوب',
-    email: 'm.ahmed@ksu.edu.sa',
-    university: 'جامعة الملك سعود',
-    status: 'busy',
-    completedReviews: 15,
-    activeReviews: 3,
-    bio: 'باحث متخصص في تطبيقات الذكاء الاصطناعي في التعليم مع خبرة تزيد عن 15 عاماً في مجال تقنيات التعليم',
-    interests: ['الذكاء الاصطناعي', 'التعليم الإلكتروني', 'تحليل البيانات التعليمية'],
-  },
-  {
-    id: '5',
-    name: 'د. محمد سالم',
-    specialization: 'علوم الحاسوب',
-    email: 'm.ahmed@ksu.edu.sa',
-    university: 'جامعة الملك سعود',
-    status: 'busy',
-    completedReviews: 15,
-    activeReviews: 3,
-    bio: 'باحث متخصص في تطبيقات الذكاء الاصطناعي في التعليم مع خبرة تزيد عن 15 عاماً في مجال تقنيات التعليم',
-    interests: ['الذكاء الاصطناعي', 'التعليم الإلكتروني', 'تحليل البيانات التعليمية'],
-  },
-  {
-    id: '6',
-    name: 'د. محمد سالم',
-    specialization: 'علوم الحاسوب',
-    email: 'm.ahmed@ksu.edu.sa',
-    university: 'جامعة الملك سعود',
-    status: 'busy',
-    completedReviews: 15,
-    activeReviews: 3,
-    bio: 'باحث متخصص في تطبيقات الذكاء الاصطناعي في التعليم مع خبرة تزيد عن 15 عاماً في مجال تقنيات التعليم',
-    interests: ['الذكاء الاصطناعي', 'التعليم الإلكتروني', 'تحليل البيانات التعليمية'],
-  },
-];
 
 // Reviewer Details Modal
 function ReviewerDetailsModal({ 
@@ -278,7 +201,6 @@ export function ManageReviewersPage() {
   const [selectedReviewer, setSelectedReviewer] = useState<Reviewer | null>(null);
   const [reviewers, setReviewers] = useState<Reviewer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const reviewersPerPage = 6;
 
@@ -290,7 +212,6 @@ export function ManageReviewersPage() {
   const fetchReviewers = async () => {
     try {
       setLoading(true);
-      setError(null);
       
       // Get all users and filter reviewers with active status
       const allUsers = await usersService.getAll();
@@ -337,13 +258,11 @@ export function ManageReviewersPage() {
         })
       );
       
-      setReviewers(mappedReviewers.length > 0 ? mappedReviewers : demoReviewers);
+      setReviewers(mappedReviewers);
     } catch (err: any) {
       const errorMessage = err.message || 'فشل في تحميل بيانات المراجعين';
-      setError(errorMessage);
       toast.error(errorMessage);
-      // Use demo data on error
-      setReviewers(demoReviewers);
+      setReviewers([]);
     } finally {
       setLoading(false);
     }
