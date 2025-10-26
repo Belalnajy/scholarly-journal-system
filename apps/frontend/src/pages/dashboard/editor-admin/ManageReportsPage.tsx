@@ -180,62 +180,82 @@ export function ManageReportsPage() {
           <h2 className="text-xl font-bold text-gray-800">تقارير المحكمين</h2>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="py-3 px-4 text-right text-xs font-bold text-gray-700">رقم البحث</th>
-                <th className="py-3 px-4 text-right text-xs font-bold text-gray-700">العنوان</th>
-                <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">الباحث</th>
-                <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">الحالة</th>
-                <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">متوسط التقييم</th>
-                <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">المحكمون</th>
-                <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reports.map((report) => (
-                <tr key={report.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-4 text-right">
-                    <span className="text-sm font-bold text-[#0D3B66]">{report.researchNumber}</span>
-                  </td>
-                  <td className="py-4 px-4 text-right">
-                    <p className="text-sm text-gray-800 font-medium">{report.researchTitle}</p>
-                    <p className="text-xs text-gray-500 mt-1">{formatDate(report.submissionDate)}</p>
-                  </td>
-                  <td className="py-4 px-4 text-center text-sm text-gray-600">{report.author}</td>
-                  <td className="py-4 px-4 text-center">
-                    <StatusBadge status={report.status} />
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <span className="text-lg font-bold text-gray-800">{report.averageRating.toFixed(1)}/5</span>
-                  </td>
-                  <td className="py-4 px-4 text-center text-sm text-gray-600">
-                    {report.completedReviews}/{report.reviewersCount}
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <button 
-                        onClick={() => navigate(`/dashboard/editor-review-details/${report.id}`)}
-                        className="px-3 py-2 bg-[#0D3B66] text-white text-xs rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium flex items-center gap-1"
-                        title="اتخاذ القرار"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>اتخاذ القرار</span>
-                      </button>
-                      <button 
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="تحميل التقرير"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        {reports.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="py-3 px-4 text-right text-xs font-bold text-gray-700">رقم البحث</th>
+                  <th className="py-3 px-4 text-right text-xs font-bold text-gray-700">العنوان</th>
+                  <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">الباحث</th>
+                  <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">الحالة</th>
+                  <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">متوسط التقييم</th>
+                  <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">المحكمون</th>
+                  <th className="py-3 px-4 text-center text-xs font-bold text-gray-700">الإجراءات</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {reports.map((report) => (
+                  <tr key={report.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-4 text-right">
+                      <span className="text-sm font-bold text-[#0D3B66]">{report.researchNumber}</span>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <p className="text-sm text-gray-800 font-medium">{report.researchTitle}</p>
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(report.submissionDate)}</p>
+                    </td>
+                    <td className="py-4 px-4 text-center text-sm text-gray-600">{report.author}</td>
+                    <td className="py-4 px-4 text-center">
+                      <StatusBadge status={report.status} />
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="text-lg font-bold text-gray-800">{report.averageRating.toFixed(1)}/5</span>
+                    </td>
+                    <td className="py-4 px-4 text-center text-sm text-gray-600">
+                      {report.completedReviews}/{report.reviewersCount}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => navigate(`/dashboard/editor-review-details/${report.id}`)}
+                          className="px-3 py-2 bg-[#0D3B66] text-white text-xs rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium flex items-center gap-1"
+                          title="اتخاذ القرار"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>اتخاذ القرار</span>
+                        </button>
+                        <button 
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="تحميل التقرير"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-16 px-4">
+            <div className="max-w-md mx-auto">
+              <div className="mb-6 flex justify-center">
+                <div className="rounded-full bg-gray-100 p-6">
+                  <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                لا توجد تقارير حالياً
+              </h3>
+              <p className="text-gray-600 text-lg">
+                لم يتم إنشاء أي تقارير تحكيم بعد.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
     </div>

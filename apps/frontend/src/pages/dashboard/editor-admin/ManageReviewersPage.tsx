@@ -332,17 +332,37 @@ export function ManageReviewersPage() {
       <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6">قائمة المراجعين</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reviewers
-            .slice((currentPage - 1) * reviewersPerPage, currentPage * reviewersPerPage)
-            .map((reviewer) => (
-              <ReviewerCard
-                key={reviewer.id}
-                reviewer={reviewer}
-                onViewDetails={() => setSelectedReviewer(reviewer)}
-              />
-            ))}
-        </div>
+        {reviewers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {reviewers
+              .slice((currentPage - 1) * reviewersPerPage, currentPage * reviewersPerPage)
+              .map((reviewer) => (
+                <ReviewerCard
+                  key={reviewer.id}
+                  reviewer={reviewer}
+                  onViewDetails={() => setSelectedReviewer(reviewer)}
+                />
+              ))}
+          </div>
+        ) : (
+          <div className="text-center py-16 px-4">
+            <div className="max-w-md mx-auto">
+              <div className="mb-6 flex justify-center">
+                <div className="rounded-full bg-gray-100 p-6">
+                  <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                لا يوجد محكمين حالياً
+              </h3>
+              <p className="text-gray-600 text-lg">
+                لم يتم إضافة أي محكمين للنظام بعد.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Pagination */}
         {reviewers.length > reviewersPerPage && (
