@@ -5,6 +5,7 @@ import { loginPageData } from '../data/loginData';
 import { useAuth } from '../contexts';
 import activityLogsService, { ActivityAction } from '../services/activity-logs.service';
 import { User, Shield, FileEdit, Search, Home, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -31,12 +32,23 @@ export function LoginPage() {
           console.error('Failed to log activity:', logError);
         }
         
+        toast.success('تم تسجيل الدخول بنجاح!');
         navigate('/dashboard');
       } else {
-        setError(result.error || 'فشل تسجيل الدخول');
+        const errorMessage = result.error || 'فشل تسجيل الدخول';
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          duration: 4000,
+          position: 'top-center',
+        });
       }
     } catch (err) {
-      setError('حدث خطأ غير متوقع');
+      const errorMessage = 'حدث خطأ غير متوقع';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: 'top-center',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -50,12 +62,23 @@ export function LoginPage() {
       const result = await login(email, 'Demo@123');
       
       if (result.success) {
+        toast.success('تم تسجيل الدخول بنجاح!');
         navigate('/dashboard');
       } else {
-        setError(result.error || 'فشل تسجيل الدخول');
+        const errorMessage = result.error || 'فشل تسجيل الدخول';
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          duration: 4000,
+          position: 'top-center',
+        });
       }
     } catch (err) {
-      setError('حدث خطأ غير متوقع');
+      const errorMessage = 'حدث خطأ غير متوقع';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: 'top-center',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -64,21 +87,19 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 relative">
       {/* Back to Home Button - Fixed Top Left */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10">
-        <Link
-          to="/"
-          className="group flex items-center gap-2 sm:gap-3 px-3 py-3 sm:px-6 sm:py-3 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
-          title="العودة للصفحة الرئيسية"
-        >
-          <Home className="w-5 h-5 sm:w-5 sm:h-5 text-[#093059] group-hover:text-[#b2823e] transition-colors" />
-          <span className="hidden sm:inline-flex items-center gap-2">
-            <ArrowRight className="w-5 h-5 text-[#093059] group-hover:translate-x-1 transition-transform" />
-            <span className="font-bold text-[#093059] group-hover:text-[#b2823e] transition-colors">
-              الصفحة الرئيسية
-            </span>
+      <Link
+        to="/"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10 group flex items-center gap-2 sm:gap-3 px-3 py-3 sm:px-6 sm:py-3 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+        title="العودة للصفحة الرئيسية"
+      >
+        <Home className="w-5 h-5 sm:w-5 sm:h-5 text-[#093059] group-hover:text-[#b2823e] transition-colors" />
+        <span className="hidden sm:inline-flex items-center gap-2">
+          <ArrowRight className="w-5 h-5 text-[#093059] group-hover:translate-x-1 transition-transform" />
+          <span className="font-bold text-[#093059] group-hover:text-[#b2823e] transition-colors">
+            الصفحة الرئيسية
           </span>
-        </Link>
-      </div>
+        </span>
+      </Link>
 
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-screen">
         <div className="max-w-2xl w-full">
@@ -193,6 +214,7 @@ export function LoginPage() {
             orDividerText={loginPageData.orDividerText}
             noAccountText={loginPageData.noAccountText}
             createAccountText={loginPageData.createAccountText}
+            isLoading={isLoading}
             onSubmit={handleLogin}
           />
         </div>
@@ -200,12 +222,12 @@ export function LoginPage() {
           {/* Footer Link - Outside Container */}
           <div className="mt-8 text-center text-sm text-gray-600">
             <span>{loginPageData.loginIssueText} </span>
-            <a
-              href="/contact"
+            <Link
+              to="/contact"
               className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               {loginPageData.contactUsText}
-            </a>
+            </Link>
           </div>
         </div>
       </div>

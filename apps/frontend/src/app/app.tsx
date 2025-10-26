@@ -5,6 +5,7 @@ import { ScrollToTop, ProtectedRoute } from '../components/common';
 import { PublicRoute } from '../components/PublicRoute';
 import { MaintenanceGuard } from '../components/MaintenanceGuard';
 import { LandingPage, AboutPage, EditorialBoardPage, IssuesArchivePage, PrivacyPolicyPage, TermsAndConditionsPage, ContactPage, IssueDetailsPage, ResearchDetailsPage, VerifyArticlePage, ArticlePublicPage, LoginPage, RegistrationPage, ForgotPasswordPage, VerifyCodePage, ResetPasswordPage, DashboardPage, MaintenancePage } from '../pages';
+import { SearchResultsPage } from '../pages/SearchResultsPage';
 import { AuthProvider, SiteSettingsProvider } from '../contexts';
 import {
   navLinks,
@@ -105,6 +106,7 @@ export function App() {
                 <Route path="/research/:id" element={<ResearchDetailsPage />} />
                 <Route path="/article/:id" element={<ArticlePublicPage />} />
                 <Route path="/verify-article/:id" element={<VerifyArticlePage />} />
+                <Route path="/search" element={<SearchResultsPage />} />
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
                 <Route path="/terms" element={<TermsAndConditionsPage />} />
                 <Route path="/contact" element={<ContactPage />} />

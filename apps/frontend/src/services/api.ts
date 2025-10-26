@@ -26,12 +26,19 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Don't logout for verify-password endpoint (expected 401 for wrong password)
+      // Don't logout for these endpoints (expected 401 for wrong credentials)
+      const isLoginEndpoint = error.config?.url?.includes('/auth/login');
       const isVerifyPassword = error.config?.url?.includes('/verify-password');
+      const isForgotPassword = error.config?.url?.includes('/auth/forgot-password');
+      const isVerifyResetCode = error.config?.url?.includes('/auth/verify-reset-code');
+      const isResetPassword = error.config?.url?.includes('/auth/reset-password');
       
-      if (!isVerifyPassword) {
-        // Redirect to login for other 401 errors
+      // Only redirect if it's NOT one of the auth endpoints
+      if (!isLoginEndpoint && !isVerifyPassword && !isForgotPassword && !isVerifyResetCode && !isResetPassword) {
+        // Redirect to login for other 401 errors (expired token, etc.)
         localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('user');
         window.location.href = '/login';
       }
     }

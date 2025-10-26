@@ -90,6 +90,19 @@ export const usersService = {
   },
 
   /**
+   * Get editors (Public endpoint)
+   * GET /api/users/editors
+   */
+  async getEditors(): Promise<UserResponse[]> {
+    try {
+      const response = await api.get<UserResponse[]>('/users/editors');
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  /**
    * Get user by ID
    * GET /api/users/:id
    */

@@ -5,6 +5,7 @@ import { registrationPageData } from '../data/registrationData';
 import { useAuth } from '../contexts';
 import activityLogsService, { ActivityAction } from '../services/activity-logs.service';
 import { CreateUserDto, UserRole } from '../types/user.types';
+import toast from 'react-hot-toast';
 
 export function RegistrationPage() {
   const navigate = useNavigate();
@@ -43,12 +44,23 @@ export function RegistrationPage() {
           console.error('❗ Failed to log registration:', logError);
         }
         
+        toast.success('تم إنشاء الحساب وتسجيل الدخول بنجاح!');
         navigate('/dashboard');
       } else {
-        setError(result.error || 'فشل إنشاء الحساب');
+        const errorMessage = result.error || 'فشل إنشاء الحساب';
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          duration: 4000,
+          position: 'top-center',
+        });
       }
     } catch (err) {
-      setError('حدث خطأ غير متوقع');
+      const errorMessage = 'حدث خطأ غير متوقع';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: 'top-center',
+      });
     } finally {
       setIsLoading(false);
     }
