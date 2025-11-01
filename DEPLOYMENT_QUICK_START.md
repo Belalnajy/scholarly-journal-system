@@ -221,8 +221,40 @@ curl https://api.upafa-edu.net/api/health
 
 ## 🔄 تحديث المشروع (مستقبلاً)
 
+### تحديث عادي (بدون مسح الكاش)
+
 ```bash
 cd /var/www/upafa-journal
+
+# إذا كان هناك تعديلات محلية (مثل package-lock.json)، احفظها مؤقتاً
+git stash
+
+# Pull changes
+git pull origin main
+
+# استرجع التعديلات المحلية (اختياري)
+# git stash pop
+
+# Install/Update dependencies
+npm install
+
+# Build both apps using Nx
+npx nx build backend
+npx nx build frontend
+
+# Restart backend
+pm2 restart upafa-backend
+
+# No need to restart Nginx (static files updated automatically)
+```
+
+**أو لو عايز تتجاهل التعديلات المحلية تماماً:**
+
+```bash
+cd /var/www/upafa-journal
+
+# تجاهل التعديلات المحلية واستبدالها بالنسخة من GitHub
+git reset --hard origin/main
 
 # Pull changes
 git pull origin main
@@ -236,8 +268,52 @@ npx nx build frontend
 
 # Restart backend
 pm2 restart upafa-backend
+```
 
-# No need to restart Nginx (static files updated automatically)
+### تحديث كامل (مع مسح الكاش والبناء من الصفر)
+
+```bash
+cd /var/www/upafa-journal
+
+# Pull changes
+git pull origin main
+
+# Install/Update dependencies
+npm install
+
+# مسح كاش Nx والملفات المبنية
+npx nx reset
+rm -rf dist
+rm -rf apps/backend/dist
+rm -rf apps/frontend/dist
+
+# مسح node_modules وإعادة التثبيت (اختياري - إذا كانت هناك مشاكل)
+# rm -rf node_modules
+# npm install
+
+# Build من الصفر
+npx nx build backend --skip-nx-cache
+npx nx build frontend --skip-nx-cache
+
+# Restart backend
+pm2 restart upafa-backend
+
+# تحقق من الحالة
+pm2 status
+pm2 logs upafa-backend --lines 50
+```
+
+### مسح الكاش فقط (بدون إعادة البناء)
+
+```bash
+cd /var/www/upafa-journal
+
+# مسح كاش Nx
+npx nx reset
+
+# مسح ملفات البناء
+rm -rf dist
+rm -rf .nx/cache
 ```
 
 ---

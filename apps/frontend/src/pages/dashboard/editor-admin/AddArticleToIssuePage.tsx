@@ -112,19 +112,15 @@ export function AddArticleToIssuePage() {
         // Use the most recent file URL (prioritize file_url which gets updated when admin uploads edited file)
         const pdfUrl = research.file_url || research.cloudinary_secure_url || '';
         
+        // Don't send authors - let backend extract them from research.user relation
+        // This ensures correct author data is used
         await articlesService.createArticle({
           research_id: research.id,
           issue_id: issueId,
           article_number: articleNumber,
           title: research.title,
           title_en: research.title_en,
-          authors: [
-            {
-              name: research.user?.name || 'غير معروف',
-              affiliation: research.user?.affiliation || 'غير محدد',
-              email: research.user?.email || 'no-email@example.com',
-            },
-          ],
+          authors: [], // Empty array - backend will populate from research.user
           abstract: research.abstract,
           abstract_en: research.abstract_en,
           keywords: research.keywords || [],

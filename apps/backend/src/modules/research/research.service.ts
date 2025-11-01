@@ -68,7 +68,8 @@ export class ResearchService {
     status?: ResearchStatus;
     specialization?: string;
   }): Promise<Research[]> {
-    const query = this.researchRepository.createQueryBuilder('research');
+    const query = this.researchRepository.createQueryBuilder('research')
+      .leftJoinAndSelect('research.user', 'user'); // Load user data for author info
 
     if (filters?.user_id) {
       query.andWhere('research.user_id = :user_id', {
