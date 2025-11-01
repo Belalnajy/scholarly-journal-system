@@ -67,32 +67,78 @@ export class ArticlesService {
 
     const article = this.articleRepository.create(createArticleDto);
     
-    // Copy authors data from research if not provided in DTO
-    if (research && (!createArticleDto.authors || createArticleDto.authors.length === 0)) {
-      // Build authors array from research data
-      const authors = [];
-      
-      // Add main author (researcher)
-      if (research.user) {
-        authors.push({
-          name: research.user.name,
-          email: research.user.email,
-          affiliation: research.user.affiliation || 'غير محدد',
-        });
-      }
-      
-      // Add co-authors if they exist
-      if (research.co_authors && Array.isArray(research.co_authors)) {
-        research.co_authors.forEach((coAuthor: any) => {
+    // Copy all data from research if research_id is provided
+    if (research) {
+      // Copy authors data if not provided in DTO
+      if (!createArticleDto.authors || createArticleDto.authors.length === 0) {
+        // Build authors array from research data
+        const authors = [];
+        
+        // Add main author (researcher)
+        if (research.user) {
           authors.push({
-            name: coAuthor.name || 'غير محدد',
-            email: coAuthor.email || 'no-email@example.com',
-            affiliation: coAuthor.affiliation || 'غير محدد',
+            name: research.user.name,
+            email: research.user.email,
+            affiliation: research.user.affiliation || 'غير محدد',
           });
-        });
+        }
+        
+        // Add co-authors if they exist
+        if (research.co_authors && Array.isArray(research.co_authors)) {
+          research.co_authors.forEach((coAuthor: any) => {
+            authors.push({
+              name: coAuthor.name || 'غير محدد',
+              email: coAuthor.email || 'no-email@example.com',
+              affiliation: coAuthor.affiliation || 'غير محدد',
+            });
+          });
+        }
+        
+        article.authors = authors;
       }
       
-      article.authors = authors;
+      // Copy other data from research if not provided in DTO
+      if (!createArticleDto.title || createArticleDto.title === research.title) {
+        article.title = research.title;
+      }
+      
+      if (!createArticleDto.title_en && research.title_en) {
+        article.title_en = research.title_en;
+      }
+      
+      if (!createArticleDto.abstract || createArticleDto.abstract === research.abstract) {
+        article.abstract = research.abstract;
+      }
+      
+      if (!createArticleDto.abstract_en && research.abstract_en) {
+        article.abstract_en = research.abstract_en;
+      }
+      
+      if (!createArticleDto.keywords || createArticleDto.keywords.length === 0) {
+        article.keywords = research.keywords || [];
+      }
+      
+      if (!createArticleDto.keywords_en || createArticleDto.keywords_en.length === 0) {
+        article.keywords_en = research.keywords_en || [];
+      }
+      
+      // Use the most recent file URL from research
+      if (!createArticleDto.pdf_url) {
+        article.pdf_url = research.file_url || research.cloudinary_secure_url || '';
+      }
+    }
+    
+    // Validate that required fields are present after copying from research
+    if (!article.authors || article.authors.length === 0) {
+      throw new BadRequestException('المؤلفون مطلوبون');
+    }
+    
+    if (!article.abstract) {
+      throw new BadRequestException('الملخص مطلوب');
+    }
+    
+    if (!article.pdf_url) {
+      throw new BadRequestException('رابط الملف مطلوب');
     }
     
     // If the article is being published to a published issue, set published_date

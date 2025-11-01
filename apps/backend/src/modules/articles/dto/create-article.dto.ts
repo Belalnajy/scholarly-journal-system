@@ -53,12 +53,12 @@ export class CreateArticleDto {
   @IsArray({ message: 'المؤلفون يجب أن يكونوا مصفوفة' })
   @ValidateNested({ each: true })
   @Type(() => AuthorDto)
-  @IsNotEmpty({ message: 'المؤلفون مطلوبون' })
-  authors!: AuthorDto[];
+  @IsOptional() // Optional - will be populated from research if empty
+  authors?: AuthorDto[];
 
   @IsString({ message: 'الملخص يجب أن يكون نصاً' })
-  @IsNotEmpty({ message: 'الملخص مطلوب' })
-  abstract!: string;
+  @IsOptional() // Optional - will be populated from research if not provided
+  abstract?: string;
 
   @IsString({ message: 'الملخص بالإنجليزية يجب أن يكون نصاً' })
   @IsOptional()
@@ -82,8 +82,8 @@ export class CreateArticleDto {
   doi?: string;
 
   @IsString({ message: 'رابط الملف يجب أن يكون نصاً' })
-  @IsNotEmpty({ message: 'رابط الملف مطلوب' })
-  pdf_url!: string;
+  @IsOptional() // Optional - will be populated from research if not provided
+  pdf_url?: string;
 
   @IsEnum(ArticleStatus, { message: 'حالة المقال غير صحيحة' })
   @IsOptional()

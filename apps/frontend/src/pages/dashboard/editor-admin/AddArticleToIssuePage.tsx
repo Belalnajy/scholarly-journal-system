@@ -109,24 +109,21 @@ export function AddArticleToIssuePage() {
         // If issue is published, article should be published too
         const articleStatus = issue?.status === 'published' ? 'published' : 'ready-to-publish';
         
-        // Use the most recent file URL (prioritize file_url which gets updated when admin uploads edited file)
-        const pdfUrl = research.file_url || research.cloudinary_secure_url || '';
-        
-        // Don't send authors - let backend extract them from research.user relation
-        // This ensures correct author data is used
+        // Backend will automatically copy all data from research
+        // We only need to provide: research_id, issue_id, article_number, pages, and status
         await articlesService.createArticle({
           research_id: research.id,
           issue_id: issueId,
           article_number: articleNumber,
-          title: research.title,
-          title_en: research.title_en,
-          authors: [], // Empty array - backend will populate from research.user
-          abstract: research.abstract,
-          abstract_en: research.abstract_en,
-          keywords: research.keywords || [],
-          keywords_en: research.keywords_en || [],
+          title: research.title, // Will be copied from research
+          title_en: research.title_en || '',
+          authors: [], // Backend will populate from research.user
+          abstract: research.abstract, // Will be copied from research
+          abstract_en: research.abstract_en || '',
+          keywords: [], // Backend will populate from research
+          keywords_en: [], // Backend will populate from research
           pages: '1-10', // Default pages, can be edited later
-          pdf_url: pdfUrl,
+          pdf_url: '', // Backend will use research.file_url
           status: articleStatus,
         });
       });
