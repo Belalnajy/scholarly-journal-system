@@ -109,6 +109,9 @@ export function AddArticleToIssuePage() {
         // If issue is published, article should be published too
         const articleStatus = issue?.status === 'published' ? 'published' : 'ready-to-publish';
         
+        // Use the most recent file URL (prioritize file_url which gets updated when admin uploads edited file)
+        const pdfUrl = research.file_url || research.cloudinary_secure_url || '';
+        
         await articlesService.createArticle({
           research_id: research.id,
           issue_id: issueId,
@@ -127,7 +130,7 @@ export function AddArticleToIssuePage() {
           keywords: research.keywords || [],
           keywords_en: research.keywords_en || [],
           pages: '1-10', // Default pages, can be edited later
-          pdf_url: research.cloudinary_secure_url || research.file_url || '',
+          pdf_url: pdfUrl,
           status: articleStatus,
         });
       });
