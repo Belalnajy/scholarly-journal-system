@@ -2,8 +2,12 @@ import { Scale, Mail } from 'lucide-react';
 import { PrivacySection } from '../components/cards/PrivacySection';
 import { termsAndConditionsData } from '../data/termsData';
 import { NewsletterSection } from '../components';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 
 export function TermsAndConditionsPage() {
+  const { settings } = useSiteSettings();
+  const contactEmail = settings?.contact_info?.email || termsAndConditionsData.contact.email;
+
   return (
     <div className="min-h-screen bg-white">
       <section className="py-8 sm:py-12 lg:py-16">
@@ -52,11 +56,11 @@ export function TermsAndConditionsPage() {
                   {termsAndConditionsData.contact.description}
                 </p>
                 <a
-                  href={`mailto:${termsAndConditionsData.contact.email}`}
+                  href={`mailto:${contactEmail}`}
                   className="inline-flex items-center gap-2 rounded-full bg-[#b2823e] px-6 py-3 font-bold text-white transition-all duration-300 hover:bg-[#9a6f35] hover:shadow-lg"
                 >
                   <Mail className="h-5 w-5" />
-                  <span>{termsAndConditionsData.contact.email}</span>
+                  <span>{contactEmail}</span>
                 </a>
               </div>
             </div>

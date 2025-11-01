@@ -49,6 +49,12 @@ export const editorNavItems: SidebarNavItem[] = [
     path: '/dashboard',
   },
   {
+    id: 'manage-payments',
+    label: 'إدارة حسابات الباحثين',
+    icon: 'DollarSign',
+    path: '/dashboard/manage-payments',
+  },
+  {
     id: 'manage-research',
     label: 'إدارة الأبحاث',
     icon: 'FileText',
@@ -153,11 +159,24 @@ export const adminNavItems: SidebarNavItem[] = [
     path: '/dashboard',
   },
   {
+    id: 'manage-payments',
+    label: 'إدارة حسابات الباحثين',
+    icon: 'DollarSign',
+    path: '/dashboard/manage-payments',
+  },
+  {
     id: 'manage-users',
     label: 'إدارة المستخدمين',
     icon: 'Users',
     path: '/dashboard/manage-users',
   },
+  {
+    id: 'manage-reviewers',
+    label: 'إدارة المراجعين',
+    icon: 'UserCheck',
+    path: '/dashboard/manage-reviewers',
+  },
+
   {
     id: 'manage-research',
     label: 'إدارة الأبحاث',
@@ -170,23 +189,18 @@ export const adminNavItems: SidebarNavItem[] = [
     icon: 'UserPlus',
     path: '/dashboard/assign-reviewer',
   },
+
   {
-    id: 'manage-reviewers',
-    label: 'إدارة المراجعين',
-    icon: 'UserCheck',
-    path: '/dashboard/manage-reviewers',
+    id: 'manage-reports',
+    label: 'إدارة التقارير',
+    icon: 'BarChart',
+    path: '/dashboard/manage-reports',
   },
   {
     id: 'manage-issues',
     label: 'إدارة الأعداد',
     icon: 'BookOpen',
     path: '/dashboard/manage-issues',
-  },
-  {
-    id: 'manage-reports',
-    label: 'إدارة التقارير',
-    icon: 'BarChart',
-    path: '/dashboard/manage-reports',
   },
   {
     id: 'manage-articles',
@@ -211,6 +225,18 @@ export const adminNavItems: SidebarNavItem[] = [
     label: 'إعدادات الموقع',
     icon: 'Globe',
     path: '/dashboard/site-settings',
+  },
+  {
+    id: 'manage-team-sections',
+    label: 'إدارة أقسام الفريق',
+    icon: 'Layers',
+    path: '/dashboard/manage-team-sections',
+  },
+  {
+    id: 'manage-team-members',
+    label: 'إدارة أعضاء الفريق',
+    icon: 'UsersRound',
+    path: '/dashboard/manage-team-members',
   },
   {
     id: 'profile',

@@ -1,4 +1,16 @@
-import { Bell, Search, SlidersHorizontal, Download, FileText, User, Calendar, Tag, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import {
+  Bell,
+  Search,
+  SlidersHorizontal,
+  Download,
+  FileText,
+  User,
+  Calendar,
+  Tag,
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { researchService } from '../../../services/researchService';
@@ -17,23 +29,39 @@ interface CompletedResearch {
   status: ResearchStatus;
 }
 
-
 // Status Badge Component
 function StatusBadge({ status }: { status: ResearchStatus }) {
   const getStatusConfig = () => {
     switch (status) {
       case 'accepted':
-        return { text: 'مقبول', bgColor: 'bg-green-50', textColor: 'text-green-700', borderColor: 'border-green-200' };
+        return {
+          text: 'مقبول',
+          bgColor: 'bg-green-50',
+          textColor: 'text-green-700',
+          borderColor: 'border-green-200',
+        };
       case 'needs-revision':
-        return { text: 'تعديلات بسيطة', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', borderColor: 'border-yellow-200' };
+        return {
+          text: 'تعديلات بسيطة',
+          bgColor: 'bg-yellow-50',
+          textColor: 'text-yellow-700',
+          borderColor: 'border-yellow-200',
+        };
       case 'rejected':
-        return { text: 'مرفوض', bgColor: 'bg-red-50', textColor: 'text-red-700', borderColor: 'border-red-200' };
+        return {
+          text: 'مرفوض',
+          bgColor: 'bg-red-50',
+          textColor: 'text-red-700',
+          borderColor: 'border-red-200',
+        };
     }
   };
 
   const config = getStatusConfig();
   return (
-    <span className={`${config.bgColor} ${config.textColor} ${config.borderColor} border px-3 py-1 rounded-md text-xs font-semibold inline-block`}>
+    <span
+      className={`${config.bgColor} ${config.textColor} ${config.borderColor} border px-3 py-1 rounded-md text-xs font-semibold inline-block`}
+    >
       {config.text}
     </span>
   );
@@ -59,7 +87,9 @@ function ResearchCard({ research }: { research: CompletedResearch }) {
       <h3 className="text-xl font-bold text-gray-800 mb-3">{research.title}</h3>
 
       {/* Description */}
-      <p className="text-gray-600 text-sm leading-relaxed mb-4">{research.description}</p>
+      <p className="text-gray-600 text-sm leading-relaxed mb-4">
+        {research.description}
+      </p>
 
       {/* Meta Information */}
       <div className="space-y-2 mb-4 pb-4 border-b border-gray-200">
@@ -87,17 +117,16 @@ function ResearchCard({ research }: { research: CompletedResearch }) {
 
       {/* Action Buttons */}
       <div className="flex gap-3">
-        <button 
+        {/* <button 
           onClick={() => {
             // TODO: Implement download
-            console.log('Download research:', research.id);
           }}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
         >
           <Download className="w-4 h-4" />
           <span>تحميل البحث</span>
-        </button>
-        <button 
+        </button> */}
+        <button
           onClick={() => navigate(`/dashboard/review-details/${research.id}`)}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C9A961] text-white rounded-lg hover:bg-[#B89851] transition-colors font-medium"
         >
@@ -114,7 +143,9 @@ export function CompletedResearchPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | ResearchStatus>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | ResearchStatus>(
+    'all'
+  );
 
   useEffect(() => {
     loadCompletedResearches();
@@ -127,47 +158,57 @@ export function CompletedResearchPage() {
 
       // Get all researches
       const allResearches = await researchService.getAll();
-      
+
       // Filter completed researches (accepted, rejected, needs-revision)
       const completed = allResearches
-        .filter(r => 
-          r.status === 'accepted' || 
-          r.status === 'rejected' || 
-          r.status === 'needs-revision'
+        .filter(
+          (r) =>
+            r.status === 'accepted' ||
+            r.status === 'rejected' ||
+            r.status === 'needs-revision'
         )
-        .map(r => ({
+        .map((r) => ({
           id: r.id,
           title: r.title,
           description: r.abstract,
           author: 'باحث', // TODO: Add user relation
           specialization: r.specialization,
-          submissionDate: new Date(r.submission_date).toLocaleDateString('ar-EG'),
-          evaluationDate: r.evaluation_date ? new Date(r.evaluation_date).toLocaleDateString('ar-EG') : 'غير محدد',
+          submissionDate: new Date(r.submission_date).toLocaleDateString(
+            'ar-EG'
+          ),
+          evaluationDate: r.evaluation_date
+            ? new Date(r.evaluation_date).toLocaleDateString('ar-EG')
+            : 'غير محدد',
           status: r.status as ResearchStatus,
         }));
 
       setResearches(completed);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ أثناء تحميل الأبحاث');
+      setError(
+        err instanceof Error ? err.message : 'حدث خطأ أثناء تحميل الأبحاث'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   // Filter researches
-  const filteredResearches = researches.filter(research => {
-    const matchesSearch = research.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         research.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || research.status === filterStatus;
+  const filteredResearches = researches.filter((research) => {
+    const matchesSearch =
+      research.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      research.author.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter =
+      filterStatus === 'all' || research.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
   // Count by status
   const statusCounts = {
     all: researches.length,
-    accepted: researches.filter(r => r.status === 'accepted').length,
-    'needs-revision': researches.filter(r => r.status === 'needs-revision').length,
-    rejected: researches.filter(r => r.status === 'rejected').length,
+    accepted: researches.filter((r) => r.status === 'accepted').length,
+    'needs-revision': researches.filter((r) => r.status === 'needs-revision')
+      .length,
+    rejected: researches.filter((r) => r.status === 'rejected').length,
   };
 
   if (isLoading) {
@@ -206,7 +247,9 @@ export function CompletedResearchPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">الأبحاث المكتملة</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            الأبحاث المكتملة
+          </h1>
           <p className="text-gray-600">المراجعات السابقة والتقييمات المنجزة</p>
         </div>
         <button className="p-3 text-gray-600 hover:text-[#0D3B66] transition-colors">
@@ -288,7 +331,9 @@ export function CompletedResearchPage() {
           ))
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <p className="text-gray-500 mb-4">لا توجد أبحاث مكتملة تطابق البحث</p>
+            <p className="text-gray-500 mb-4">
+              لا توجد أبحاث مكتملة تطابق البحث
+            </p>
             <button
               onClick={() => {
                 setSearchQuery('');

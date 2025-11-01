@@ -170,6 +170,9 @@ export class ResearchRevisionsService {
       throw new NotFoundException('Research not found');
     }
 
+    // Extract file extension
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
+
     // Delete old file if exists
     if (revision.cloudinary_public_id) {
       try {
@@ -182,21 +185,33 @@ export class ResearchRevisionsService {
       }
     }
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary with format specified
     const uploadResult = await this.cloudinaryService.uploadFile(
       fileBuffer,
       `research/revisions/${research.research_number}/revision-${revision.revision_number}`,
       'raw',
       {
-        public_id: fileName.replace(/\.[^/.]+$/, ''),
+        public_id: `revision-${revision.revision_number}`,
+        format: fileExtension,
         access_mode: 'public',
       }
     );
 
-    // Update revision with Cloudinary info
+    // Store original data before updating
+    if (!revision.original_data) {
+      revision.original_data = {
+        file_url: research.file_url,
+        cloudinary_public_id: research.cloudinary_public_id,
+        cloudinary_secure_url: research.cloudinary_secure_url,
+        file_type: research.file_type,
+      };
+    }
+
+    // Update revision with Cloudinary info and file type
     revision.file_url = uploadResult.secure_url;
     revision.cloudinary_public_id = uploadResult.public_id;
     revision.cloudinary_secure_url = uploadResult.secure_url;
+    revision.file_type = fileExtension;
     revision.status = RevisionStatus.SUBMITTED;
     revision.submitted_at = new Date();
 

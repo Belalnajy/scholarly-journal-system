@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Send, CheckCircle, Clock, Eye, Bell, Loader2, AlertCircle, Edit } from 'lucide-react';
+import { Send, CheckCircle, Clock, Eye, Bell, Loader2, AlertCircle, Edit, DollarSign, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts';
 import { WelcomeCard, StatusBadge } from '../../../components/dashboard';
 import type { StatusType } from '../../../components/dashboard';
 import { researchService, Research, ResearchStats } from '../../../services/researchService';
 import  notificationsService  from '../../../services/notifications.service';
+import { downloadAcceptanceCertificate } from '../../../utils/downloadFile';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 interface StatCardProps {
   title: string;
@@ -35,6 +40,20 @@ interface ResearchItemProps {
 
 function ResearchItem({ research, onView }: ResearchItemProps) {
   const navigate = useNavigate();
+  
+  const handleDownloadCertificate = async () => {
+    try {
+      toast.loading('جاري تحميل شهادة القبول...', { id: 'download-cert' });
+      
+      const certificateUrl = await researchService.getAcceptanceCertificateUrl(research.id);
+      await downloadAcceptanceCertificate(certificateUrl, research.research_number);
+      
+      toast.success('تم بدء التحميل', { id: 'download-cert' });
+    } catch (error) {
+      toast.error('فشل تحميل الشهادة', { id: 'download-cert' });
+      console.error('Error downloading certificate:', error);
+    }
+  };
   
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ar-EG', {
@@ -68,7 +87,16 @@ function ResearchItem({ research, onView }: ResearchItemProps) {
         <p className="text-gray-800 font-medium">{research.title}</p>
       </td>
       <td className="py-4 px-4 text-center">
-        <StatusBadge status={mapStatus(research.status)} />
+        <div className="flex items-center justify-center gap-2">
+          <StatusBadge status={mapStatus(research.status)} />
+          {/* Certificate Badge */}
+          {(research.status === 'accepted' || research.status === 'published') &&
+           research.acceptance_certificate_cloudinary_public_id && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold border border-green-200" title="شهادة القبول متاحة">
+              <Award className="w-3 h-3" />
+            </span>
+          )}
+        </div>
       </td>
       <td className="py-4 px-4 text-center text-gray-600 text-sm">
         {formatDate(research.submission_date)}
@@ -78,6 +106,20 @@ function ResearchItem({ research, onView }: ResearchItemProps) {
       </td>
       <td className="py-4 px-4 text-center">
         <div className="flex items-center justify-center gap-2">
+          {/* Certificate Download Button */}
+          {(research.status === 'accepted' || research.status === 'published') &&
+           research.acceptance_certificate_cloudinary_public_id && (
+            <button
+              onClick={handleDownloadCertificate}
+              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors group relative"
+              title="تحميل شهادة القبول"
+            >
+              <Award className="w-5 h-5" />
+              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                تحميل الشهادة
+              </span>
+            </button>
+          )}
           {research.status === 'needs-revision' ? (
             <button
               onClick={() => navigate(`/dashboard/revise-research/${research.id}`)}
@@ -146,6 +188,7 @@ export function ResearcherDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<string>('pending');
 
   useEffect(() => {
     loadDashboardData();
@@ -162,11 +205,16 @@ export function ResearcherDashboard() {
         return;
       }
 
+      const token = localStorage.getItem('token');
+
       // Load all data in parallel
-      const [statsData, researchesData, notificationsData] = await Promise.all([
+      const [statsData, researchesData, notificationsData, paymentStatusData] = await Promise.all([
         researchService.getStats(userId),
         researchService.getAll({ user_id: userId }),
         notificationsService.getUserNotifications(userId).catch(() => []),
+        axios.get(`${API_URL}/users/${userId}/payment-status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => ({ data: { payment_status: 'pending' } })),
       ]);
 
       setStats(statsData);
@@ -174,6 +222,7 @@ export function ResearcherDashboard() {
       setResearches(researchesData.slice(0, 3));
       // Get only latest 3 notifications
       setNotifications(notificationsData.slice(0, 3));
+      setPaymentStatus(paymentStatusData.data.payment_status);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ أثناء تحميل البيانات');
     } finally {
@@ -260,6 +309,36 @@ export function ResearcherDashboard() {
         userName={user?.name || 'د. أحمد محمد'}
         subtitle="تابع آخر المستجدات على أبحاثك وأنشطتك الأكاديمية"
       />
+
+      {/* Payment Status Alert */}
+      {paymentStatus !== 'verified' && (
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6 shadow-md">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-yellow-100 rounded-xl">
+              <DollarSign className="w-6 h-6 text-yellow-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-800 mb-2">
+                {paymentStatus === 'pending' ? 'يجب دفع رسوم التقديم' : 'في انتظار موافقة الإدارة'}
+              </h3>
+              <p className="text-gray-700 mb-4">
+                {paymentStatus === 'pending' 
+                  ? 'لتتمكن من تقديم أبحاثك، يرجى إتمام عملية دفع رسوم التقديم أولاً.'
+                  : 'تم إرسال طلب الدفع للإدارة. سيتم مراجعته والموافقة عليه قريباً.'}
+              </p>
+              {paymentStatus === 'pending' && (
+                <button
+                  onClick={() => navigate('/dashboard/payment-instructions')}
+                  className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-bold shadow-md"
+                >
+                  <DollarSign className="w-5 h-5" />
+                  <span>الذهاب لصفحة الدفع</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Section */}
       <div>

@@ -22,10 +22,17 @@ export class SiteSettingsService {
 
     // If no settings exist, create default settings
     if (settings.length === 0) {
+      const defaultAcceptanceLetterContent = `قد تم قبوله للنشر في مجلتنا بعد مراجعته من قبل المحكمين المختصين واستيفائه لجميع المعايير العلمية والأكاديمية المطلوبة.
+
+نتقدم لكم بأحر التهاني على هذا الإنجاز العلمي المتميز، ونتطلع إلى المزيد من التعاون العلمي المثمر معكم.
+
+وتفضلوا بقبول فائق الاحترام والتقدير،`;
+
       const defaultSettings = this.siteSettingsRepository.create({
         site_name: 'مجلة الدراسات والبحوث',
         site_name_en: 'Journal of Studies and Research',
         is_maintenance_mode: false,
+        acceptance_letter_content: defaultAcceptanceLetterContent,
       });
       return await this.siteSettingsRepository.save(defaultSettings);
     }
@@ -42,8 +49,14 @@ export class SiteSettingsService {
   ): Promise<SiteSettings> {
     const settings = await this.getSettings();
 
+    // Convert submission_fee from string to number if provided
+    const dataToUpdate: any = { ...updateSiteSettingsDto };
+    if (dataToUpdate.submission_fee !== undefined) {
+      dataToUpdate.submission_fee = parseFloat(dataToUpdate.submission_fee) || 0;
+    }
+
     // Update settings
-    Object.assign(settings, updateSiteSettingsDto);
+    Object.assign(settings, dataToUpdate);
 
     return await this.siteSettingsRepository.save(settings);
   }
@@ -58,6 +71,10 @@ export class SiteSettingsService {
     return {
       site_name: settings.site_name,
       site_name_en: settings.site_name_en,
+      journal_doi: settings.journal_doi,
+      journal_url: settings.journal_url,
+      journal_issn: settings.journal_issn,
+      university_url: settings.university_url,
       logo_url: settings.logo_url,
       favicon_url: settings.favicon_url,
       about_intro: settings.about_intro,
@@ -68,6 +85,9 @@ export class SiteSettingsService {
       social_links: settings.social_links,
       is_maintenance_mode: settings.is_maintenance_mode,
       maintenance_message: settings.maintenance_message,
+      submission_fee: settings.submission_fee,
+      submission_fee_currency: settings.submission_fee_currency,
+      payment_instructions: settings.payment_instructions,
     };
   }
 

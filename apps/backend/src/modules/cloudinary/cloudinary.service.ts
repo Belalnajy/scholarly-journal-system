@@ -110,23 +110,33 @@ export class CloudinaryService {
   }
 
   /**
-   * Upload research PDF file
+   * Upload research PDF or Word file
    */
   async uploadResearchPDF(
     fileBuffer: Buffer,
     researchNumber: string,
     fileName: string
   ): Promise<CloudinaryUploadResult> {
-    // Use research number as filename to avoid Arabic characters in URL
+    // Detect file extension from original filename
+    const fileExtension = fileName.split('.').pop()?.toLowerCase();
+    const allowedExtensions = ['pdf', 'doc', 'docx'];
+    
+    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+      throw new BadRequestException(
+        'نوع الملف غير مدعوم. يرجى رفع ملف PDF أو Word (doc/docx) فقط'
+      );
+    }
+    
+    // Use research number as public_id and specify format explicitly
     const sanitizedFileName = researchNumber;
     
     return this.uploadFile(
       fileBuffer,
-      `research/pdfs/${researchNumber}`,
+      `research/documents/${researchNumber}`,
       'raw',
       {
         public_id: sanitizedFileName,
-        format: 'pdf',
+        format: fileExtension, // Explicitly set the format/extension
         access_mode: 'public', // Force public access
         // type will default to 'upload' (public) from uploadFile
       }
@@ -152,6 +162,29 @@ export class CloudinaryService {
       'auto',
       {
         public_id: uniqueFileName,
+        access_mode: 'public',
+      }
+    );
+  }
+
+  /**
+   * Upload full issue PDF (all articles combined)
+   */
+  async uploadIssuePdf(
+    fileBuffer: Buffer,
+    issueNumber: string,
+    fileName: string
+  ): Promise<CloudinaryUploadResult> {
+    // Sanitize issue number for use as public_id
+    const sanitizedIssueNumber = issueNumber.replace(/[^a-zA-Z0-9-_]/g, '_');
+    
+    return this.uploadFile(
+      fileBuffer,
+      `issues/full-pdfs/${issueNumber}`,
+      'raw',
+      {
+        public_id: `issue_${sanitizedIssueNumber}_full`,
+        format: 'pdf',
         access_mode: 'public',
       }
     );

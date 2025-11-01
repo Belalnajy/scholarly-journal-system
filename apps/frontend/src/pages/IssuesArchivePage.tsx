@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Search, SlidersHorizontal, Loader2, X, Calendar, TrendingUp } from 'lucide-react';
+import {
+  BookOpen,
+  Search,
+  SlidersHorizontal,
+  Loader2,
+  X,
+  Calendar,
+  TrendingUp,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IssueCard } from '../components/cards/IssueCard';
 import { NewsletterSection } from '../components';
@@ -37,12 +45,12 @@ export function IssuesArchivePage() {
       ]);
 
       setIssues(publishedIssues);
-      
+
       // Calculate stats from published data
       const totalDownloads = publishedIssues.reduce((sum, issue) => {
         return sum + (issue.downloads_count || 0);
       }, 0);
-      
+
       setStats({
         totalIssues: publishedIssues.length,
         publishedArticles: publishedArticles.length,
@@ -57,7 +65,7 @@ export function IssuesArchivePage() {
 
   // Get unique years from issues
   const availableYears = Array.from(
-    new Set(issues.map(issue => new Date(issue.publish_date).getFullYear()))
+    new Set(issues.map((issue) => new Date(issue.publish_date).getFullYear()))
   ).sort((a, b) => b - a);
 
   // Filter and sort issues
@@ -65,26 +73,33 @@ export function IssuesArchivePage() {
     .filter((issue) => {
       // Search filter
       const query = searchQuery.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         issue.title.toLowerCase().includes(query) ||
         issue.issue_number.toString().includes(query) ||
         issue.description?.toLowerCase().includes(query);
-      
+
       // Status filter
-      const matchesStatus = statusFilter === 'all' || issue.status === statusFilter;
-      
+      const matchesStatus =
+        statusFilter === 'all' || issue.status === statusFilter;
+
       // Year filter
       const issueYear = new Date(issue.publish_date).getFullYear().toString();
       const matchesYear = yearFilter === 'all' || issueYear === yearFilter;
-      
+
       return matchesSearch && matchesStatus && matchesYear;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return new Date(b.publish_date).getTime() - new Date(a.publish_date).getTime();
+          return (
+            new Date(b.publish_date).getTime() -
+            new Date(a.publish_date).getTime()
+          );
         case 'oldest':
-          return new Date(a.publish_date).getTime() - new Date(b.publish_date).getTime();
+          return (
+            new Date(a.publish_date).getTime() -
+            new Date(b.publish_date).getTime()
+          );
         case 'most-articles':
           return (b.total_articles || 0) - (a.total_articles || 0);
         case 'most-downloads':
@@ -103,12 +118,16 @@ export function IssuesArchivePage() {
   };
 
   // Check if any filter is active
-  const hasActiveFilters = searchQuery || sortBy !== 'newest' || statusFilter !== 'all' || yearFilter !== 'all';
+  const hasActiveFilters =
+    searchQuery ||
+    sortBy !== 'newest' ||
+    statusFilter !== 'all' ||
+    yearFilter !== 'all';
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] pt-[130px]">
+    <div className="min-h-screen bg-[#f5f7fa] pt-[130px]" dir="rtl">
       {/* Header Section */}
-      <motion.div 
+      <motion.div
         className="bg-[#e8f0f8] py-12"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -116,32 +135,36 @@ export function IssuesArchivePage() {
       >
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center gap-4 text-center">
-            <motion.div 
+            <motion.div
               className="flex items-center justify-center gap-3"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <BookOpen className="size-10 text-[#093059]" />
-              <h1 className="text-3xl font-bold text-[#093059] md:text-4xl" dir="rtl">
+              <h1
+                className="text-3xl font-bold text-[#093059] md:text-4xl"
+                dir="rtl"
+              >
                 أرشيف الأعداد
               </h1>
             </motion.div>
-            <motion.p 
-              className="max-w-2xl text-base text-[#666666]" 
+            <motion.p
+              className="max-w-2xl text-base text-[#666666]"
               dir="rtl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              تصفح جميع الأعداد المنشورة من المجلة واطلع على الأبحاث العلمية المحكمة
+              تصفح جميع الأعداد المنشورة من المجلة واطلع على الأبحاث العلمية
+              المحكمة
             </motion.p>
           </div>
         </div>
       </motion.div>
 
       {/* Search and Filter Section */}
-      <motion.div 
+      <motion.div
         className="container mx-auto px-4 py-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -149,7 +172,7 @@ export function IssuesArchivePage() {
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           {/* Filter Button */}
-          <motion.button 
+          <motion.button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex h-12 items-center justify-center gap-2 rounded-xl border px-5 transition-colors md:order-1 ${
               showFilters || hasActiveFilters
@@ -160,13 +183,11 @@ export function IssuesArchivePage() {
             whileTap={{ scale: 0.95 }}
           >
             <SlidersHorizontal className="size-5" />
-            {hasActiveFilters && (
-              <span className="text-xs font-bold">•</span>
-            )}
+            {hasActiveFilters && <span className="text-xs font-bold">•</span>}
           </motion.button>
 
           {/* Search Bar */}
-          <motion.div 
+          <motion.div
             className="relative flex-1 md:order-2"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -230,7 +251,9 @@ export function IssuesArchivePage() {
                     </label>
                     <select
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                      onChange={(e) =>
+                        setStatusFilter(e.target.value as StatusFilter)
+                      }
                       className="w-full h-10 rounded-lg border border-[#e5e5e5] bg-white px-3 text-right text-sm text-[#093059] focus:border-[#093059] focus:outline-none focus:ring-1 focus:ring-[#093059]"
                     >
                       <option value="all">الكل</option>
@@ -251,8 +274,10 @@ export function IssuesArchivePage() {
                       className="w-full h-10 rounded-lg border border-[#e5e5e5] bg-white px-3 text-right text-sm text-[#093059] focus:border-[#093059] focus:outline-none focus:ring-1 focus:ring-[#093059]"
                     >
                       <option value="all">كل السنوات</option>
-                      {availableYears.map(year => (
-                        <option key={year} value={year}>{year}</option>
+                      {availableYears.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -278,7 +303,7 @@ export function IssuesArchivePage() {
       </motion.div>
 
       {/* Stats Section */}
-      <motion.div 
+      <motion.div
         className="container mx-auto px-4 pb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -286,9 +311,21 @@ export function IssuesArchivePage() {
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {[
-            { value: loading ? '...' : stats.totalIssues, label: 'الأعداد المنشورة', delay: 0.6 },
-            { value: loading ? '...' : stats.publishedArticles, label: 'الأبحاث المنشورة', delay: 0.7 },
-            { value: loading ? '...' : stats.totalDownloads.toLocaleString(), label: 'إجمالي التحميلات', delay: 0.8 },
+            {
+              value: loading ? '...' : stats.totalIssues,
+              label: 'الأعداد المنشورة',
+              delay: 0.6,
+            },
+            {
+              value: loading ? '...' : stats.publishedArticles,
+              label: 'الأبحاث المنشورة',
+              delay: 0.7,
+            },
+            {
+              value: loading ? '...' : stats.totalDownloads.toLocaleString(),
+              label: 'إجمالي التحميلات',
+              delay: 0.8,
+            },
           ].map((stat, index) => (
             <motion.div
               key={index}
@@ -298,9 +335,7 @@ export function IssuesArchivePage() {
               transition={{ duration: 0.5, delay: stat.delay }}
               whileHover={{ y: -5, boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
             >
-              <p className="text-3xl font-bold text-[#093059]">
-                {stat.value}
-              </p>
+              <p className="text-3xl font-bold text-[#093059]">{stat.value}</p>
               <p className="text-sm text-[#666666]" dir="rtl">
                 {stat.label}
               </p>
@@ -311,7 +346,7 @@ export function IssuesArchivePage() {
 
       {/* Active Filters Display */}
       {hasActiveFilters && !showFilters && (
-        <motion.div 
+        <motion.div
           className="container mx-auto px-4 pb-4"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -320,14 +355,21 @@ export function IssuesArchivePage() {
             {searchQuery && (
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#093059] text-white text-sm">
                 بحث: {searchQuery}
-                <button onClick={() => setSearchQuery('')} className="hover:text-[#b2823e]">
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="hover:text-[#b2823e]"
+                >
                   <X className="size-3" />
                 </button>
               </span>
             )}
             {sortBy !== 'newest' && (
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#b2823e] text-white text-sm">
-                {sortBy === 'oldest' ? 'الأقدم' : sortBy === 'most-articles' ? 'الأكثر مقالات' : 'الأكثر تحميلاً'}
+                {sortBy === 'oldest'
+                  ? 'الأقدم'
+                  : sortBy === 'most-articles'
+                  ? 'الأكثر مقالات'
+                  : 'الأكثر تحميلاً'}
               </span>
             )}
             {statusFilter !== 'all' && (
@@ -346,7 +388,7 @@ export function IssuesArchivePage() {
 
       {/* Results Count */}
       {!loading && (
-        <motion.div 
+        <motion.div
           className="container mx-auto px-4 pb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -360,18 +402,20 @@ export function IssuesArchivePage() {
       {/* Issues Grid */}
       <div className="container mx-auto px-4 pb-16">
         {loading ? (
-          <motion.div 
+          <motion.div
             className="flex items-center justify-center py-20"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
             <div className="text-center">
               <Loader2 className="w-12 h-12 text-[#093059] mx-auto mb-4 animate-spin" />
-              <p className="text-[#666666]" dir="rtl">جاري تحميل الأعداد...</p>
+              <p className="text-[#666666]" dir="rtl">
+                جاري تحميل الأعداد...
+              </p>
             </div>
           </motion.div>
         ) : filteredIssues.length === 0 ? (
-          <motion.div 
+          <motion.div
             className="text-center py-20"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -383,7 +427,7 @@ export function IssuesArchivePage() {
             </p>
           </motion.div>
         ) : (
-          <motion.div 
+          <motion.div
             className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -402,9 +446,7 @@ export function IssuesArchivePage() {
           </motion.div>
         )}
       </div>
-      <NewsletterSection/>
-
+      <NewsletterSection />
     </div>
-
   );
 }

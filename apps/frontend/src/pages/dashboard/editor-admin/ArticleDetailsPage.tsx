@@ -33,7 +33,7 @@ export function ArticleDetailsPage() {
 
   const handleDownloadPDF = async () => {
     if (!article?.pdf_url) {
-      alert('PDF غير متوفر لهذا المقال');
+      alert('الملف غير متوفر لهذا المقال');
       return;
     }
 
@@ -42,26 +42,35 @@ export function ArticleDetailsPage() {
       try {
         const articlesService = await import('../../../services/articlesService');
         await articlesService.default.incrementDownloads(article.id);
-        console.log('✅ Download counted');
         // Refresh article data to show updated count
         await fetchArticle();
       } catch (err) {
         console.error('Failed to increment downloads:', err);
       }
 
-      // Download the PDF
+      // Extract file extension from URL
+      const getFileExtension = (url: string) => {
+        const urlParts = url.split('?')[0].split('.');
+        const ext = urlParts[urlParts.length - 1].toLowerCase();
+        return ['pdf', 'doc', 'docx'].includes(ext) ? ext : 'pdf';
+      };
+
+      // Download the file
       const response = await fetch(article.pdf_url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${article.article_number || 'article'}.pdf`;
+      
+      const fileExtension = getFileExtension(article.pdf_url);
+      link.download = `${article.article_number || 'article'}.${fileExtension}`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error('Error downloading file:', error);
       // Fallback: open in new tab
       window.open(article.pdf_url, '_blank');
     }
@@ -267,7 +276,7 @@ export function ArticleDetailsPage() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Download className="w-4 h-4" />
-                <span>تحميل PDF</span>
+                <span>تحميل الملف</span>
               </button>
               <button 
                 onClick={() => navigate(`/dashboard/articles/${articleId}/edit`)}

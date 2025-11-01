@@ -1,69 +1,139 @@
-import { Bell, FileText, Download, Send, ArrowRight, AlertCircle, HelpCircle, CheckCircle, XCircle, Edit3, Loader2 } from 'lucide-react';
+import {
+  Bell,
+  FileText,
+  Download,
+  Send,
+  ArrowRight,
+  AlertCircle,
+  HelpCircle,
+  CheckCircle,
+  XCircle,
+  Edit3,
+  Loader2,
+  Upload,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { researchService, Research } from '../../../services/researchService';
 import { reviewsService } from '../../../services/reviews.service';
-import { researchRevisionsService, ResearchRevision } from '../../../services/research-revisions.service';
+import {
+  researchRevisionsService,
+  ResearchRevision,
+} from '../../../services/research-revisions.service';
+import { reviewerAssignmentsService } from '../../../services/reviewer-assignments.service';
 import { useAuth } from '../../../contexts';
-import { downloadResearchPdf, downloadRevisionFile } from '../../../utils/downloadFile';
-import toast from 'react-hot-toast';
+import {
+  downloadResearchPdf,
+  downloadRevisionFile,
+} from '../../../utils/downloadFile';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Types
-interface EvaluationCriteria {
+interface DetailedScore {
   id: string;
+  category: string;
+  items: {
+    id: string;
+    title: string;
+    score: number;
+    maxScore: number;
+  }[];
+}
+
+// Score Input Component with Quick Buttons
+function ScoreInput({
+  title,
+  score,
+  maxScore,
+  onChange,
+  minScore = 0,
+}: {
   title: string;
-  rating: number;
-}
-
-// Star Rating Component
-function StarRating({ rating, onChange, readonly = false }: { rating: number; onChange?: (rating: number) => void; readonly?: boolean }) {
-  const [hoverRating, setHoverRating] = useState(0);
-
-  return (
-    <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          disabled={readonly}
-          onClick={() => !readonly && onChange?.(star)}
-          onMouseEnter={() => !readonly && setHoverRating(star)}
-          onMouseLeave={() => !readonly && setHoverRating(0)}
-          className={`transition-colors ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
-        >
-          <svg
-            className={`w-6 h-6 ${
-              star <= (hoverRating || rating)
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'fill-none text-gray-300'
-            }`}
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-          </svg>
-        </button>
-      ))}
-      <span className="mr-2 text-sm text-gray-500">({rating > 0 ? rating : 'غير محدد'})</span>
-    </div>
-  );
-}
-
-// Criteria Row Component
-function CriteriaRow({ 
-  title, 
-  rating, 
-  onChange 
-}: { 
-  title: string; 
-  rating: number; 
-  onChange: (rating: number) => void;
+  score: number;
+  maxScore: number;
+  onChange: (score: number) => void;
+  minScore?: number;
 }) {
+  // Generate quick score buttons based on maxScore
+  const generateQuickScores = () => {
+    const scores: number[] = [];
+    
+    if (maxScore <= 5) {
+      // For small scores (2-5), show all values
+      for (let i = 0; i <= maxScore; i += 0.5) {
+        scores.push(i);
+      }
+    } else if (maxScore <= 10) {
+      // For medium scores (6-10), show integers and half points
+      for (let i = 0; i <= maxScore; i++) {
+        scores.push(i);
+      }
+    } else {
+      // For large scores (>10), show key percentages
+      scores.push(0); // 0%
+      scores.push(Math.round(maxScore * 0.5)); // 50%
+      scores.push(Math.round(maxScore * 0.6)); // 60%
+      scores.push(Math.round(maxScore * 0.7)); // 70%
+      scores.push(Math.round(maxScore * 0.8)); // 80%
+      scores.push(Math.round(maxScore * 0.9)); // 90%
+      scores.push(maxScore); // 100%
+    }
+    
+    return scores.filter((s, i, arr) => arr.indexOf(s) === i); // Remove duplicates
+  };
+
+  const quickScores = generateQuickScores();
+
   return (
-    <div className="flex items-center justify-between py-4 border-b border-gray-200 last:border-0">
-      <h3 className="text-gray-800 font-medium">{title}</h3>
-      <StarRating rating={rating} onChange={onChange} />
+    <div className="py-4 border-b border-gray-100 last:border-0">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 pr-4">
+          <h4 className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">{title}</h4>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`text-2xl font-bold ${score >= 0 ? 'text-[#0D3B66]' : 'text-gray-400'}`}>
+            {score >= 0 ? score : '-'}
+          </span>
+          <span className="text-sm text-gray-500 font-semibold">/ {maxScore}</span>
+        </div>
+      </div>
+      
+      {/* Quick Score Buttons */}
+      <div className="flex flex-wrap gap-2">
+        {quickScores.map((quickScore) => (
+          <button
+            key={quickScore}
+            type="button"
+            onClick={() => onChange(quickScore)}
+            className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+              score === quickScore
+                ? 'bg-[#0D3B66] text-white shadow-md scale-105'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+            }`}
+          >
+            {quickScore}
+          </button>
+        ))}
+        
+        {/* Custom Input for precise values */}
+        <div className="flex items-center gap-1 ml-2">
+          <input
+            type="number"
+            min={minScore}
+            max={maxScore}
+            step="0.5"
+            value={score >= 0 ? score : ''}
+            onChange={(e) => {
+              const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+              if (!isNaN(val) && val >= minScore && val <= maxScore) {
+                onChange(val);
+              }
+            }}
+            placeholder="أخرى"
+            className="w-16 px-2 py-1.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0D3B66] focus:border-[#0D3B66] text-center text-sm font-semibold"
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -75,30 +145,159 @@ export function EvaluationFormPage() {
 
   const [research, setResearch] = useState<Research | null>(null);
   const [revisions, setRevisions] = useState<ResearchRevision[]>([]);
+  const [assignment, setAssignment] = useState<any>(null);
   const [existingReview, setExistingReview] = useState<any>(null);
   const [pendingReview, setPendingReview] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Evaluation criteria
-  const [criteria, setCriteria] = useState<EvaluationCriteria[]>([
-    { id: '1', title: 'وضوح العنوان', rating: 0 },
-    { id: '2', title: 'جودة المنهجية', rating: 0 },
-    { id: '3', title: 'أصالة الفكرة', rating: 0 },
-    { id: '4', title: 'سلامة اللغة', rating: 0 },
-    { id: '5', title: 'المراجع المستخدمة', rating: 0 },
-    { id: '6', title: 'جودة العرض العام', rating: 0 },
+  // Detailed scoring system (out of 100) - Simplified
+  const [detailedScores, setDetailedScores] = useState<DetailedScore[]>([
+    {
+      id: 'title',
+      category: 'العنوان',
+      items: [
+        {
+          id: 'title_score',
+          title: ' الصياغة اللغوية\n الدلالة على المضمون ومناسبته له',
+          score: 0,
+          maxScore: 3,
+        },
+      ],
+    },
+    {
+      id: 'abstract',
+      category: 'المستخلص',
+      items: [
+        {
+          id: 'abstract_score',
+          title: 'شمولية المستخلص',
+          score: 0,
+          maxScore: 2,
+        },
+      ],
+    },
+    {
+      id: 'research_background',
+      category: 'أدبيات البحث',
+      items: [
+        {
+          id: 'background_score',
+          title: 'الخلفية العلمية',
+          score: 0,
+          maxScore: 12,
+        },
+      ],
+    },
+    {
+      id: 'methodology',
+      category: 'منهج الرسالة',
+      items: [
+        {
+          id: 'methodology_score',
+          title:
+            '- مشكلة البحث\n- أهدافه\n- أهميته\n- تحليل المعلومات ومناقشتها\n- التناسق الفكري للبحث\n- صحة المعلومات ودقتها',
+          score: 0,
+          maxScore: 12,
+        },
+      ],
+    },
+    {
+      id: 'results',
+      category: 'النتائج',
+      items: [
+        {
+          id: 'results_score',
+          title: '- ربط النتائج بالفروض والأهداف\n- التوصيات',
+          score: 0,
+          maxScore: 10,
+        },
+      ],
+    },
+    {
+      id: 'documentation',
+      category: 'التوثيق العلمي والمراجع',
+      items: [
+        {
+          id: 'documentation_score',
+          title:
+            '- تنوع المصادر والمراجع\n- أسلوب التوثيق العلمي\n- الأمانة العلمية',
+          score: 0,
+          maxScore: 12,
+        },
+      ],
+    },
+    {
+      id: 'originality',
+      category: 'الأصالة والابتكار',
+      items: [
+        {
+          id: 'originality_score',
+          title:
+            '- أصالة الموضوع والابتكار فيه\n- الإسهام الفاعل في إنماء المعرفة في التخصص',
+          score: 0,
+          maxScore: 12,
+        },
+      ],
+    },
+    {
+      id: 'formatting',
+      category: 'إخراج البحث',
+      items: [
+        {
+          id: 'formatting_score',
+          title: 'إخراج البحث وتنسيقه',
+          score: 0,
+          maxScore: 7,
+        },
+      ],
+    },
+    {
+      id: 'research_condition',
+      category: 'حالة البحث',
+      items: [
+        {
+          id: 'condition_score',
+          title:
+            '- أسلوب الباحث وشخصيته\n- نسبة الاقتباس\n- سلامة الرسالة لغوياً وإملائياً\n- عدم وجود: ركاكة الألفاظ، كثرة الأخطاء، ضعف التحليل والاستنتاج',
+          score: 0,
+          maxScore: 12,
+        },
+      ],
+    },
+    {
+      id: 'sources',
+      category: 'المصادر والمراجع',
+      items: [
+        {
+          id: 'sources_score',
+          title: '- تنوع المصادر والمراجع\n- ترتيبها\n- استيفاء معلومات الكتاب',
+          score: 0,
+          maxScore: 8,
+        },
+      ],
+    },
   ]);
 
   const [generalComments, setGeneralComments] = useState('');
-  const [recommendation, setRecommendation] = useState<'accepted' | 'needs-revision' | 'rejected' | ''>('');
+  const [recommendation, setRecommendation] = useState<
+    'accepted' | 'needs-revision' | 'rejected' | ''
+  >('');
+
+  // File upload state
+  const [editedFile, setEditedFile] = useState<File | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
 
   const handleDownloadOriginal = async () => {
     if (!research) return;
     try {
       toast.loading('جاري تحميل البحث الأصلي...', { id: 'download-original' });
-      await downloadResearchPdf(research.cloudinary_secure_url, research.file_url, research.research_number);
+      await downloadResearchPdf(
+        research.cloudinary_secure_url,
+        research.file_url,
+        research.research_number
+      );
       toast.success('تم بدء التحميل', { id: 'download-original' });
     } catch (error) {
       toast.error('فشل تحميل الملف', { id: 'download-original' });
@@ -107,11 +306,67 @@ export function EvaluationFormPage() {
 
   const handleDownloadRevision = async (revision: ResearchRevision) => {
     try {
-      toast.loading('جاري تحميل النسخة المعدلة...', { id: 'download-revision' });
-      await downloadRevisionFile(revision.cloudinary_secure_url, revision.file_url, revision.revision_number);
+      toast.loading('جاري تحميل النسخة المعدلة...', {
+        id: 'download-revision',
+      });
+      await downloadRevisionFile(
+        revision.cloudinary_secure_url,
+        revision.file_url,
+        revision.revision_number
+      );
       toast.success('تم بدء التحميل', { id: 'download-revision' });
     } catch (error) {
       toast.error('فشل تحميل الملف', { id: 'download-revision' });
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file type (PDF or Word)
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('يرجى اختيار ملف PDF أو Word (doc/docx) فقط');
+      return;
+    }
+
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('حجم الملف يجب أن يكون أقل من 10 ميجابايت');
+      return;
+    }
+
+    setEditedFile(file);
+  };
+
+  const handleUploadEditedFile = async () => {
+    if (!editedFile || !research) return;
+
+    try {
+      setIsUploadingFile(true);
+      toast.loading('جاري رفع الملف المعدل...', { id: 'upload-edited' });
+
+      // Upload file directly to research without creating/updating review
+      await researchService.uploadEditedByReviewer(research.id, editedFile);
+
+      toast.success('تم رفع الملف المعدل بنجاح! الملف الأصلي تم استبداله.', {
+        id: 'upload-edited',
+      });
+      setEditedFile(null);
+
+      // Reload page to show updated file
+      window.location.reload();
+    } catch (error) {
+      console.error('Error uploading edited file:', error);
+      toast.error('فشل رفع الملف المعدل', { id: 'upload-edited' });
+    } finally {
+      setIsUploadingFile(false);
     }
   };
 
@@ -127,26 +382,35 @@ export function EvaluationFormPage() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Load research data and revisions
-      const [data, revisionsData] = await Promise.all([
+      const [data, revisionsData, assignmentsData] = await Promise.all([
         researchService.getById(researchId),
         researchRevisionsService.getByResearch(researchId),
+        reviewerAssignmentsService.getByResearch(researchId).catch(() => []),
       ]);
-      
+
       setResearch(data);
       setRevisions(revisionsData);
-      
+
+      // Find my assignment
+      const myAssignment = assignmentsData.find(
+        (a: any) => a.reviewer_id === user?.id
+      );
+      setAssignment(myAssignment);
+
       // Check if reviewer already submitted a review for this research
       if (user?.id) {
         try {
           const reviews = await reviewsService.getByResearch(researchId);
-          const myReview = reviews.find(r => r.reviewer_id === user.id);
-          
+          const myReview = reviews.find((r) => r.reviewer_id === user.id);
+
           // Only block if review is completed (not pending)
           if (myReview && myReview.status === 'completed') {
             setExistingReview(myReview);
-            setError('لقد قمت بتقييم هذا البحث مسبقاً. لا يمكن إرسال تقييم آخر.');
+            setError(
+              'لقد قمت بتقييم هذا البحث مسبقاً. لا يمكن إرسال تقييم آخر.'
+            );
           } else if (myReview && myReview.status === 'pending') {
             // Allow re-evaluation for pending reviews (revised research)
             setPendingReview(myReview);
@@ -154,23 +418,56 @@ export function EvaluationFormPage() {
           }
         } catch (err) {
           // If error fetching reviews, continue (maybe no reviews yet)
-          console.log('No existing review found');
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ أثناء تحميل البحث');
+      setError(
+        err instanceof Error ? err.message : 'حدث خطأ أثناء تحميل البحث'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Calculate average rating
-  const averageRating = criteria.reduce((sum, c) => sum + c.rating, 0) / criteria.length;
-  const ratedCount = criteria.filter(c => c.rating > 0).length;
-  const isFormComplete = ratedCount === criteria.length && generalComments.trim() && recommendation;
+  // Calculate total score from detailed scores
+  const calculateTotalScore = () => {
+    let total = 0;
+    detailedScores.forEach((category) => {
+      category.items.forEach((item) => {
+        total += item.score;
+      });
+    });
+    return total;
+  };
 
-  const handleCriteriaChange = (id: string, rating: number) => {
-    setCriteria(prev => prev.map(c => c.id === id ? { ...c, rating } : c));
+  const totalScore = calculateTotalScore();
+  const maxTotalScore = 100;
+
+  // Check if all scores are filled (including zero)
+  const allScoresFilled = detailedScores.every((category) =>
+    category.items.every((item) => item.score !== undefined && item.score !== null && item.score >= 0)
+  );
+
+  const isFormComplete =
+    allScoresFilled && generalComments.trim() && recommendation;
+
+  const handleScoreChange = (
+    categoryId: string,
+    itemId: string,
+    score: number
+  ) => {
+    setDetailedScores((prev) =>
+      prev.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              items: category.items.map((item) =>
+                item.id === itemId ? { ...item, score } : item
+              ),
+            }
+          : category
+      )
+    );
   };
 
   const handleBackToTasks = () => {
@@ -183,12 +480,22 @@ export function EvaluationFormPage() {
     e.preventDefault();
 
     if (!isFormComplete) {
-      setError('يرجى إكمال جميع الحقول قبل الإرسال');
+      const msg = 'يرجى إكمال جميع الحقول قبل الإرسال';
+      setError(msg);
+      toast.error(msg, { 
+        icon: '⚠️',
+        duration: 4000,
+      });
       return;
     }
 
     if (!user?.id || !research?.id) {
-      setError('خطأ في تحديد المستخدم أو البحث');
+      const msg = 'خطأ في تحديد المستخدم أو البحث';
+      setError(msg);
+      toast.error(msg, { 
+        icon: '❌',
+        duration: 4000,
+      });
       return;
     }
 
@@ -196,10 +503,22 @@ export function EvaluationFormPage() {
       setIsSubmitting(true);
       setError(null);
 
-      // Convert criteria to ratings object
+      // Convert detailed scores to the format expected by backend
+      const detailedScoresObj: any = {};
+      detailedScores.forEach((category) => {
+        category.items.forEach((item) => {
+          detailedScoresObj[item.id] = item.score;
+        });
+      });
+
+      // Create criteria_ratings for backward compatibility
       const criteriaRatings: Record<string, number> = {};
-      criteria.forEach(c => {
-        criteriaRatings[c.title] = c.rating;
+      detailedScores.forEach((category) => {
+        const categoryTotal = category.items.reduce(
+          (sum, item) => sum + item.score,
+          0
+        );
+        criteriaRatings[category.category] = categoryTotal;
       });
 
       // If there's a pending review, update it. Otherwise, create new one.
@@ -208,8 +527,12 @@ export function EvaluationFormPage() {
         await reviewsService.update(pendingReview.id, {
           criteria_ratings: criteriaRatings,
           general_comments: generalComments,
-          recommendation: recommendation as 'accepted' | 'needs-revision' | 'rejected',
-          average_rating: averageRating,
+          recommendation: recommendation as
+            | 'accepted'
+            | 'needs-revision'
+            | 'rejected',
+          total_score: totalScore,
+          detailed_scores: detailedScoresObj,
           status: 'completed',
         });
       } else {
@@ -219,19 +542,53 @@ export function EvaluationFormPage() {
           reviewer_id: user.id,
           criteria_ratings: criteriaRatings,
           general_comments: generalComments,
-          recommendation: recommendation as 'accepted' | 'needs-revision' | 'rejected',
-          average_rating: averageRating,
+          recommendation: recommendation as
+            | 'accepted'
+            | 'needs-revision'
+            | 'rejected',
+          total_score: totalScore,
+          detailed_scores: detailedScoresObj,
         });
       }
 
-      navigate('/dashboard/my-tasks', {
-        state: {
-          message: 'تم إرسال المراجعة بنجاح!',
-          type: 'success'
+      // Show success toast with research details
+      toast.success(
+        `تم إرسال المراجعة بنجاح!\nالبحث: ${research.title}\nالتوصية: ${
+          recommendation === 'accepted' ? 'قبول' : 
+          recommendation === 'needs-revision' ? 'قبول مع تعديلات' : 
+          'رفض'
+        }\nالدرجة الإجمالية: ${totalScore}/${maxTotalScore}`,
+        {
+          duration: 5000,
+          style: {
+            background: '#10B981',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            padding: '16px',
+          },
+          icon: '✅',
         }
-      });
+      );
+
+      // Navigate after a short delay to show the toast
+      setTimeout(() => {
+        navigate('/dashboard/my-tasks');
+      }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال المراجعة');
+      const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال المراجعة';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 4000,
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          padding: '16px',
+        },
+        icon: '❌',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -261,42 +618,61 @@ export function EvaluationFormPage() {
           <div className="flex items-center gap-3 mb-4">
             <AlertCircle className="w-8 h-8 text-amber-600 flex-shrink-0" />
             <div>
-              <p className="text-amber-800 font-bold text-lg">تم إرسال التقييم مسبقاً</p>
-              <p className="text-amber-700">لقد قمت بتقييم هذا البحث بالفعل ولا يمكن إرسال تقييم آخر.</p>
+              <p className="text-amber-800 font-bold text-lg">
+                تم إرسال التقييم مسبقاً
+              </p>
+              <p className="text-amber-700">
+                لقد قمت بتقييم هذا البحث بالفعل ولا يمكن إرسال تقييم آخر.
+              </p>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg p-4 mt-4">
-            <h3 className="font-bold text-gray-800 mb-3">ملخص تقييمك السابق:</h3>
+            <h3 className="font-bold text-gray-800 mb-3">
+              ملخص تقييمك السابق:
+            </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">التقييم العام:</span>
                 <span className="font-semibold text-gray-800">
-                  {existingReview.average_rating ? Number(existingReview.average_rating).toFixed(1) : '0.0'}/5
+                  {existingReview.average_rating
+                    ? Number(existingReview.average_rating).toFixed(1)
+                    : '0.0'}
+                  /5
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">التوصية:</span>
-                <span className={`font-semibold ${
-                  existingReview.recommendation === 'accepted' ? 'text-green-600' :
-                  existingReview.recommendation === 'needs-revision' ? 'text-yellow-600' :
-                  'text-red-600'
-                }`}>
-                  {existingReview.recommendation === 'accepted' ? 'أوصي بالقبول' :
-                   existingReview.recommendation === 'needs-revision' ? 'أوصي بالقبول مع تعديلات' :
-                   'أوصي بالرفض'}
+                <span
+                  className={`font-semibold ${
+                    existingReview.recommendation === 'accepted'
+                      ? 'text-green-600'
+                      : existingReview.recommendation === 'needs-revision'
+                      ? 'text-yellow-600'
+                      : 'text-red-600'
+                  }`}
+                >
+                  {existingReview.recommendation === 'accepted'
+                    ? 'أوصي بالقبول'
+                    : existingReview.recommendation === 'needs-revision'
+                    ? 'أوصي بالقبول مع تعديلات'
+                    : 'أوصي بالرفض'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">تاريخ الإرسال:</span>
                 <span className="font-semibold text-gray-800">
-                  {existingReview.submitted_at ? new Date(existingReview.submitted_at).toLocaleDateString('ar-EG') : 'غير محدد'}
+                  {existingReview.submitted_at
+                    ? new Date(existingReview.submitted_at).toLocaleDateString(
+                        'ar-EG'
+                      )
+                    : 'غير محدد'}
                 </span>
               </div>
             </div>
           </div>
         </div>
-        
+
         <button
           onClick={() => navigate('/dashboard/my-tasks')}
           className="px-6 py-3 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors flex items-center gap-2"
@@ -330,10 +706,14 @@ export function EvaluationFormPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
+      <Toaster position="top-center" reverseOrder={false} />
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">نموذج التحكيم الإلكتروني</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            نموذج التحكيم الإلكتروني
+          </h1>
           <p className="text-gray-600">تقييم شامل للبحث الأكاديمي</p>
         </div>
         <button className="p-3 text-gray-600 hover:text-[#0D3B66] transition-colors">
@@ -343,7 +723,9 @@ export function EvaluationFormPage() {
 
       {/* Research Info Card */}
       <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">نموذج التحكيم الإلكتروني</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">
+          نموذج التحكيم الإلكتروني
+        </h2>
         <p className="text-sm text-gray-600 mb-4">
           تقييم شامل للبحث الأكاديمي وفق المعايير العلمية
         </p>
@@ -352,52 +734,205 @@ export function EvaluationFormPage() {
         <div className="bg-white rounded-lg p-4 space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <FileText className="w-4 h-4 text-gray-600" />
-            <span className="font-semibold text-gray-700">معلومات عامة عن البحث</span>
+            <span className="font-semibold text-gray-700">
+              معلومات عامة عن البحث
+            </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             <div className="flex gap-2">
               <span className="text-gray-600">عنوان البحث:</span>
-              <span className="font-medium text-gray-800">{research.title}</span>
+              <span className="font-medium text-gray-800">
+                {research.title}
+              </span>
             </div>
             <div className="flex gap-2">
               <span className="text-gray-600">رقم البحث:</span>
-              <span className="font-medium text-gray-800">{research.research_number}</span>
+              <span className="font-medium text-gray-800">
+                {research.research_number}
+              </span>
             </div>
             <div className="flex gap-2">
               <span className="text-gray-600">التصنيف العلمي:</span>
-              <span className="font-medium text-gray-800">{research.specialization}</span>
+              <span className="font-medium text-gray-800">
+                {research.specialization}
+              </span>
             </div>
           </div>
 
           {/* Download Buttons */}
           <div className="mt-4 space-y-2">
-            <button 
+            <button
               onClick={handleDownloadOriginal}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium"
             >
               <Download className="w-4 h-4" />
-              <span>تحميل البحث الأصلي (PDF)</span>
+              <span>تحميل البحث الأصلي</span>
             </button>
-       
+          </div>
+
+          {/* Upload Edited File Section - Show for all reviewers */}
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-3 mb-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-gray-800 mb-1">
+                  رفع ملف معدل (اختياري)
+                </h3>
+                <p className="text-sm text-gray-600">
+                  يمكنك تحميل الملف، تعديله (مثل حذف اسم الباحث)، ثم رفعه هنا.
+                  <strong className="text-yellow-700">
+                    {' '}
+                    الملف الجديد سيستبدل الملف الأصلي تلقائياً.
+                  </strong>
+                </p>
+              </div>
+            </div>
+
+            {!editedFile ? (
+              <div>
+                <input
+                  type="file"
+                  id="edited-file-upload"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="edited-file-upload"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50 transition-colors font-medium cursor-pointer"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>اختيار ملف معدل (PDF أو Word)</span>
+                </label>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-white border border-yellow-300 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-yellow-600" />
+                    <span className="text-sm font-medium text-gray-800">
+                      {editedFile.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setEditedFile(null)}
+                    className="text-red-500 hover:text-red-700 text-sm font-medium"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+                <button
+                  onClick={handleUploadEditedFile}
+                  disabled={isUploadingFile}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUploadingFile ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>جاري الرفع...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      <span>رفع الملف المعدل (سيستبدل الأصلي)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
+      {/* Assignment Notes */}
+      {assignment?.assignment_notes && (
+        <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl border border-amber-200 p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-800 mb-2">
+                تعليمات خاصة من المحرر
+              </h3>
+              <p className="text-gray-700 leading-relaxed">
+                {assignment.assignment_notes}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deadline Warning */}
+      {assignment?.deadline && (
+        <div className={`rounded-xl border p-6 ${
+          new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+            ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
+            : 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200'
+        }`}>
+          <div className="flex items-start gap-4">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+              new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                ? 'bg-red-500'
+                : 'bg-blue-500'
+            }`}>
+              <Bell className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className={`text-lg font-bold mb-2 ${
+                new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                  ? 'text-red-800'
+                  : 'text-blue-800'
+              }`}>
+                {new Date(assignment.deadline) < new Date()
+                  ? '⚠️ تجاوز الموعد النهائي'
+                  : new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                  ? '⏰ الموعد النهائي قريب'
+                  : '📅 الموعد النهائي للتقييم'}
+              </h3>
+              <p className={`${
+                new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                  ? 'text-red-700'
+                  : 'text-blue-700'
+              }`}>
+                {new Date(assignment.deadline).toLocaleDateString('ar-EG', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+                {new Date(assignment.deadline) < new Date() && (
+                  <span className="font-bold mr-2">- يرجى إكمال التقييم في أقرب وقت</span>
+                )}
+                {new Date(assignment.deadline) >= new Date() && 
+                 new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && (
+                  <span className="font-bold mr-2">- يرجى إكمال التقييم قبل انتهاء الموعد</span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Revision History - Show if there are submitted revisions */}
-      {revisions.filter(r => r.status === 'submitted').length > 0 && (
+      {revisions.filter((r) => r.status === 'submitted').length > 0 && (
         <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200 overflow-hidden">
           <div className="p-6 border-b border-orange-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">تعديلات الباحث</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-1">
+              تعديلات الباحث
+            </h2>
             <p className="text-sm text-gray-600">
               الباحث قام بإجراء تعديلات على البحث بناءً على ملاحظاتك السابقة
             </p>
           </div>
           <div className="p-6 space-y-4">
             {revisions
-              .filter(r => r.status === 'submitted')
+              .filter((r) => r.status === 'submitted')
               .sort((a, b) => b.revision_number - a.revision_number)
               .map((revision) => (
-                <div key={revision.id} className="bg-white rounded-lg p-4 border border-orange-200">
+                <div
+                  key={revision.id}
+                  className="bg-white rounded-lg p-4 border border-orange-200"
+                >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-bold">
@@ -405,22 +940,26 @@ export function EvaluationFormPage() {
                       </span>
                       {revision.submitted_at && (
                         <span className="text-xs text-gray-500">
-                          {new Date(revision.submitted_at).toLocaleDateString('ar-EG')}
+                          {new Date(revision.submitted_at).toLocaleDateString(
+                            'ar-EG'
+                          )}
                         </span>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div>
-                      <h4 className="text-sm font-bold text-gray-700 mb-1">ملاحظات الباحث حول التعديلات:</h4>
+                      <h4 className="text-sm font-bold text-gray-700 mb-1">
+                        ملاحظات الباحث حول التعديلات:
+                      </h4>
                       <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-200">
                         {revision.revision_notes}
                       </p>
                     </div>
-                    
+
                     {(revision.file_url || revision.cloudinary_secure_url) && (
-                      <button 
+                      <button
                         onClick={() => handleDownloadRevision(revision)}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
                       >
@@ -432,49 +971,74 @@ export function EvaluationFormPage() {
                 </div>
               ))}
           </div>
-          
+
           {/* Show current vs original data - Only if original data exists */}
-          {revisions.filter(r => r.status === 'submitted' && r.original_data).length > 0 && (
+          {revisions.filter((r) => r.status === 'submitted' && r.original_data)
+            .length > 0 && (
             <div className="p-6 bg-white border-t border-orange-200">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">مقارنة البيانات</h3>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                مقارنة البيانات
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Original Abstract */}
                 <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                  <h4 className="text-sm font-bold text-red-800 mb-2">✖ الملخص الأصلي</h4>
+                  <h4 className="text-sm font-bold text-red-800 mb-2">
+                    ✖ الملخص الأصلي
+                  </h4>
                   <p className="text-sm text-gray-700 line-through opacity-75">
-                    {revisions.find(r => r.status === 'submitted' && r.original_data)?.original_data?.abstract || '[غير متوفر]'}
+                    {revisions.find(
+                      (r) => r.status === 'submitted' && r.original_data
+                    )?.original_data?.abstract || '[غير متوفر]'}
                   </p>
                 </div>
-                
+
                 {/* Current Abstract */}
                 <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <h4 className="text-sm font-bold text-green-800 mb-2">✔ الملخص المعدل</h4>
-                  <p className="text-sm text-gray-700">
-                    {research.abstract}
-                  </p>
+                  <h4 className="text-sm font-bold text-green-800 mb-2">
+                    ✔ الملخص المعدل
+                  </h4>
+                  <p className="text-sm text-gray-700">{research.abstract}</p>
                 </div>
-                
+
                 {/* Original Keywords */}
-                {revisions.find(r => r.status === 'submitted' && r.original_data?.keywords)?.original_data?.keywords && (
+                {revisions.find(
+                  (r) => r.status === 'submitted' && r.original_data?.keywords
+                )?.original_data?.keywords && (
                   <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                    <h4 className="text-sm font-bold text-red-800 mb-2">✖ الكلمات المفتاحية الأصلية:</h4>
+                    <h4 className="text-sm font-bold text-red-800 mb-2">
+                      ✖ الكلمات المفتاحية الأصلية:
+                    </h4>
                     <div className="flex flex-wrap gap-2">
-                      {revisions.find(r => r.status === 'submitted' && r.original_data?.keywords)?.original_data?.keywords?.map((keyword, index) => (
-                        <span key={index} className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium line-through opacity-75">
-                          {keyword}
-                        </span>
-                      ))}
+                      {revisions
+                        .find(
+                          (r) =>
+                            r.status === 'submitted' &&
+                            r.original_data?.keywords
+                        )
+                        ?.original_data?.keywords?.map((keyword, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium line-through opacity-75"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
                     </div>
                   </div>
                 )}
-                
+
                 {/* Current Keywords */}
                 {research.keywords && research.keywords.length > 0 && (
                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                    <h4 className="text-sm font-bold text-green-800 mb-2">✔ الكلمات المفتاحية المعدلة:</h4>
+                    <h4 className="text-sm font-bold text-green-800 mb-2">
+                      ✔ الكلمات المفتاحية المعدلة:
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {research.keywords.map((keyword, index) => (
-                        <span key={index} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium"
+                        >
                           {keyword}
                         </span>
                       ))}
@@ -489,24 +1053,67 @@ export function EvaluationFormPage() {
 
       {/* Evaluation Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Criteria Section */}
+        {/* Detailed Scoring Section */}
         <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">نموذج تقييم المحكم</h2>
-            <p className="text-sm text-gray-500">أولاً: تقييم جوانب البحث</p>
-            <p className="text-xs text-gray-500 mt-2">
-              يرجى التقييم لكل جانب من الجوانب التالية على مقياس من 1 إلى 5 (حيث 1 ضعيف و 5 ممتاز)
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              معايير التحكيم
+            </h2>
+            <p className="text-sm text-gray-600">
+              يرجى تقييم البحث وفقاً للمعايير التالية (الدرجة الإجمالية:{' '}
+              {totalScore} من {maxTotalScore})
             </p>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex-1 bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all"
+                  style={{ width: `${(totalScore / maxTotalScore) * 100}%` }}
+                ></div>
+              </div>
+              <span className="text-sm font-bold text-gray-700">
+                {((totalScore / maxTotalScore) * 100).toFixed(1)}%
+              </span>
+            </div>
           </div>
 
-          <div className="p-6">
-            {criteria.map((criterion) => (
-              <CriteriaRow
-                key={criterion.id}
-                title={criterion.title}
-                rating={criterion.rating}
-                onChange={(rating) => handleCriteriaChange(criterion.id, rating)}
-              />
+          <div className="p-6 space-y-6">
+            {detailedScores.map((category, categoryIndex) => (
+              <div
+                key={category.id}
+                className="border border-gray-200 rounded-lg overflow-hidden"
+              >
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-gray-800">
+                      {categoryIndex + 1}. {category.category}
+                    </h3>
+                    <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-sm font-bold">
+                      {category.items.reduce(
+                        (sum, item) => sum + item.score,
+                        0
+                      )}{' '}
+                      /{' '}
+                      {category.items.reduce(
+                        (sum, item) => sum + item.maxScore,
+                        0
+                      )}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-4 bg-white">
+                  {category.items.map((item) => (
+                    <ScoreInput
+                      key={item.id}
+                      title={item.title}
+                      score={item.score}
+                      maxScore={item.maxScore}
+                      onChange={(score) =>
+                        handleScoreChange(category.id, item.id, score)
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -514,14 +1121,18 @@ export function EvaluationFormPage() {
         {/* Recommendation Section */}
         <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">ثانياً: توصية المحكم</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-1">
+              ثانياً: توصية المحكم
+            </h2>
             <p className="text-sm text-gray-500">
               يرجى اختيار توصيتك بشأن البحث
             </p>
             <div className="mt-2 flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
               <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800">
-                <span className="font-semibold">ملاحظة هامة:</span> توصيتك هي رأي استشاري. القرار النهائي (قبول أو رفض البحث) سيتخذه المحرر أو المدير بناءً على تقييمك وتقييمات المحكمين الآخرين.
+                <span className="font-semibold">ملاحظة هامة:</span> توصيتك هي
+                رأي استشاري. القرار النهائي (قبول أو رفض البحث) سيتخذه المحرر أو
+                المدير بناءً على تقييمك وتقييمات المحكمين الآخرين.
               </p>
             </div>
           </div>
@@ -539,16 +1150,28 @@ export function EvaluationFormPage() {
                 }`}
               >
                 <div className="flex flex-col items-center gap-3">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                    recommendation === 'accepted' ? 'bg-green-500' : 'bg-gray-200'
-                  }`}>
-                    <CheckCircle className={`w-8 h-8 ${
-                      recommendation === 'accepted' ? 'text-white' : 'text-gray-400'
-                    }`} />
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                      recommendation === 'accepted'
+                        ? 'bg-green-500'
+                        : 'bg-gray-200'
+                    }`}
+                  >
+                    <CheckCircle
+                      className={`w-8 h-8 ${
+                        recommendation === 'accepted'
+                          ? 'text-white'
+                          : 'text-gray-400'
+                      }`}
+                    />
                   </div>
                   <div className="text-center">
-                    <h3 className="font-bold text-gray-800 mb-1">أوصي بالقبول</h3>
-                    <p className="text-xs text-gray-600">البحث يستوفي المعايير المطلوبة</p>
+                    <h3 className="font-bold text-gray-800 mb-1">
+                      أوصي بالقبول
+                    </h3>
+                    <p className="text-xs text-gray-600">
+                      البحث يستوفي المعايير المطلوبة
+                    </p>
                   </div>
                 </div>
               </button>
@@ -564,16 +1187,28 @@ export function EvaluationFormPage() {
                 }`}
               >
                 <div className="flex flex-col items-center gap-3">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                    recommendation === 'needs-revision' ? 'bg-yellow-500' : 'bg-gray-200'
-                  }`}>
-                    <Edit3 className={`w-8 h-8 ${
-                      recommendation === 'needs-revision' ? 'text-white' : 'text-gray-400'
-                    }`} />
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                      recommendation === 'needs-revision'
+                        ? 'bg-yellow-500'
+                        : 'bg-gray-200'
+                    }`}
+                  >
+                    <Edit3
+                      className={`w-8 h-8 ${
+                        recommendation === 'needs-revision'
+                          ? 'text-white'
+                          : 'text-gray-400'
+                      }`}
+                    />
                   </div>
                   <div className="text-center">
-                    <h3 className="font-bold text-gray-800 mb-1">أوصي بالقبول مع تعديلات</h3>
-                    <p className="text-xs text-gray-600">البحث جيد لكن يحتاج تحسينات</p>
+                    <h3 className="font-bold text-gray-800 mb-1">
+                      أوصي بالقبول مع تعديلات
+                    </h3>
+                    <p className="text-xs text-gray-600">
+                      البحث جيد لكن يحتاج تحسينات
+                    </p>
                   </div>
                 </div>
               </button>
@@ -589,16 +1224,28 @@ export function EvaluationFormPage() {
                 }`}
               >
                 <div className="flex flex-col items-center gap-3">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                    recommendation === 'rejected' ? 'bg-red-500' : 'bg-gray-200'
-                  }`}>
-                    <XCircle className={`w-8 h-8 ${
-                      recommendation === 'rejected' ? 'text-white' : 'text-gray-400'
-                    }`} />
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                      recommendation === 'rejected'
+                        ? 'bg-red-500'
+                        : 'bg-gray-200'
+                    }`}
+                  >
+                    <XCircle
+                      className={`w-8 h-8 ${
+                        recommendation === 'rejected'
+                          ? 'text-white'
+                          : 'text-gray-400'
+                      }`}
+                    />
                   </div>
                   <div className="text-center">
-                    <h3 className="font-bold text-gray-800 mb-1">أوصي بالرفض</h3>
-                    <p className="text-xs text-gray-600">البحث لا يستوفي المعايير</p>
+                    <h3 className="font-bold text-gray-800 mb-1">
+                      أوصي بالرفض
+                    </h3>
+                    <p className="text-xs text-gray-600">
+                      البحث لا يستوفي المعايير
+                    </p>
                   </div>
                 </div>
               </button>
@@ -609,7 +1256,9 @@ export function EvaluationFormPage() {
         {/* General Comments Section */}
         <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-1">ثالثاً: التقييم العام والملاحظات</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-1">
+              ثالثاً: التقييم العام والملاحظات
+            </h2>
             <p className="text-sm text-gray-500">
               يرجى كتابة تقييمكم الشامل وملاحظاتكم التفصيلية على البحث
             </p>
@@ -630,16 +1279,14 @@ export function EvaluationFormPage() {
         {/* Progress Indicator */}
         <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-700">التقدم في التقييم</span>
-            <span className="text-sm text-gray-600">
-              {ratedCount}/{criteria.length} معايير • {recommendation ? '✓' : '✗'} توصية • {generalComments.trim() ? '✓' : '✗'} تعليقات
+            <span className="text-sm font-medium text-gray-700">
+              التقدم في التقييم
             </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-green-500 h-2.5 rounded-full transition-all"
-              style={{ width: `${(ratedCount / criteria.length) * 100}%` }}
-            ></div>
+            <span className="text-sm text-gray-600">
+              {allScoresFilled ? '✓' : '✗'} الدرجات •{' '}
+              {recommendation ? '✓' : '✗'} التوصية •{' '}
+              {generalComments.trim() ? '✓' : '✗'} التعليقات
+            </span>
           </div>
 
           {/* Summary */}
@@ -648,19 +1295,38 @@ export function EvaluationFormPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-800">توصيتك:</p>
-                  <p className={`text-lg font-bold ${
-                    recommendation === 'accepted' ? 'text-green-600' :
-                    recommendation === 'needs-revision' ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
-                    {recommendation === 'accepted' ? '✓ أوصي بالقبول' :
-                     recommendation === 'needs-revision' ? '⚠ أوصي بالقبول مع تعديلات' :
-                     '✗ أوصي بالرفض'}
+                  <p
+                    className={`text-lg font-bold ${
+                      recommendation === 'accepted'
+                        ? 'text-green-600'
+                        : recommendation === 'needs-revision'
+                        ? 'text-yellow-600'
+                        : 'text-red-600'
+                    }`}
+                  >
+                    {recommendation === 'accepted'
+                      ? '✓ أوصي بالقبول'
+                      : recommendation === 'needs-revision'
+                      ? '⚠ أوصي بالقبول مع تعديلات'
+                      : '✗ أوصي بالرفض'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-800">متوسط التقييم:</p>
-                  <p className="text-2xl font-bold text-gray-800">{averageRating.toFixed(1)}/5</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    الدرجة النهائية:
+                  </p>
+                  <p className="text-2xl font-bold text-gray-800">
+                    {totalScore.toFixed(1)}/100
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {totalScore >= 70
+                      ? 'ممتاز'
+                      : totalScore >= 60
+                      ? 'جيد جداً'
+                      : totalScore >= 50
+                      ? 'جيد'
+                      : 'يحتاج تحسين'}
+                  </p>
                 </div>
               </div>
             </div>

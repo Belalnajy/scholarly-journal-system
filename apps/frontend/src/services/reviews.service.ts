@@ -8,9 +8,15 @@ export interface Review {
   general_comments: string;
   recommendation: 'accepted' | 'needs-revision' | 'rejected';
   average_rating?: number;
+  total_score?: number;
+  detailed_scores?: Record<string, number>;
   status: 'pending' | 'in-progress' | 'completed';
   deadline?: string;
   submitted_at?: string;
+  edited_file_url?: string;
+  edited_file_cloudinary_public_id?: string;
+  edited_file_cloudinary_secure_url?: string;
+  edited_file_type?: string;
   created_at: string;
   updated_at: string;
   research?: {
@@ -32,6 +38,8 @@ export interface CreateReviewDto {
   general_comments: string;
   recommendation: 'accepted' | 'needs-revision' | 'rejected';
   average_rating?: number;
+  total_score?: number;
+  detailed_scores?: Record<string, number>;
   status?: 'pending' | 'in-progress' | 'completed';
   deadline?: string;
 }
@@ -41,6 +49,8 @@ export interface UpdateReviewDto {
   general_comments?: string;
   recommendation?: 'accepted' | 'needs-revision' | 'rejected';
   average_rating?: number;
+  total_score?: number;
+  detailed_scores?: Record<string, number>;
   status?: 'pending' | 'in-progress' | 'completed';
   deadline?: string;
 }
@@ -138,6 +148,43 @@ class ReviewsService {
    */
   async delete(id: string): Promise<void> {
     await axiosInstance.delete(`${this.baseUrl}/${id}`);
+  }
+
+  /**
+   * Upload edited file by reviewer (replaces original research file)
+   * رفع ملف معدل من المحكم (يستبدل الملف الأصلي)
+   */
+  async uploadEditedFile(review_id: string, file: File): Promise<Review> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axiosInstance.post(
+      `${this.baseUrl}/${review_id}/upload-edited-file`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  }
+
+  /**
+   * Get original file URL (before reviewer's edit)
+   * الحصول على رابط الملف الأصلي
+   */
+  async getOriginalFileUrl(review_id: string): Promise<{ url: string; file_type: string } | null> {
+    const response = await axiosInstance.get(`${this.baseUrl}/${review_id}/original-file-url`);
+    return response.data;
+  }
+
+  /**
+   * Restore original file (undo reviewer's edit)
+   * استعادة الملف الأصلي
+   */
+  async restoreOriginalFile(review_id: string): Promise<void> {
+    await axiosInstance.post(`${this.baseUrl}/${review_id}/restore-original`);
   }
 }
 

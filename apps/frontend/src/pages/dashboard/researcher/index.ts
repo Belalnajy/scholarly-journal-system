@@ -4,3 +4,4 @@ export { SubmitResearchPage } from './SubmitResearchPage';
 export { MyResearchPage } from './MyResearchPage';
 export { ViewResearchPage } from './ViewResearchPage';
 export { ReviseResearchPage } from './ReviseResearchPage';
+export { PaymentInstructionsPage } from './PaymentInstructionsPage';

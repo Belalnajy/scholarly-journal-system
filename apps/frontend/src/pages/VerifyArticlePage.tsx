@@ -41,7 +41,6 @@ export function VerifyArticlePage() {
       // Increment download count
       try {
         await articlesService.incrementDownloads(article.id);
-        console.log('✅ Download counted for article:', article.article_number);
       } catch (err) {
         console.error('Failed to increment downloads:', err);
       }

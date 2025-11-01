@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, ExternalLink } from 'lucide-react';
 import { ContactForm } from '../components/sections';
 import { NewsletterSection } from '../components';
 import { contactData } from '../data/contactData';
@@ -158,6 +158,43 @@ export function ContactPage() {
               </div>
             </motion.div>
 
+            {/* University Website Card */}
+            {settings?.university_url && (
+              <motion.div 
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+                className="overflow-hidden rounded-xl bg-white shadow-sm"
+              >
+                <div className="bg-gradient-to-r from-[#093059] to-[#0d4a7a] px-6 py-4 sm:px-8">
+                  <div className="flex items-center justify-center gap-3">
+                    <ExternalLink className="size-6 text-white" />
+                    <h2 className="text-xl font-bold text-white sm:text-2xl" dir="rtl">
+                      موقع الجامعة
+                    </h2>
+                  </div>
+                </div>
+                <div className="p-6 sm:p-8" dir="rtl">
+                  <div className="flex items-center gap-3">
+                    <ExternalLink className="size-5 text-[#b2823e]" />
+                    <div className="text-right flex-1">
+                      <p className="text-sm text-[#666666] mb-2">زيارة الموقع الإلكتروني للجامعة</p>
+                      <a
+                        href={settings.university_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-base font-bold text-[#093059] hover:text-[#b2823e] sm:text-lg transition-colors underline"
+                      >
+                        {settings.university_url.replace(/^https?:\/\//, '')}
+                        <ExternalLink className="size-4" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
           </div>
         </div>

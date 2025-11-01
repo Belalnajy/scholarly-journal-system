@@ -1,6 +1,6 @@
 export const navLinks = [
   { label: 'عن المجلة', href: '/about' },
-  { label: 'هيئة التحرير', href: '/editorial' },
+  { label: 'الفريق الأكاديمي', href: '/team' },
   { label: 'الأعداد', href: '/issues' },
   { label: 'تقديم بحث', href: '#submit' },
   { label: 'تواصل معنا', href: '/contact' },
@@ -88,6 +88,7 @@ export const footerLinks = {
     { label: 'الرئيسية', href: '/' },
     { label: 'عن المجلة', href: '/about' },
     { label: 'هيئة التحرير', href: '/editorial' },
+    { label: 'الفريق الأكاديمي', href: '/team' },
     { label: 'اتصل بنا', href: '/contact' },
   ],
   forResearchers: [

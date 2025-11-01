@@ -10,6 +10,7 @@ import { Issue, IssueStatus } from '../../database/entities/issue.entity';
 import { Article } from '../../database/entities/article.entity';
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class IssuesService {
@@ -18,6 +19,7 @@ export class IssuesService {
     private readonly issueRepository: Repository<Issue>,
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   /**
@@ -245,5 +247,43 @@ export class IssuesService {
       relations: ['articles'],
       order: { publish_date: 'DESC' },
     });
+  }
+
+  /**
+   * Upload full issue PDF (all articles combined)
+   */
+  async uploadFullIssuePdf(
+    issueId: string,
+    fileBuffer: Buffer,
+    fileName: string,
+    fileSize: number,
+  ): Promise<Issue> {
+    const issue = await this.findOne(issueId);
+
+    // Delete old PDF from Cloudinary if exists
+    if (issue.issue_pdf_public_id) {
+      try {
+        await this.cloudinaryService.deleteFile(
+          issue.issue_pdf_public_id,
+          'raw',
+        );
+      } catch (error) {
+        console.error('Failed to delete old issue PDF from Cloudinary:', error);
+        // Continue with upload even if deletion fails
+      }
+    }
+
+    // Upload new PDF to Cloudinary
+    const uploadResult = await this.cloudinaryService.uploadIssuePdf(
+      fileBuffer,
+      issue.issue_number,
+      fileName,
+    );
+
+    // Update issue with new PDF info
+    issue.issue_pdf_url = uploadResult.secure_url;
+    issue.issue_pdf_public_id = uploadResult.public_id;
+
+    return await this.issueRepository.save(issue);
   }
 }

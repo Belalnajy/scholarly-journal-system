@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,8 +14,11 @@ import {
   ResearchStatus,
 } from '../../database/entities/research.entity';
 import { ResearchFile } from '../../database/entities/research-file.entity';
+import { User } from '../../database/entities/user.entity';
+import { SiteSettings } from '../../database/entities/site-settings.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { PdfGeneratorService } from '../pdf/pdf-generator.service';
 
 @Injectable()
 export class ResearchService {
@@ -23,8 +27,13 @@ export class ResearchService {
     private readonly researchRepository: Repository<Research>,
     @InjectRepository(ResearchFile)
     private readonly researchFileRepository: Repository<ResearchFile>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(SiteSettings)
+    private readonly siteSettingsRepository: Repository<SiteSettings>,
     private readonly notificationsService: NotificationsService,
-    private readonly cloudinaryService: CloudinaryService
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly pdfGeneratorService: PdfGeneratorService
   ) {}
 
   async create(createResearchDto: CreateResearchDto): Promise<Research> {
@@ -77,7 +86,9 @@ export class ResearchService {
       });
     }
 
-    query.orderBy('research.submission_date', 'DESC');
+    // Order by submission_date DESC, but put NULL values last using updated_at
+    query.orderBy('research.submission_date', 'DESC', 'NULLS LAST');
+    query.addOrderBy('research.updated_at', 'DESC');
 
     return await query.getMany();
   }
@@ -128,8 +139,49 @@ export class ResearchService {
       }
     }
 
+    // Check if this is a draft being submitted (title changing from "مسودة")
+    const wasDraft = research.title.includes('مسودة');
+    const isBeingSubmitted = wasDraft && 
+                            updateResearchDto.title && 
+                            !updateResearchDto.title.includes('مسودة');
+
     Object.assign(research, updateResearchDto);
-    return await this.researchRepository.save(research);
+    
+    // If status is changing to under-review and submission_date is null, set it
+    if (updateResearchDto.status === ResearchStatus.UNDER_REVIEW && !research.submission_date) {
+      research.submission_date = new Date();
+    }
+    
+    const savedResearch = await this.researchRepository.save(research);
+
+    // Auto-deactivate payment after successful research submission
+    if (isBeingSubmitted && research.submission_date) {
+      try {
+        const user = await this.userRepository.findOne({ 
+          where: { id: research.user_id } 
+        });
+
+        if (user && user.payment_status === 'verified') {
+          // Reset payment status to pending
+          user.payment_status = 'pending';
+          user.payment_verified_at = null;
+          await this.userRepository.save(user);
+
+          // Send notification to user
+          await this.notificationsService.create({
+            user_id: user.id,
+            type: 'general' as any,
+            title: 'تم استهلاك رسوم التقديم',
+            message: 'تم تقديم بحثك بنجاح. لتقديم بحث جديد، يرجى دفع رسوم التقديم مرة أخرى.',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to auto-deactivate payment:', error);
+        // Don't fail the research submission if payment deactivation fails
+      }
+    }
+    
+    return savedResearch;
   }
 
   async updateStatus(id: string, status: ResearchStatus): Promise<Research> {
@@ -139,6 +191,14 @@ export class ResearchService {
 
     if (status === ResearchStatus.ACCEPTED) {
       research.evaluation_date = new Date();
+      
+      // Generate acceptance certificate
+      try {
+        await this.generateAcceptanceCertificate(id);
+      } catch (error) {
+        console.error('Failed to generate acceptance certificate:', error);
+        // Don't fail the status update if certificate generation fails
+      }
     }
 
     if (status === ResearchStatus.PUBLISHED) {
@@ -193,9 +253,38 @@ export class ResearchService {
     return savedResearch;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, user?: any): Promise<void> {
     const research = await this.findOne(id);
-    await this.researchRepository.remove(research);
+    
+    // Check permissions
+    if (user) {
+      // Admin and editor can delete any research
+      if (user.role === 'admin' || user.role === 'editor') {
+        await this.researchRepository.remove(research);
+        return;
+      }
+      
+      // Researcher can only delete their own research if it's still a draft
+      if (user.role === 'researcher') {
+        if (research.user_id !== user.id) {
+          throw new ForbiddenException('لا يمكنك حذف بحث لباحث آخر');
+        }
+        
+        // Allow deletion if research is in draft state (title contains "مسودة" OR status is PENDING)
+        const isDraft = research.title.includes('مسودة');
+        const isPending = research.status === ResearchStatus.PENDING;
+        
+        if (isDraft || isPending) {
+          await this.researchRepository.remove(research);
+          return;
+        }
+        
+        throw new ForbiddenException('لا يمكن حذف البحث بعد إرساله للمراجعة');
+      }
+    }
+    
+    // If no user provided (shouldn't happen), only admin can delete
+    throw new ForbiddenException('غير مصرح لك بحذف هذا البحث');
   }
 
   async getStats(user_id?: string): Promise<{
@@ -308,6 +397,9 @@ export class ResearchService {
   ): Promise<Research> {
     const research = await this.findOne(research_id);
 
+    // Extract file extension
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
+
     // Upload to Cloudinary
     const uploadResult = await this.cloudinaryService.uploadResearchPDF(
       fileBuffer,
@@ -315,12 +407,70 @@ export class ResearchService {
       fileName
     );
 
-    // Update research with Cloudinary info
+    // Update research with Cloudinary info and file type
     research.file_url = uploadResult.secure_url;
     research.cloudinary_public_id = uploadResult.public_id;
     research.cloudinary_secure_url = uploadResult.secure_url;
+    research.file_type = fileExtension;
 
     return await this.researchRepository.save(research);
+  }
+
+  async updateResearchFile(
+    research_id: string,
+    fileBuffer: Buffer,
+    fileName: string,
+    fileSize: number,
+    updated_by_user_id: string
+  ): Promise<Research> {
+    const research = await this.findOne(research_id);
+
+    // Delete old file from Cloudinary if exists
+    if (research.cloudinary_public_id) {
+      try {
+        await this.cloudinaryService.deleteFile(
+          research.cloudinary_public_id,
+          'raw'
+        );
+      } catch (error) {
+        console.error('Failed to delete old file from Cloudinary:', error);
+        // Continue with upload even if deletion fails
+      }
+    }
+
+    // Extract file extension
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
+
+    // Upload new file to Cloudinary
+    const uploadResult = await this.cloudinaryService.uploadResearchPDF(
+      fileBuffer,
+      research.research_number,
+      fileName
+    );
+
+    // Update research with new file info and tracking
+    research.file_url = uploadResult.secure_url;
+    research.cloudinary_public_id = uploadResult.public_id;
+    research.cloudinary_secure_url = uploadResult.secure_url;
+    research.file_type = fileExtension;
+    research.file_updated_at = new Date();
+    research.file_updated_by = updated_by_user_id;
+
+    const savedResearch = await this.researchRepository.save(research);
+
+    // Send notification to researcher
+    try {
+      await this.notificationsService.create({
+        user_id: research.user_id,
+        type: 'general' as any,
+        title: 'تم تحديث ملف البحث',
+        message: `تم تحديث ملف البحث "${research.title}" من قبل الإدارة. يمكنك تحميل النسخة المحدثة الآن.`,
+      });
+    } catch (error) {
+      console.error('Failed to send file update notification:', error);
+    }
+
+    return savedResearch;
   }
 
   async uploadSupplementaryFile(
@@ -437,5 +587,99 @@ export class ResearchService {
       'raw',
       3600 // 1 hour
     );
+  }
+
+  /**
+   * Generate acceptance certificate for a research
+   */
+  async generateAcceptanceCertificate(research_id: string): Promise<Research> {
+    const research = await this.findOne(research_id);
+    const researcher = await this.userRepository.findOne({
+      where: { id: research.user_id },
+    });
+
+    if (!researcher) {
+      throw new NotFoundException('الباحث غير موجود');
+    }
+
+    // Get site settings
+    const siteSettings = await this.siteSettingsRepository.findOne({
+      where: {},
+    });
+
+    if (!siteSettings) {
+      throw new NotFoundException('إعدادات الموقع غير موجودة');
+    }
+
+    // Generate PDF certificate
+    const pdfBuffer = await this.pdfGeneratorService.generateAcceptanceCertificate(
+      research,
+      researcher,
+      siteSettings
+    );
+
+    // Upload to Cloudinary as public file
+    const uploadResult = await this.cloudinaryService.uploadFile(
+      pdfBuffer,
+      `certificates`,
+      'raw',
+      {
+        public_id: `${research.research_number}_acceptance_certificate`,
+        format: 'pdf',
+        access_mode: 'public',
+        type: 'upload', // Public upload
+      }
+    );
+
+    // Update research with certificate info
+    research.acceptance_certificate_url = uploadResult.secure_url;
+    research.acceptance_certificate_cloudinary_public_id = uploadResult.public_id;
+    research.acceptance_certificate_cloudinary_secure_url = uploadResult.secure_url;
+
+    return await this.researchRepository.save(research);
+  }
+
+  /**
+   * Get acceptance certificate download URL
+   */
+  async getAcceptanceCertificateUrl(research_id: string): Promise<string> {
+    const research = await this.findOne(research_id);
+
+    if (!research.acceptance_certificate_cloudinary_public_id) {
+      throw new NotFoundException('شهادة القبول غير متوفرة لهذا البحث');
+    }
+
+    // Return direct secure URL (public file)
+    if (research.acceptance_certificate_cloudinary_secure_url) {
+      return research.acceptance_certificate_cloudinary_secure_url;
+    }
+
+    // Fallback: generate download URL
+    return this.cloudinaryService.getDownloadUrl(
+      research.acceptance_certificate_cloudinary_public_id,
+      `${research.research_number}_acceptance_certificate.pdf`
+    );
+  }
+
+  /**
+   * Regenerate acceptance certificate (if needed)
+   */
+  async regenerateAcceptanceCertificate(research_id: string): Promise<Research> {
+    const research = await this.findOne(research_id);
+
+    // Delete old certificate from Cloudinary if exists
+    if (research.acceptance_certificate_cloudinary_public_id) {
+      try {
+        await this.cloudinaryService.deleteFile(
+          research.acceptance_certificate_cloudinary_public_id,
+          'raw'
+        );
+      } catch (error) {
+        console.error('Failed to delete old certificate from Cloudinary:', error);
+      }
+    }
+
+    // Generate new certificate
+    return await this.generateAcceptanceCertificate(research_id);
   }
 }

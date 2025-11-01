@@ -1,11 +1,16 @@
-import { useState } from 'react';
-import { Upload, Send, Bell, Loader2, CheckCircle, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Upload, Send, Bell, Loader2, CheckCircle, X, AlertCircle, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { researchService } from '../../../services/researchService';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export function SubmitResearchPage() {
   const navigate = useNavigate();
+  const [paymentStatus, setPaymentStatus] = useState<string>('pending');
+  const [checkingPayment, setCheckingPayment] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     title_en: '',
@@ -22,6 +27,60 @@ export function SubmitResearchPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedResearchId, setUploadedResearchId] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [researchSubmitted, setResearchSubmitted] = useState(false);
+
+  // Check payment status on mount
+  useEffect(() => {
+    checkPaymentStatus();
+  }, []);
+
+  const checkPaymentStatus = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      const token = localStorage.getItem('token');
+
+      if (!userId || !token) {
+        setCheckingPayment(false);
+        setTimeout(() => navigate('/login'), 0);
+        return;
+      }
+
+      // Check site settings first to see if payment system is enabled
+      const settingsResponse = await axios.get(`${API_URL}/site-settings/public`);
+      const submissionFee = settingsResponse.data.submission_fee || 0;
+
+      // If submission fee is 0, payment system is disabled - allow submission
+      if (submissionFee === 0) {
+        setPaymentStatus('verified');
+        setCheckingPayment(false);
+        return;
+      }
+
+      // Check payment status
+      const response = await axios.get(`${API_URL}/users/${userId}/payment-status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setPaymentStatus(response.data.payment_status);
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      toast.error('فشل في التحقق من حالة الدفع');
+    } finally {
+      setCheckingPayment(false);
+    }
+  };
+
+  // Cleanup on unmount - delete draft if not submitted
+  useEffect(() => {
+    return () => {
+      // Cleanup function runs when component unmounts
+      if (uploadedResearchId && !researchSubmitted) {
+        // Delete the draft research if user leaves without submitting (silent mode to ignore 404)
+        researchService.delete(uploadedResearchId, true);
+      }
+    };
+  }, [uploadedResearchId, researchSubmitted]);
 
   const specializations = [
     'تكنولوجيا التعليم',
@@ -38,9 +97,15 @@ export function SubmitResearchPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check file type (PDF only)
-    if (file.type !== 'application/pdf') {
-      toast.error('يرجى اختيار ملف PDF فقط');
+    // Check file type (PDF or Word)
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    ];
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('يرجى اختيار ملف PDF أو Word (doc/docx) فقط');
       return;
     }
 
@@ -64,6 +129,7 @@ export function SubmitResearchPage() {
 
       // Get current user ID
       const userId = localStorage.getItem('userId');
+      
       if (!userId) {
         toast.error('يجب تسجيل الدخول أولاً', { id: 'upload-file' });
         return;
@@ -73,7 +139,7 @@ export function SubmitResearchPage() {
       const year = new Date().getFullYear();
       const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
       const research_number = `RES-${year}-${random}`;
-
+      
       // Create temporary research entry (will be updated when form is submitted)
       const research = await researchService.create({
         user_id: userId,
@@ -82,7 +148,7 @@ export function SubmitResearchPage() {
         abstract: 'مسودة - سيتم التحديث عند إرسال البحث',
         keywords: ['مسودة'],
         specialization: 'تكنولوجيا التعليم',
-        status: 'under-review', // Will be kept as under-review after update
+        status: 'pending', // Keep as pending (draft) until form submission
       });
 
       // Upload PDF to Cloudinary
@@ -114,12 +180,12 @@ export function SubmitResearchPage() {
       // Delete the temporary research entry
       await researchService.delete(uploadedResearchId);
       
-      // Clear state
+      toast.success('تم حذف الملف بنجاح', { id: 'remove-file' });
+      
+      // Reset state instead of reloading
+      setUploadedResearchId(null);
       setFormData({ ...formData, file: null });
       setFileName('');
-      setUploadedResearchId(null);
-      
-      toast.success('تم حذف الملف بنجاح', { id: 'remove-file' });
     } catch (error) {
       console.error('Remove error:', error);
       toast.error('فشل حذف الملف', { id: 'remove-file' });
@@ -182,7 +248,7 @@ export function SubmitResearchPage() {
           keywords,
           keywords_en,
           specialization: formData.specialization,
-          status: 'under-review',
+          status: 'under-review', // ← Backend will set submission_date automatically
         });
       } else {
         // Fallback: create new research if file wasn't uploaded
@@ -210,6 +276,9 @@ export function SubmitResearchPage() {
 
       toast.success('تم إرسال البحث بنجاح!', { id: 'submit-research' });
 
+      // Mark research as submitted to prevent cleanup
+      setResearchSubmitted(true);
+
       // Navigate after showing success message
       setTimeout(() => {
         setFormData({
@@ -232,11 +301,82 @@ export function SubmitResearchPage() {
     }
   };
 
-  const handleCancel = () => {
-    if (confirm('هل أنت متأكد من إلغاء تقديم البحث؟ سيتم فقدان جميع البيانات المدخلة.')) {
+  const handleCancelClick = () => {
+    // If no file uploaded, just navigate back
+    if (!uploadedResearchId) {
+      navigate('/dashboard/my-research');
+      return;
+    }
+    // If file uploaded, show confirmation modal
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    setShowCancelModal(false);
+    try {
+      // Delete the temporary research if it was created
+      if (uploadedResearchId) {
+        toast.loading('جاري حذف البحث المؤقت...', { id: 'delete-draft' });
+        await researchService.delete(uploadedResearchId);
+        toast.success('تم حذف البحث المؤقت بنجاح', { id: 'delete-draft' });
+      }
+      navigate('/dashboard/my-research');
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      toast.error('فشل حذف البحث المؤقت', { id: 'delete-draft' });
+      // Navigate anyway
       navigate('/dashboard/my-research');
     }
   };
+
+  // Show loading while checking payment
+  if (checkingPayment) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" dir="rtl">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // If payment not verified, show message with button
+  if (paymentStatus !== 'verified') {
+    return (
+      <div className="space-y-6" dir="rtl">
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-8 shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-yellow-100 rounded-xl">
+              <DollarSign className="w-8 h-8 text-yellow-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                {paymentStatus === 'pending' ? 'يجب دفع رسوم التقديم أولاً' : 'في انتظار موافقة الإدارة'}
+              </h3>
+              <p className="text-gray-700 mb-4">
+                {paymentStatus === 'pending' 
+                  ? 'لتتمكن من تقديم بحثك، يرجى إتمام عملية دفع رسوم التقديم أولاً.'
+                  : 'تم إرسال طلب الدفع للإدارة. سيتم مراجعته والموافقة عليه قريباً. بعد الموافقة ستتمكن من تقديم بحثك.'}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate('/dashboard/payment-instructions')}
+                  className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-bold shadow-md"
+                >
+                  <DollarSign className="w-5 h-5" />
+                  <span>الذهاب لصفحة الدفع</span>
+                </button>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  <span>العودة للوحة التحكم</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -257,6 +397,19 @@ export function SubmitResearchPage() {
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-800">تقديم بحث جديد</h2>
           <p className="text-sm text-gray-500 mt-1">املأ النموذج التالي لتقديم بحثك للمراجعة</p>
+          
+          {/* Important Notice */}
+          <div className="mt-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-yellow-800 mb-1">⚠️ ملاحظة هامة</p>
+                <p className="text-sm text-yellow-700">
+                  بعد تقديم هذا البحث، سيتم إلغاء تفعيل حسابك تلقائياً. لتقديم بحث جديد، ستحتاج إلى دفع رسوم التقديم مرة أخرى.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Form Content */}
@@ -402,7 +555,7 @@ export function SubmitResearchPage() {
               <input
                 type="file"
                 id="file-upload"
-                accept=".pdf"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={!!fileName || isUploading}
@@ -431,7 +584,7 @@ export function SubmitResearchPage() {
                     disabled={isUploading}
                     className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isUploading ? 'جاري الرفع...' : 'اختيار ملف (PDF)'}
+                    {isUploading ? 'جاري الرفع...' : 'اختيار ملف (PDF أو Word)'}
                   </button>
                 )}
               </label>
@@ -485,7 +638,7 @@ export function SubmitResearchPage() {
             </button>
             <button
               type="button"
-              onClick={handleCancel}
+              onClick={handleCancelClick}
               disabled={isSubmitting}
               className="px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -494,6 +647,39 @@ export function SubmitResearchPage() {
           </div>
         </form>
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" dir="rtl">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">تأكيد الإلغاء</h3>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              هل أنت متأكد من إلغاء تقديم البحث؟ سيتم حذف جميع البيانات والملفات المرفوعة بشكل نهائي.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmCancel}
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                نعم، إلغاء البحث
+              </button>
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                تراجع
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

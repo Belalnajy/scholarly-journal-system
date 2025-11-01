@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Eye, Edit, Bell, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Eye, Edit, Bell, Plus, Loader2, AlertCircle, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { researchService, Research, ResearchStats } from '../../../services/researchService';
+import {
+  researchService,
+  Research,
+  ResearchStats,
+} from '../../../services/researchService';
+import { downloadAcceptanceCertificate } from '../../../utils/downloadFile';
+import toast from 'react-hot-toast';
 
 export function MyResearchPage() {
   const navigate = useNavigate();
@@ -33,10 +39,23 @@ export function MyResearchPage() {
         researchService.getStats(userId),
       ]);
 
-      setResearches(researchesData);
+      // Sort researches: prioritize submission_date, fallback to updated_at
+      const sortedResearches = researchesData.sort((a, b) => {
+        const dateA = a.submission_date
+          ? new Date(a.submission_date).getTime()
+          : new Date(a.updated_at).getTime();
+        const dateB = b.submission_date
+          ? new Date(b.submission_date).getTime()
+          : new Date(b.updated_at).getTime();
+        return dateB - dateA;
+      });
+
+      setResearches(sortedResearches);
       setStats(statsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ أثناء تحميل الأبحاث');
+      setError(
+        err instanceof Error ? err.message : 'حدث خطأ أثناء تحميل الأبحاث'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -44,22 +63,54 @@ export function MyResearchPage() {
 
   const getStatusConfig = (status: Research['status']) => {
     switch (status) {
-      case 'under-review':
-        return { text: 'تحت المراجعة', bgColor: 'bg-blue-100', textColor: 'text-blue-700' };
-      case 'pending-editor-decision':
-        return { text: 'بانتظار قرار المحرر', bgColor: 'bg-orange-100', textColor: 'text-orange-700' };
       case 'pending':
-        return { text: 'قيد الانتظار', bgColor: 'bg-gray-100', textColor: 'text-gray-700' };
+        return {
+          text: 'مسودة',
+          bgColor: 'bg-gray-100',
+          textColor: 'text-gray-700',
+        };
+      case 'under-review':
+        return {
+          text: 'تحت المراجعة',
+          bgColor: 'bg-blue-100',
+          textColor: 'text-blue-700',
+        };
+      case 'pending-editor-decision':
+        return {
+          text: 'بانتظار قرار المحرر',
+          bgColor: 'bg-orange-100',
+          textColor: 'text-orange-700',
+        };
       case 'accepted':
-        return { text: 'مقبول', bgColor: 'bg-green-100', textColor: 'text-green-700' };
+        return {
+          text: 'مقبول',
+          bgColor: 'bg-green-100',
+          textColor: 'text-green-700',
+        };
       case 'needs-revision':
-        return { text: 'يتطلب تعديل', bgColor: 'bg-yellow-100', textColor: 'text-yellow-700' };
+        return {
+          text: 'يتطلب تعديل',
+          bgColor: 'bg-yellow-100',
+          textColor: 'text-yellow-700',
+        };
       case 'rejected':
-        return { text: 'مرفوض', bgColor: 'bg-red-100', textColor: 'text-red-700' };
+        return {
+          text: 'مرفوض',
+          bgColor: 'bg-red-100',
+          textColor: 'text-red-700',
+        };
       case 'published':
-        return { text: 'منشور', bgColor: 'bg-purple-100', textColor: 'text-purple-700' };
+        return {
+          text: 'منشور',
+          bgColor: 'bg-purple-100',
+          textColor: 'text-purple-700',
+        };
       default:
-        return { text: 'غير محدد', bgColor: 'bg-gray-100', textColor: 'text-gray-700' };
+        return {
+          text: 'غير محدد',
+          bgColor: 'bg-gray-100',
+          textColor: 'text-gray-700',
+        };
     }
   };
 
@@ -71,9 +122,10 @@ export function MyResearchPage() {
     });
   };
 
-  const filteredResearches = filter === 'all' 
-    ? researches 
-    : researches.filter(r => r.status === filter);
+  const filteredResearches =
+    filter === 'all'
+      ? researches
+      : researches.filter((r) => r.status === filter);
 
   const handleView = (id: string) => {
     navigate(`/dashboard/view-research/${id}`);
@@ -81,6 +133,20 @@ export function MyResearchPage() {
 
   const handleEdit = (id: string) => {
     navigate(`/dashboard/revise-research/${id}`);
+  };
+
+  const handleDownloadCertificate = async (research: Research) => {
+    try {
+      toast.loading('جاري تحميل شهادة القبول...', { id: 'download-cert' });
+      
+      const certificateUrl = await researchService.getAcceptanceCertificateUrl(research.id);
+      await downloadAcceptanceCertificate(certificateUrl, research.research_number);
+      
+      toast.success('تم بدء التحميل', { id: 'download-cert' });
+    } catch (error) {
+      toast.error('فشل تحميل الشهادة', { id: 'download-cert' });
+      console.error('Error downloading certificate:', error);
+    }
   };
 
   // Loading state
@@ -135,7 +201,9 @@ export function MyResearchPage() {
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-800">جميع أبحاثي</h2>
-            <p className="text-sm text-gray-500 mt-1">إدارة ومتابعة جميع الأبحاث المقدمة</p>
+            <p className="text-sm text-gray-500 mt-1">
+              إدارة ومتابعة جميع الأبحاث المقدمة
+            </p>
           </div>
           <button
             onClick={() => navigate('/dashboard/submit-research')}
@@ -195,30 +263,74 @@ export function MyResearchPage() {
           <table className="w-full">
             <thead className="bg-gray-100">
               <tr>
-                <th className="py-3 px-4 text-right text-sm font-bold text-gray-700">عنوان البحث</th>
-                <th className="py-3 px-4 text-center text-sm font-bold text-gray-700">الحالة</th>
-                <th className="py-3 px-4 text-center text-sm font-bold text-gray-700">تاريخ التقديم</th>
-                <th className="py-3 px-4 text-center text-sm font-bold text-gray-700">آخر تحديث</th>
-                <th className="py-3 px-4 text-center text-sm font-bold text-gray-700">الإجراءات</th>
+                <th className="py-3 px-4 text-right text-sm font-bold text-gray-700">
+                  عنوان البحث
+                </th>
+                <th className="py-3 px-4 text-center text-sm font-bold text-gray-700">
+                  الحالة
+                </th>
+                <th className="py-3 px-4 text-center text-sm font-bold text-gray-700">
+                  تاريخ التقديم
+                </th>
+                <th className="py-3 px-4 text-center text-sm font-bold text-gray-700">
+                  آخر تحديث
+                </th>
+                <th className="py-3 px-4 text-center text-sm font-bold text-gray-700">
+                  الإجراءات
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredResearches.map((research) => {
                 const statusConfig = getStatusConfig(research.status);
                 return (
-                  <tr key={research.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={research.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
                     <td className="py-4 px-4 text-right">
-                      <p className="text-gray-800 font-medium">{research.title}</p>
+                      <p className="text-gray-800 font-medium">
+                        {research.title}
+                      </p>
                     </td>
                     <td className="py-4 px-4 text-center">
-                      <span className={`${statusConfig.bgColor} ${statusConfig.textColor} px-3 py-1 rounded-full text-xs font-semibold`}>
-                        {statusConfig.text}
-                      </span>
+                      <div className="flex items-center justify-center gap-2">
+                        <span
+                          className={`${statusConfig.bgColor} ${statusConfig.textColor} px-3 py-1 rounded-full text-xs font-semibold`}
+                        >
+                          {statusConfig.text}
+                        </span>
+                        {/* Certificate Badge */}
+                        {(research.status === 'accepted' || research.status === 'published') &&
+                         research.acceptance_certificate_cloudinary_public_id && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold border border-green-200" title="شهادة القبول متاحة">
+                            <Award className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="py-4 px-4 text-center text-gray-600 text-sm">{formatDate(research.submission_date)}</td>
-                    <td className="py-4 px-4 text-center text-gray-600 text-sm">{formatDate(research.updated_at)}</td>
+                    <td className="py-4 px-4 text-center text-gray-600 text-sm">
+                      {formatDate(research.submission_date)}
+                    </td>
+                    <td className="py-4 px-4 text-center text-gray-600 text-sm">
+                      {formatDate(research.updated_at)}
+                    </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center justify-center gap-2">
+                        {/* Certificate Download Button - Show for accepted/published research */}
+                        {(research.status === 'accepted' || research.status === 'published') &&
+                         research.acceptance_certificate_cloudinary_public_id && (
+                          <button
+                            onClick={() => handleDownloadCertificate(research)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors group relative"
+                            title="تحميل شهادة القبول"
+                          >
+                            <Award className="w-5 h-5" />
+                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              تحميل الشهادة
+                            </span>
+                          </button>
+                        )}
                         {research.status === 'needs-revision' && (
                           <button
                             onClick={() => handleEdit(research.id)}

@@ -1,5 +1,17 @@
-import { Facebook, Twitter, Linkedin, Youtube, Mail, Phone, MapPin, Copyright, Instagram } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  Facebook,
+  Twitter,
+  Linkedin,
+  Youtube,
+  Mail,
+  Phone,
+  Copyright,
+  Instagram,
+  Send,
+  MessageCircle,
+  Globe,
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useSiteSettings } from '../../contexts';
 
 interface FooterLink {
@@ -41,10 +53,17 @@ const socialIconMap: Record<string, any> = {
   twitter: Twitter,
   linkedin: Linkedin,
   youtube: Youtube,
-  instagram: Instagram
+  instagram: Instagram,
+  telegram: Send,
+  whatsapp_channel: MessageCircle,
 };
 
-export function Footer({ links, socialLinks, contactInfo, siteInfo }: FooterProps) {
+export function Footer({
+  links,
+  socialLinks,
+  contactInfo,
+  siteInfo,
+}: FooterProps) {
   const { settings } = useSiteSettings();
 
   // Use settings or fallback to props
@@ -64,23 +83,51 @@ export function Footer({ links, socialLinks, contactInfo, siteInfo }: FooterProp
   // Build social links from settings
   const displaySocialLinks = [];
   if (settings?.social_links?.facebook) {
-    displaySocialLinks.push({ platform: 'facebook', url: settings.social_links.facebook });
+    displaySocialLinks.push({
+      platform: 'facebook',
+      url: settings.social_links.facebook,
+    });
   }
   if (settings?.social_links?.twitter) {
-    displaySocialLinks.push({ platform: 'twitter', url: settings.social_links.twitter });
+    displaySocialLinks.push({
+      platform: 'twitter',
+      url: settings.social_links.twitter,
+    });
   }
   if (settings?.social_links?.linkedin) {
-    displaySocialLinks.push({ platform: 'linkedin', url: settings.social_links.linkedin });
+    displaySocialLinks.push({
+      platform: 'linkedin',
+      url: settings.social_links.linkedin,
+    });
   }
   if (settings?.social_links?.instagram) {
-    displaySocialLinks.push({ platform: 'instagram', url: settings.social_links.instagram });
+    displaySocialLinks.push({
+      platform: 'instagram',
+      url: settings.social_links.instagram,
+    });
   }
   if (settings?.social_links?.youtube) {
-    displaySocialLinks.push({ platform: 'youtube', url: settings.social_links.youtube });
+    displaySocialLinks.push({
+      platform: 'youtube',
+      url: settings.social_links.youtube,
+    });
   }
-  
+  if (settings?.social_links?.telegram) {
+    displaySocialLinks.push({
+      platform: 'telegram',
+      url: settings.social_links.telegram,
+    });
+  }
+  if (settings?.social_links?.whatsapp_channel) {
+    displaySocialLinks.push({
+      platform: 'whatsapp_channel',
+      url: settings.social_links.whatsapp_channel,
+    });
+  }
+
   // Fallback to props if no settings social links
-  const finalSocialLinks = displaySocialLinks.length > 0 ? displaySocialLinks : socialLinks;
+  const finalSocialLinks =
+    displaySocialLinks.length > 0 ? displaySocialLinks : socialLinks;
 
   return (
     <footer className="w-full bg-[#05192e]">
@@ -91,7 +138,10 @@ export function Footer({ links, socialLinks, contactInfo, siteInfo }: FooterProp
           <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-3 sm:items-start sm:gap-6 md:w-auto md:gap-12 lg:gap-[140px] md:pt-[80px]">
             {/* Content Links */}
             <div className="flex flex-col  gap-4 sm:items-end sm:gap-5 lg:w-[115px] lg:gap-6">
-              <h4 className="text-base font-bold text-[#f8f3ec] sm:text-lg" dir="auto">
+              <h4
+                className="text-base font-bold text-[#f8f3ec] sm:text-lg"
+                dir="auto"
+              >
                 المحتوى
               </h4>
               <div className="flex w-full flex-col  gap-2  text-sm text-[#f8f3ec] sm:items-end sm:gap-3 sm:text-right sm:text-base">
@@ -110,7 +160,10 @@ export function Footer({ links, socialLinks, contactInfo, siteInfo }: FooterProp
 
             {/* For Researchers Links */}
             <div className="flex flex-col  gap-4 sm:items-end sm:gap-5 lg:w-[130px] lg:gap-6">
-              <h4 className="text-base font-bold text-[#f8f3ec] sm:text-lg" dir="auto">
+              <h4
+                className="text-base font-bold text-[#f8f3ec] sm:text-lg"
+                dir="auto"
+              >
                 للباحثين
               </h4>
               <div className="flex w-full flex-col  gap-2 text-sm text-[#f8f3ec] sm:items-end sm:gap-3 sm:text-right sm:text-base">
@@ -129,7 +182,10 @@ export function Footer({ links, socialLinks, contactInfo, siteInfo }: FooterProp
 
             {/* Quick Links */}
             <div className="flex flex-col  gap-4 sm:items-end sm:gap-5 lg:w-[146px] lg:gap-6">
-              <h4 className="text-base font-bold text-[#f8f3ec] sm:text-lg" dir="auto">
+              <h4
+                className="text-base font-bold text-[#f8f3ec] sm:text-lg"
+                dir="auto"
+              >
                 روابط سريعة
               </h4>
               <div className="flex w-full flex-col  gap-2 text-sm text-[#f8f3ec] sm:items-end sm:gap-3 sm:text-right sm:text-base">
@@ -160,7 +216,10 @@ export function Footer({ links, socialLinks, contactInfo, siteInfo }: FooterProp
                   />
                 </div>
               </div>
-              <p className="w-full text-right text-sm font-medium text-[#f8f3ec] sm:text-base" dir="auto">
+              <p
+                className="w-full text-right text-sm font-medium text-[#f8f3ec] sm:text-base"
+                dir="auto"
+              >
                 {displaySiteInfo.description}
               </p>
             </div>
@@ -168,25 +227,52 @@ export function Footer({ links, socialLinks, contactInfo, siteInfo }: FooterProp
             {/* Contact Info */}
             <div className="flex w-full flex-col items-end gap-3 md:w-auto">
               <div className="flex items-center gap-3">
-                <p className="text-right text-sm font-medium text-[#f8f3ec] sm:text-base" dir="auto">
+                <p
+                  className="text-right text-sm font-medium text-[#f8f3ec] sm:text-base"
+                  dir="auto"
+                >
                   {displayContactInfo.email}
                 </p>
                 <Mail className="size-5 text-[#b2823e] sm:size-6" />
               </div>
 
               <div className="flex items-center gap-3">
-                <p className="text-right text-sm font-medium text-[#f8f3ec] sm:text-base" dir="auto">
+                <p
+                  className="text-right text-sm font-medium text-[#f8f3ec] sm:text-base"
+                  dir="auto"
+                >
                   {displayContactInfo.phone}
                 </p>
                 <Phone className="size-5 text-[#b2823e] sm:size-6" />
               </div>
 
-              <div className="flex items-center gap-3">
-                <p className="text-right text-sm font-medium text-[#f8f3ec] sm:text-base" dir="auto">
-                  {displayContactInfo.address}
-                </p>
-                <MapPin className="size-5 text-[#b2823e] sm:size-6" />
-              </div>
+              {/* ISSN */}
+              {settings?.journal_issn && (
+                <div className="flex items-center gap-3">
+                  <p
+                    className="text-right text-sm font-medium text-[#b2823e] sm:text-base"
+                    dir="ltr"
+                  >
+                    ISSN: {settings.journal_issn}
+                  </p>
+                  <Globe className="size-5 text-[#b2823e] sm:size-6" />
+                </div>
+              )}
+
+              {/* University Website */}
+              {settings?.university_url && (
+                <a
+                  href={settings.university_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 group"
+                >
+                  <p className="text-right text-sm font-medium text-[#f8f3ec] hover:text-[#b2823e] transition-colors sm:text-base" dir="auto">
+                    موقع الجامعة
+                  </p>
+                  <Globe className="size-5 text-[#b2823e] sm:size-6 group-hover:scale-110 transition-transform" />
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -207,18 +293,25 @@ export function Footer({ links, socialLinks, contactInfo, siteInfo }: FooterProp
                     className="transition-transform hover:scale-110"
                     aria-label={social.platform}
                   >
-                    {Icon && <Icon className="size-5 text-[#b2823e] sm:size-6" />}
+                    {Icon && (
+                      <Icon className="size-5 text-[#b2823e] sm:size-6" />
+                    )}
                   </a>
                 );
               })}
             </div>
 
-            {/* Copyright */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <p className="text-center text-xs font-medium text-[#f8f3ec] sm:text-right sm:text-sm" dir="rtl">
-                2024 {displaySiteInfo.name}. جميع الحقوق محفوظة.
-              </p>
-              <Copyright className="size-4 text-[#b2823e] sm:size-5" />
+            {/* Copyright and ISSN */}
+            <div className="flex flex-col items-center gap-2 sm:items-end sm:gap-2">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <p
+                  className="text-center text-xs font-medium text-[#f8f3ec] sm:text-right sm:text-sm"
+                  dir="rtl"
+                >
+                  2024 {displaySiteInfo.name}. جميع الحقوق محفوظة.
+                </p>
+                <Copyright className="size-4 text-[#b2823e] sm:size-5" />
+              </div>
             </div>
           </div>
         </div>

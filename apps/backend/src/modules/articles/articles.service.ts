@@ -47,10 +47,12 @@ export class ArticlesService {
       );
     }
 
-    // If research_id is provided, verify it exists and update it
+    // If research_id is provided, verify it exists and copy data
+    let research = null;
     if (createArticleDto.research_id) {
-      const research = await this.researchRepository.findOne({
+      research = await this.researchRepository.findOne({
         where: { id: createArticleDto.research_id },
+        relations: ['user'], // Load user data for author info
       });
 
       if (!research) {
@@ -64,6 +66,41 @@ export class ArticlesService {
     }
 
     const article = this.articleRepository.create(createArticleDto);
+    
+    // Copy authors data from research if not provided in DTO
+    if (research && (!createArticleDto.authors || createArticleDto.authors.length === 0)) {
+      // Build authors array from research data
+      const authors = [];
+      
+      // Add main author (researcher)
+      if (research.user) {
+        authors.push({
+          name: research.user.name,
+          email: research.user.email,
+          affiliation: research.user.affiliation || 'غير محدد',
+        });
+      }
+      
+      // Add co-authors if they exist
+      if (research.co_authors && Array.isArray(research.co_authors)) {
+        research.co_authors.forEach((coAuthor: any) => {
+          authors.push({
+            name: coAuthor.name || 'غير محدد',
+            email: coAuthor.email || 'no-email@example.com',
+            affiliation: coAuthor.affiliation || 'غير محدد',
+          });
+        });
+      }
+      
+      article.authors = authors;
+    }
+    
+    // If the article is being published to a published issue, set published_date
+    if (article.status === ArticleStatus.PUBLISHED || issue.status === 'published') {
+      article.published_date = new Date();
+      article.status = ArticleStatus.PUBLISHED;
+    }
+    
     const savedArticle = await this.articleRepository.save(article);
 
     // Generate QR Code for article verification

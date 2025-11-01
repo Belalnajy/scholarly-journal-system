@@ -46,24 +46,41 @@ export function ArticlePublicPage() {
       // Increment download count
       try {
         await articlesService.incrementDownloads(article.id);
-        console.log('✅ Download counted');
       } catch (err) {
         console.error('Failed to increment downloads:', err);
       }
 
-      // Download the PDF
+      // Extract file extension from URL
+      const getFileExtension = (url: string) => {
+        // Try to get extension from URL
+        const urlParts = url.split('?')[0].split('.');
+        const ext = urlParts[urlParts.length - 1].toLowerCase();
+        
+        // Common document extensions
+        if (['pdf', 'doc', 'docx'].includes(ext)) {
+          return ext;
+        }
+        
+        // Default to pdf if can't determine
+        return 'pdf';
+      };
+
+      // Download the file
       const response = await fetch(article.pdf_url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${article.article_number || 'article'}.pdf`;
+      
+      const fileExtension = getFileExtension(article.pdf_url);
+      link.download = `${article.article_number || 'article'}.${fileExtension}`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error('Error downloading file:', error);
       window.open(article.pdf_url, '_blank');
     }
   };

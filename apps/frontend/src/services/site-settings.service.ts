@@ -20,6 +20,10 @@ export interface SiteSettings {
   id: string;
   site_name: string;
   site_name_en?: string;
+  journal_doi?: string;
+  journal_url?: string;
+  journal_issn?: string;
+  university_url?: string;
   logo_url?: string;
   favicon_url?: string;
   about_intro?: string;
@@ -29,8 +33,13 @@ export interface SiteSettings {
   contact_info?: {
     email?: string;
     phone?: string;
+    whatsapp?: string;
     address?: string;
     fax?: string;
+    whatsapp_numbers?: Array<{
+      number: string;
+      label: string;
+    }>;
   };
   social_links?: {
     facebook?: string;
@@ -38,15 +47,25 @@ export interface SiteSettings {
     linkedin?: string;
     instagram?: string;
     youtube?: string;
+    telegram?: string;
+    whatsapp_channel?: string;
   };
   is_maintenance_mode: boolean;
   maintenance_message?: string;
+  submission_fee?: number;
+  submission_fee_currency?: string;
+  payment_instructions?: string;
+  acceptance_letter_content?: string;
   updated_at: string;
 }
 
 export interface UpdateSiteSettingsDto {
   site_name?: string;
   site_name_en?: string;
+  journal_doi?: string;
+  journal_url?: string;
+  journal_issn?: string;
+  university_url?: string;
   logo_url?: string;
   favicon_url?: string;
   about_intro?: string;
@@ -56,8 +75,13 @@ export interface UpdateSiteSettingsDto {
   contact_info?: {
     email?: string;
     phone?: string;
+    whatsapp?: string;
     address?: string;
     fax?: string;
+    whatsapp_numbers?: Array<{
+      number: string;
+      label: string;
+    }>;
   };
   social_links?: {
     facebook?: string;
@@ -65,9 +89,15 @@ export interface UpdateSiteSettingsDto {
     linkedin?: string;
     instagram?: string;
     youtube?: string;
+    telegram?: string;
+    whatsapp_channel?: string;
   };
   is_maintenance_mode?: boolean;
   maintenance_message?: string;
+  submission_fee?: number;
+  submission_fee_currency?: string;
+  payment_instructions?: string;
+  acceptance_letter_content?: string;
 }
 
 class SiteSettingsService {
@@ -119,9 +149,12 @@ class SiteSettingsService {
    */
   async toggleMaintenanceMode(enabled: boolean): Promise<SiteSettings> {
     try {
-      const response = await axiosInstance.post('/site-settings/maintenance-mode', {
-        enabled,
-      });
+      const response = await axiosInstance.post(
+        '/site-settings/maintenance-mode',
+        {
+          enabled,
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('Error toggling maintenance mode:', error);
@@ -138,11 +171,15 @@ class SiteSettingsService {
       const formData = new FormData();
       formData.append('logo', file);
 
-      const response = await axiosInstance.post('/site-settings/upload-logo', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axiosInstance.post(
+        '/site-settings/upload-logo',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('Error uploading logo:', error);
@@ -159,11 +196,15 @@ class SiteSettingsService {
       const formData = new FormData();
       formData.append('favicon', file);
 
-      const response = await axiosInstance.post('/site-settings/upload-favicon', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axiosInstance.post(
+        '/site-settings/upload-favicon',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('Error uploading favicon:', error);

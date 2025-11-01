@@ -26,6 +26,8 @@ export function EditUserPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [shouldDeleteAvatar, setShouldDeleteAvatar] = useState(false);
 
   // Fetch user data on mount
   useEffect(() => {
@@ -88,12 +90,14 @@ export function EditUserPage() {
       return;
     }
 
-    // قراءة الصورة وتحويلها لـ Base64
+    // حفظ الملف للرفع لاحقاً
+    setAvatarFile(file);
+    setShouldDeleteAvatar(false);
+
+    // قراءة الصورة للعرض المسبق
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setAvatarPreview(base64String);
-      setFormData({ ...formData, avatar_url: base64String });
+      setAvatarPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
   };
@@ -103,7 +107,8 @@ export function EditUserPage() {
    */
   const handleRemoveImage = () => {
     setAvatarPreview(null);
-    setFormData({ ...formData, avatar_url: '' });
+    setAvatarFile(null);
+    setShouldDeleteAvatar(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,7 +117,21 @@ export function EditUserPage() {
     try {
       setSaving(true);
 
-      // Prepare data for backend
+      // 1. Upload avatar if new file selected
+      if (avatarFile) {
+        toast.loading('جاري رفع الصورة...', { id: 'upload-avatar' });
+        await usersService.uploadAvatar(id!, avatarFile);
+        toast.success('تم رفع الصورة بنجاح', { id: 'upload-avatar' });
+      }
+
+      // 2. Delete avatar if requested
+      if (shouldDeleteAvatar && !avatarFile) {
+        toast.loading('جاري حذف الصورة...', { id: 'delete-avatar' });
+        await usersService.deleteAvatar(id!);
+        toast.success('تم حذف الصورة بنجاح', { id: 'delete-avatar' });
+      }
+
+      // 3. Update user data
       const userData = {
         name: formData.name,
         email: formData.email,
@@ -123,7 +142,6 @@ export function EditUserPage() {
         specialization: formData.specialization || undefined,
         department: formData.department || undefined,
         academic_degree: (formData.academic_degree as AcademicDegree) || undefined,
-        avatar_url: formData.avatar_url || undefined,
       };
 
       // Send to backend
@@ -231,21 +249,33 @@ export function EditUserPage() {
 
                 {/* Upload Button */}
                 <div className="flex-1">
-                  <label className="cursor-pointer">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors border-2 border-gray-300 w-fit">
-                      <Upload className="w-5 h-5" />
-                      <span className="font-medium">اختر صورة</span>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <p className="text-xs text-gray-500 mt-2">
-                    الحد الأقصى: 2 ميجابايت • الصيغ المدعومة: JPG, PNG, GIF
-                  </p>
+                  <div>
+                    <label className="cursor-pointer">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors w-fit">
+                        <Upload className="w-5 h-5" />
+                        <span className="font-medium">{avatarPreview ? 'تغيير الصورة' : 'اختر صورة'}</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-xs text-gray-500 mt-2">
+                      الحد الأقصى: 2 ميجابايت • الصيغ المدعومة: JPG, PNG, GIF
+                    </p>
+                    {avatarFile && (
+                      <p className="text-xs text-green-600 mt-1 font-medium">
+                        ✓ تم اختيار صورة جديدة - سيتم رفعها عند الحفظ
+                      </p>
+                    )}
+                    {shouldDeleteAvatar && (
+                      <p className="text-xs text-red-600 mt-1 font-medium">
+                        ✓ سيتم حذف الصورة عند الحفظ
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

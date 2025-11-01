@@ -15,12 +15,14 @@ export interface ResearchRevision {
   file_url: string | null;
   cloudinary_public_id?: string;
   cloudinary_secure_url?: string;
+  file_type?: string;
   original_data?: {
     abstract?: string;
     keywords?: string[];
     file_url?: string;
     cloudinary_public_id?: string;
     cloudinary_secure_url?: string;
+    file_type?: string;
   };
   status: RevisionStatus;
   deadline: string | null;

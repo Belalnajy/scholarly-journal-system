@@ -1,6 +1,7 @@
 export { LandingPage } from './LandingPage';
 export { AboutPage } from './AboutPage';
 export { EditorialBoardPage } from './EditorialBoardPage';
+export { TeamPage } from './TeamPage';
 export { IssuesArchivePage } from './IssuesArchivePage';
 export { TermsAndConditionsPage } from './TermsAndConditionsPage';
 export { PrivacyPolicyPage } from './PrivacyPolicyPage';

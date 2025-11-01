@@ -42,7 +42,6 @@ export function AddArticleToIssuePage() {
         (r) => r.status === 'accepted' && !r.published_article_id
       );
       setAcceptedResearches(accepted);
-      console.log('Accepted researches:', accepted);
     } catch (err: any) {
       const errorMsg = err.message || 'فشل في تحميل البيانات';
       setError(errorMsg);

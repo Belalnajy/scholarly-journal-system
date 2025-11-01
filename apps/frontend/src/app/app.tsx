@@ -4,7 +4,8 @@ import { Header, Footer } from '../components/layout';
 import { ScrollToTop, ProtectedRoute } from '../components/common';
 import { PublicRoute } from '../components/PublicRoute';
 import { MaintenanceGuard } from '../components/MaintenanceGuard';
-import { LandingPage, AboutPage, EditorialBoardPage, IssuesArchivePage, PrivacyPolicyPage, TermsAndConditionsPage, ContactPage, IssueDetailsPage, ResearchDetailsPage, VerifyArticlePage, ArticlePublicPage, LoginPage, RegistrationPage, ForgotPasswordPage, VerifyCodePage, ResetPasswordPage, DashboardPage, MaintenancePage } from '../pages';
+import { FloatingWhatsAppButton } from '../components/FloatingWhatsAppButton';
+import { LandingPage, AboutPage, EditorialBoardPage, TeamPage, IssuesArchivePage, PrivacyPolicyPage, TermsAndConditionsPage, ContactPage, IssueDetailsPage, ResearchDetailsPage, VerifyArticlePage, ArticlePublicPage, LoginPage, RegistrationPage, ForgotPasswordPage, VerifyCodePage, ResetPasswordPage, DashboardPage, MaintenancePage } from '../pages';
 import { SearchResultsPage } from '../pages/SearchResultsPage';
 import { AuthProvider, SiteSettingsProvider } from '../contexts';
 import {
@@ -101,6 +102,7 @@ export function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/editorial" element={<EditorialBoardPage />} />
+                <Route path="/team" element={<TeamPage />} />
                 <Route path="/issues" element={<IssuesArchivePage />} />
                 <Route path="/issues/:id" element={<IssueDetailsPage />} />
                 <Route path="/research/:id" element={<ResearchDetailsPage />} />
@@ -117,6 +119,7 @@ export function App() {
                 contactInfo={contactInfo}
                 siteInfo={siteInfo}
               />
+              <FloatingWhatsAppButton />
             </MaintenanceGuard>
           }
         />

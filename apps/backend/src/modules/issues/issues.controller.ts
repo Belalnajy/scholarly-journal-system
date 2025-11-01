@@ -9,7 +9,11 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { IssuesService } from './issues.service';
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
@@ -124,6 +128,35 @@ export class IssuesController {
   @Public()
   incrementDownloads(@Param('id', ParseUUIDPipe) id: string) {
     return this.issuesService.incrementDownloads(id);
+  }
+
+  /**
+   * Upload full issue PDF (Admin/Editor only)
+   */
+  @Post(':id/upload-full-pdf')
+  @Roles('admin', 'editor')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFullIssuePdf(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    // Validate file type
+    if (file.mimetype !== 'application/pdf') {
+      throw new BadRequestException('نوع الملف غير مدعوم. يرجى رفع ملف PDF فقط');
+    }
+
+    // Validate file size (max 50MB for full issue)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      throw new BadRequestException('حجم الملف كبير جداً. الحد الأقصى 50 ميجابايت');
+    }
+
+    return this.issuesService.uploadFullIssuePdf(
+      id,
+      file.buffer,
+      file.originalname,
+      file.size,
+    );
   }
 
   /**

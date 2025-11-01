@@ -352,4 +352,99 @@ export class UsersService {
       console.error('Failed to send password change notification:', error);
     }
   }
+
+  // Get payment status for a user
+  async getPaymentStatus(userId: string): Promise<{
+    payment_status: string;
+    payment_verified_at: Date | null;
+    can_submit_research: boolean;
+  }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('المستخدم غير موجود');
+    }
+
+    return {
+      payment_status: user.payment_status,
+      payment_verified_at: user.payment_verified_at,
+      can_submit_research: user.payment_status === 'verified',
+    };
+  }
+
+  // Verify payment for a user (Admin/Editor only)
+  async verifyPayment(userId: string): Promise<UserResponse> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('المستخدم غير موجود');
+    }
+
+    user.payment_status = 'verified';
+    user.payment_verified_at = new Date();
+
+    const updatedUser = await this.userRepository.save(user);
+
+    // Send notification to user
+    try {
+      await this.notificationsService.create({
+        user_id: user.id,
+        type: NotificationType.GENERAL,
+        title: 'تم تأكيد الدفع',
+        message: 'تم تأكيد دفعك بنجاح! يمكنك الآن تقديم بحثك من خلال لوحة التحكم.',
+      });
+    } catch (error) {
+      console.error('Failed to send payment verification notification:', error);
+    }
+
+    const { password, hashPassword, comparePassword, ...result } = updatedUser;
+    return result as UserResponse;
+  }
+
+  // Get all users with pending payments (Admin/Editor only)
+  async getPendingPayments(): Promise<UserResponse[]> {
+    const users = await this.userRepository.find({
+      where: { 
+        payment_status: 'paid',
+        role: 'researcher'
+      },
+      order: {
+        updated_at: 'DESC',
+      },
+    });
+
+    return users.map((user) => {
+      const { password, hashPassword, comparePassword, ...result } = user;
+      return result as UserResponse;
+    });
+  }
+
+  // Deactivate payment (reset to pending) - Admin/Editor only
+  async deactivatePayment(userId: string): Promise<UserResponse> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('المستخدم غير موجود');
+    }
+
+    user.payment_status = 'pending';
+    user.payment_verified_at = null;
+
+    const updatedUser = await this.userRepository.save(user);
+
+    // Send notification to user
+    try {
+      await this.notificationsService.create({
+        user_id: user.id,
+        type: NotificationType.GENERAL,
+        title: 'تم إلغاء تفعيل الحساب',
+        message: 'تم إلغاء تفعيل حسابك. يرجى التواصل مع الإدارة للمزيد من المعلومات.',
+      });
+    } catch (error) {
+      console.error('Failed to send payment deactivation notification:', error);
+    }
+
+    const { password, hashPassword, comparePassword, ...result } = updatedUser;
+    return result as UserResponse;
+  }
 }

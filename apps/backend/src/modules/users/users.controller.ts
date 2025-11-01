@@ -90,4 +90,28 @@ export class UsersController {
     const h = height ? parseInt(height, 10) : undefined;
     return this.usersService.getAvatarUrl(userId, w, h);
   }
+
+  // Payment status endpoints
+  @Get(':id/payment-status')
+  getPaymentStatus(@Param('id') userId: string) {
+    return this.usersService.getPaymentStatus(userId);
+  }
+
+  @Patch(':id/verify-payment')
+  @Roles('admin', 'editor') // Only admin and editor can verify payments
+  verifyPayment(@Param('id') userId: string) {
+    return this.usersService.verifyPayment(userId);
+  }
+
+  @Get('pending-payments/list')
+  @Roles('admin', 'editor') // Only admin and editor can view pending payments
+  getPendingPayments() {
+    return this.usersService.getPendingPayments();
+  }
+
+  @Patch(':id/deactivate-payment')
+  @Roles('admin', 'editor') // Only admin and editor can deactivate payments
+  deactivatePayment(@Param('id') userId: string) {
+    return this.usersService.deactivatePayment(userId);
+  }
 }

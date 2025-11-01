@@ -148,6 +148,24 @@ export const incrementIssueDownloads = async (id: string): Promise<void> => {
 };
 
 /**
+ * Upload full issue PDF (all articles combined)
+ */
+export const uploadFullIssuePdf = async (
+  id: string,
+  file: File
+): Promise<Issue> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await api.post(`/issues/${id}/upload-full-pdf`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+/**
  * Get issue statistics (calculated from issues list)
  */
 export const getIssuesStats = async (): Promise<IssueStats> => {
@@ -179,6 +197,7 @@ const issuesService = {
   publishIssue,
   incrementIssueViews,
   incrementIssueDownloads,
+  uploadFullIssuePdf,
   getStats: getIssuesStats,
 };
 

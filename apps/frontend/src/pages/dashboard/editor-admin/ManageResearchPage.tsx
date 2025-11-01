@@ -216,7 +216,12 @@ export function ManageResearchPage() {
                     </td>
                     <td className="py-4 px-4 text-center text-sm text-gray-600">{formatDate(research.submission_date)}</td>
                     <td className="py-4 px-4">
-                      <ResearchActionButtons researchId={research.id} status={mapStatus(research.status)} />
+                      <ResearchActionButtons 
+                        researchId={research.id} 
+                        status={mapStatus(research.status)}
+                        hasCertificate={!!research.acceptance_certificate_cloudinary_public_id}
+                        onCertificateGenerated={loadResearches}
+                      />
                     </td>
                   </tr>
                 ))

@@ -103,6 +103,17 @@ export class User {
   })
   status!: string;
 
+  // Payment Status for Research Submission
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'paid', 'verified'],
+    default: 'pending',
+  })
+  payment_status!: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  payment_verified_at!: Date;
+
   // Timestamps
   @CreateDateColumn()
   created_at!: Date;

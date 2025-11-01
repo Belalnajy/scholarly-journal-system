@@ -79,9 +79,15 @@ export function ReviseResearchPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check file type (PDF only)
-    if (file.type !== 'application/pdf') {
-      toast.error('يرجى اختيار ملف PDF فقط');
+    // Check file type (PDF or Word)
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    ];
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('يرجى اختيار ملف PDF أو Word (doc/docx) فقط');
       return;
     }
 
@@ -599,7 +605,7 @@ export function ReviseResearchPage() {
               <input
                 type="file"
                 id="file-upload"
-                accept=".pdf"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={!!fileName || isUploading}
@@ -628,7 +634,7 @@ export function ReviseResearchPage() {
                     disabled={isUploading}
                     className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isUploading ? 'جاري الرفع...' : 'اختيار ملف (PDF)'}
+                    {isUploading ? 'جاري الرفع...' : 'اختيار ملف (PDF أو Word)'}
                   </button>
                 )}
               </label>

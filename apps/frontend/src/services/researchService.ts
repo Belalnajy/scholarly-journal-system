@@ -6,9 +6,9 @@ import axios from 'axios';
 // ============================================
 
 export type ResearchStatus =
+  | 'pending'
   | 'under-review'
   | 'pending-editor-decision'
-  | 'pending'
   | 'needs-revision'
   | 'accepted'
   | 'rejected'
@@ -36,6 +36,12 @@ export interface Research {
   file_url?: string;
   cloudinary_public_id?: string;
   cloudinary_secure_url?: string;
+  file_type?: string;
+  file_updated_at?: string;
+  file_updated_by?: string;
+  acceptance_certificate_url?: string;
+  acceptance_certificate_cloudinary_public_id?: string;
+  acceptance_certificate_cloudinary_secure_url?: string;
   published_article_id?: string;
   submission_date: string;
   evaluation_date?: string;
@@ -227,7 +233,11 @@ export const researchService = {
   /**
    * Update research status
    */
-  async updateStatus(id: string, status: ResearchStatus, issueId?: string): Promise<Research> {
+  async updateStatus(
+    id: string,
+    status: ResearchStatus,
+    issueId?: string
+  ): Promise<Research> {
     try {
       const response = await api.patch<Research>(`/research/${id}/status`, {
         status,
@@ -240,12 +250,18 @@ export const researchService = {
   },
 
   // Accept research and convert to article automatically
-  async acceptAndConvertToArticle(researchId: string, issueId: string): Promise<Research> {
+  async acceptAndConvertToArticle(
+    researchId: string,
+    issueId: string
+  ): Promise<Research> {
     try {
-      const response = await api.patch<Research>(`/research/${researchId}/status`, {
-        status: 'accepted',
-        issueId: issueId,
-      });
+      const response = await api.patch<Research>(
+        `/research/${researchId}/status`,
+        {
+          status: 'accepted',
+          issueId: issueId,
+        }
+      );
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
@@ -255,10 +271,20 @@ export const researchService = {
   /**
    * Delete research
    */
-  async delete(id: string): Promise<void> {
+  async delete(id: string, silent = false): Promise<void> {
     try {
-      await api.delete(`/research/${id}`);
+      await api.delete(`/research/${id}`, {
+        // In silent mode, treat 404 as success
+        validateStatus: (status) => {
+          if (silent && status === 404) return true;
+          return status >= 200 && status < 300;
+        },
+      });
     } catch (error) {
+      // If silent mode and it's a 404, don't throw
+      if (silent && (error as any)?.response?.status === 404) {
+        return; // Research already deleted, ignore
+      }
       throw new Error(getErrorMessage(error));
     }
   },
@@ -387,6 +413,60 @@ export const researchService = {
   },
 
   /**
+   * Upload edited file by reviewer (replaces original without creating review)
+   * POST /api/research/:id/upload-edited-by-reviewer
+   */
+  async uploadEditedByReviewer(
+    research_id: string,
+    file: File
+  ): Promise<Research> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post<Research>(
+        `/research/${research_id}/upload-edited-by-reviewer`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  /**
+   * Update research file by admin (with tracking)
+   * PATCH /api/research/:id/update-file
+   */
+  async updateResearchFile(
+    research_id: string,
+    file: File
+  ): Promise<Research> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.patch<Research>(
+        `/research/${research_id}/update-file`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  /**
    * Upload supplementary file to Cloudinary
    * POST /api/research/:id/upload-supplementary
    */
@@ -474,6 +554,55 @@ export const researchService = {
     try {
       const response = await api.get<string>(
         `/research/${research_id}/pdf-view-url`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  // ============================================
+  // Acceptance Certificate Methods
+  // ============================================
+
+  /**
+   * Get acceptance certificate download URL
+   * GET /api/research/:id/acceptance-certificate-url
+   */
+  async getAcceptanceCertificateUrl(research_id: string): Promise<string> {
+    try {
+      const response = await api.get<string>(
+        `/research/${research_id}/acceptance-certificate-url`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  /**
+   * Generate acceptance certificate (admin/editor only)
+   * POST /api/research/:id/generate-acceptance-certificate
+   */
+  async generateAcceptanceCertificate(research_id: string): Promise<Research> {
+    try {
+      const response = await api.post<Research>(
+        `/research/${research_id}/generate-acceptance-certificate`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  /**
+   * Regenerate acceptance certificate (admin/editor only)
+   * POST /api/research/:id/regenerate-acceptance-certificate
+   */
+  async regenerateAcceptanceCertificate(research_id: string): Promise<Research> {
+    try {
+      const response = await api.post<Research>(
+        `/research/${research_id}/regenerate-acceptance-certificate`
       );
       return response.data;
     } catch (error) {

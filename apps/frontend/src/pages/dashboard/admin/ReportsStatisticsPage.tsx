@@ -31,8 +31,55 @@ export function ReportsStatisticsPage() {
   };
 
   const handleExportReport = () => {
-    // TODO: Implement export functionality
-    toast.success('سيتم تصدير التقرير قريباً...');
+    try {
+      if (!reportsData) {
+        toast.error('لا توجد بيانات للتصدير');
+        return;
+      }
+
+      // Prepare report data
+      const reportContent = `
+تقرير الأداء الشامل
+=====================
+
+📊 الإحصائيات العامة:
+- إجمالي التقديمات: ${stats.totalSubmissions}
+- الأبحاث المنشورة: ${stats.publishedResearch}
+- معدل القبول: ${stats.acceptanceRate}%
+- معدل الرفض: ${stats.rejectionRate}%
+- قيد المراجعة: ${stats.pendingReview}
+
+📈 تطور وقت المراجعة الشهري:
+${monthlyReviewTime.map(item => `- ${item.month}: ${item.days} يوم`).join('\n')}
+
+📊 إنتاجية النشر الشهرية:
+${monthlyProductivity.map(item => `- ${item.month}: ${item.value} بحث`).join('\n')}
+
+تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG', { 
+  year: 'numeric', 
+  month: 'long', 
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+})}
+      `.trim();
+
+      // Create blob and download
+      const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `تقرير-الأداء-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('تم تحميل التقرير بنجاح');
+    } catch (error) {
+      toast.error('فشل في تصدير التقرير');
+      console.error('Export error:', error);
+    }
   };
 
   // Custom tooltip for charts

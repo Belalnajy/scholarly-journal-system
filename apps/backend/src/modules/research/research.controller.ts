@@ -10,6 +10,8 @@ import {
   UseInterceptors,
   UploadedFile,
   UseGuards,
+  BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ResearchService } from './research.service';
@@ -83,9 +85,9 @@ export class ResearchController {
   }
 
   @Delete(':id')
-  @Roles('admin') // Only admin can delete research
-  remove(@Param('id') id: string) {
-    return this.researchService.remove(id);
+  @Roles('researcher', 'admin', 'editor') // Researchers can delete their own draft research
+  remove(@Param('id') id: string, @Req() req: any) {
+    return this.researchService.remove(id, req.user);
   }
 
   // Research Files Endpoints
@@ -109,17 +111,85 @@ export class ResearchController {
 
   // Cloudinary Upload Endpoints
   @Post(':id/upload-pdf')
-  @Roles('researcher', 'admin', 'editor') // Researchers can upload PDFs
+  @Roles('researcher', 'admin', 'editor') // Researchers can upload PDFs or Word files
   @UseInterceptors(FileInterceptor('file'))
   async uploadPDF(
     @Param('id') research_id: string,
     @UploadedFile() file: Express.Multer.File
   ) {
+    // Validate file type
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    ];
+    
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('نوع الملف غير مدعوم. يرجى رفع ملف PDF أو Word (doc/docx) فقط');
+    }
+    
     return this.researchService.uploadResearchPDF(
       research_id,
       file.buffer,
       file.originalname,
       file.size
+    );
+  }
+
+  // Upload edited file by reviewer (replaces original without creating review)
+  @Post(':id/upload-edited-by-reviewer')
+  @Roles('reviewer', 'admin', 'editor')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadEditedByReviewer(
+    @Param('id') research_id: string,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    // Validate file type
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    ];
+    
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('نوع الملف غير مدعوم. يرجى رفع ملف PDF أو Word (doc/docx) فقط');
+    }
+    
+    // Simply replace the file without affecting review status
+    return this.researchService.uploadResearchPDF(
+      research_id,
+      file.buffer,
+      file.originalname,
+      file.size
+    );
+  }
+
+  // Update research file by admin (with tracking)
+  @Patch(':id/update-file')
+  @Roles('admin', 'editor')
+  @UseInterceptors(FileInterceptor('file'))
+  async updateResearchFile(
+    @Param('id') research_id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any
+  ) {
+    // Validate file type
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    ];
+    
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('نوع الملف غير مدعوم. يرجى رفع ملف PDF أو Word (doc/docx) فقط');
+    }
+    
+    return this.researchService.updateResearchFile(
+      research_id,
+      file.buffer,
+      file.originalname,
+      file.size,
+      req.user.id
     );
   }
 
@@ -189,5 +259,24 @@ export class ResearchController {
         message: error.message,
       };
     }
+  }
+
+  // Acceptance Certificate Endpoints
+  @Get(':id/acceptance-certificate-url')
+  @Roles('researcher', 'admin', 'editor') // Researchers can download their acceptance certificate
+  getAcceptanceCertificateUrl(@Param('id') research_id: string) {
+    return this.researchService.getAcceptanceCertificateUrl(research_id);
+  }
+
+  @Post(':id/generate-acceptance-certificate')
+  @Roles('admin', 'editor') // Only admins and editors can generate certificates
+  generateAcceptanceCertificate(@Param('id') research_id: string) {
+    return this.researchService.generateAcceptanceCertificate(research_id);
+  }
+
+  @Post(':id/regenerate-acceptance-certificate')
+  @Roles('admin', 'editor') // Only admins and editors can regenerate certificates
+  regenerateAcceptanceCertificate(@Param('id') research_id: string) {
+    return this.researchService.regenerateAcceptanceCertificate(research_id);
   }
 }

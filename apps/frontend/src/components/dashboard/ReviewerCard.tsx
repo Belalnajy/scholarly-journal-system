@@ -62,19 +62,6 @@ export function ReviewerCard({
             {reviewer.completedReviews} مراجعة مكتملة • {reviewer.availability === 'available' ? 'متاح' : 'مشغول'}
           </p>
         </div>
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          <button className="px-3 py-1.5 text-xs text-[#0D3B66] border border-[#0D3B66] rounded-lg hover:bg-blue-50 transition-colors">
-            التخصص المطابق
-          </button>
-          <button className="px-3 py-1.5 text-xs text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-            تقييم الأداء
-          </button>
-          <button className="px-3 py-1.5 text-xs text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-            مقارنة البيانات
-          </button>
-        </div>
       </div>
     </div>
   );

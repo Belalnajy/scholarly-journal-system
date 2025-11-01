@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
@@ -56,5 +57,46 @@ export class ReviewsController {
   @Roles('admin') // Only admin can delete reviews
   remove(@Param('id') id: string) {
     return this.reviewsService.remove(id);
+  }
+
+  // Upload edited file by reviewer
+  @Post(':id/upload-edited-file')
+  @Roles('reviewer', 'admin', 'editor')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadEditedFile(
+    @Param('id') review_id: string,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    // Validate file type
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    ];
+    
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('نوع الملف غير مدعوم. يرجى رفع ملف PDF أو Word (doc/docx) فقط');
+    }
+    
+    return this.reviewsService.uploadEditedFile(
+      review_id,
+      file.buffer,
+      file.originalname,
+      file.size
+    );
+  }
+
+  // Get original file URL (before reviewer's edit)
+  @Get(':id/original-file-url')
+  @Roles('reviewer', 'researcher', 'editor', 'admin')
+  getOriginalFileUrl(@Param('id') review_id: string) {
+    return this.reviewsService.getOriginalFileUrl(review_id);
+  }
+
+  // Restore original file (undo reviewer's edit)
+  @Post(':id/restore-original')
+  @Roles('admin', 'editor')
+  restoreOriginalFile(@Param('id') review_id: string) {
+    return this.reviewsService.restoreOriginalFile(review_id);
   }
 }

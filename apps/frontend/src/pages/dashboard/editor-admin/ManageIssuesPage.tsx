@@ -32,11 +32,11 @@ function CreateIssueModal({ onClose, onSave }: { onClose: () => void; onSave: (d
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div 
-        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full"
+        className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-lg w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-t-2xl relative">
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl relative">
           <button
             onClick={onClose}
             className="absolute left-4 top-4 p-2 text-gray-600 hover:bg-white rounded-lg transition-colors"
@@ -44,11 +44,11 @@ function CreateIssueModal({ onClose, onSave }: { onClose: () => void; onSave: (d
             <X className="w-5 h-5" />
           </button>
           
-          <h2 className="text-2xl font-bold text-gray-800 text-center">إنشاء عدد جديد</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center">إنشاء عدد جديد</h2>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="p-6 space-y-6" dir="rtl">
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6" dir="rtl">
         {/* رقم العدد */}
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2 text-right">
@@ -132,19 +132,19 @@ function CreateIssueModal({ onClose, onSave }: { onClose: () => void; onSave: (d
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-bold"
+              className="w-full sm:flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm sm:text-base"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-bold"
+              className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-bold text-sm sm:text-base"
             >
-              <Save className="w-5 h-5" />
+              <Save className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>إنشاء العدد</span>
             </button>
           </div>
@@ -159,11 +159,11 @@ function PublishIssueModal({ issue, onClose, onPublish }: { issue: IssueWithArti
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div 
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+        className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-t-2xl">
+        <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 sm:p-6 rounded-t-xl sm:rounded-t-2xl">
           <div className="flex items-center justify-center mb-4">
             <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center">
               <Send className="w-8 h-8 text-white" />
@@ -200,11 +200,11 @@ function PublishIssueModal({ issue, onClose, onPublish }: { issue: IssueWithArti
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-bold"
+              className="w-full sm:flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm sm:text-base"
             >
               إلغاء
             </button>
@@ -214,9 +214,9 @@ function PublishIssueModal({ issue, onClose, onPublish }: { issue: IssueWithArti
                 onPublish();
                 onClose();
               }}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold"
+              className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-sm sm:text-base"
             >
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>تأكيد النشر</span>
             </button>
           </div>
@@ -234,9 +234,9 @@ function IssueCard({ issue, onPublish, onDelete }: { issue: IssueWithArticles; o
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
       {/* Header */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-800">{issue.title}</h3>
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-3 sm:p-4 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <h3 className="text-base sm:text-lg font-bold text-gray-800">{issue.title}</h3>
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
             issue.status === 'published' 
               ? 'bg-green-100 text-green-700' 

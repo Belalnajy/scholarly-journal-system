@@ -30,4 +30,25 @@ export class CreateReviewDto {
   @IsOptional()
   @IsDateString({}, { message: 'الموعد النهائي يجب أن يكون تاريخ صحيح' })
   deadline?: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'الدرجة الإجمالية يجب أن تكون رقم' })
+  @Min(0, { message: 'الدرجة الإجمالية يجب أن تكون على الأقل 0' })
+  @Max(100, { message: 'الدرجة الإجمالية يجب أن تكون على الأكثر 100' })
+  total_score?: number;
+
+  @IsOptional()
+  @IsObject({ message: 'الدرجات التفصيلية يجب أن تكون object' })
+  detailed_scores?: {
+    title?: number;
+    abstract?: number;
+    research_background?: number;
+    methodology?: number;
+    results?: number;
+    documentation?: number;
+    originality?: number;
+    formatting?: number;
+    research_condition?: number;
+    sources?: number;
+  };
 }

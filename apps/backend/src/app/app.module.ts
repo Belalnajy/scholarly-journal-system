@@ -18,6 +18,8 @@ import { CloudinaryModule } from '../modules/cloudinary/cloudinary.module';
 import { IssuesModule } from '../modules/issues/issues.module';
 import { ArticlesModule } from '../modules/articles/articles.module';
 import { QRCodeModule } from '../modules/qrcode/qrcode.module';
+import { TeamSectionsModule } from '../modules/team-sections/team-sections.module';
+import { TeamMembersModule } from '../modules/team-members/team-members.module';
 import { getDatabaseConfig } from '../config';
 
 @Module({
@@ -51,6 +53,8 @@ import { getDatabaseConfig } from '../config';
     ResearchRevisionsModule,
     IssuesModule,
     ArticlesModule,
+    TeamSectionsModule,
+    TeamMembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

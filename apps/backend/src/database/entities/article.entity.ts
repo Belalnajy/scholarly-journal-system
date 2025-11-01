@@ -58,7 +58,7 @@ export class Article {
   @Column({ type: 'text', nullable: true })
   abstract_en!: string;
 
-  @Column({ type: 'json' })
+  @Column({ type: 'json', nullable: true })
   keywords!: string[];
 
   @Column({ type: 'json', nullable: true })

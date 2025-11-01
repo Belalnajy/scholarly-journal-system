@@ -43,6 +43,10 @@ export class ResearchRevision {
   @Column({ type: 'text', nullable: true })
   cloudinary_secure_url: string;
 
+  // File type/extension (pdf, doc, docx)
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  file_type: string;
+
   // Store original data before revision
   @Column({ type: 'jsonb', nullable: true })
   original_data: {
@@ -51,6 +55,7 @@ export class ResearchRevision {
     file_url?: string;
     cloudinary_public_id?: string;
     cloudinary_secure_url?: string;
+    file_type?: string;
   };
 
   @Column({

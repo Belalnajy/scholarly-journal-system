@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import siteSettingsService, { SiteSettings } from '../services/site-settings.service';
+import { SiteSettings } from '../services/site-settings.service';
+import siteSettingsService from '../services/site-settings.service';
 
 interface SiteSettingsContextType {
   settings: Partial<SiteSettings> | null;

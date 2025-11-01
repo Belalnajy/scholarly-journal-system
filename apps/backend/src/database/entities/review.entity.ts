@@ -54,6 +54,24 @@ export class Review {
   @Column({ type: 'decimal', precision: 3, scale: 2, nullable: true })
   average_rating?: number;
 
+  // Detailed scoring system (out of 100)
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  total_score?: number;
+
+  @Column({ type: 'jsonb', nullable: true })
+  detailed_scores?: {
+    title?: number; // العنوان (3 درجات)
+    abstract?: number; // المستخلص (2 درجات)
+    research_background?: number; // أدبيات البحث (12 درجة)
+    methodology?: number; // منهج الرسالة (12 درجة)
+    results?: number; // النتائج (10 درجات)
+    documentation?: number; // التوثيق العلمي والمراجع (12 درجة)
+    originality?: number; // الأصالة والابتكار (12 درجة)
+    formatting?: number; // إخراج البحث (7 درجات)
+    research_condition?: number; // حالة البحث (12 درجة)
+    sources?: number; // المصادر والمراجع (8 درجات)
+  };
+
   @Column({
     type: 'enum',
     enum: ReviewStatus,
@@ -66,6 +84,19 @@ export class Review {
 
   @Column({ type: 'timestamp', nullable: true })
   submitted_at?: Date;
+
+  // Reviewer's edited file (optional)
+  @Column({ type: 'text', nullable: true })
+  edited_file_url?: string;
+
+  @Column({ type: 'text', nullable: true })
+  edited_file_cloudinary_public_id?: string;
+
+  @Column({ type: 'text', nullable: true })
+  edited_file_cloudinary_secure_url?: string;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  edited_file_type?: string;
 
   @CreateDateColumn()
   created_at!: Date;

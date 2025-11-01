@@ -12,6 +12,7 @@ import {
 import { User } from './user.entity';
 
 export enum ResearchStatus {
+  PENDING = 'pending',
   UNDER_REVIEW = 'under-review',
   PENDING_EDITOR_DECISION = 'pending-editor-decision',
   NEEDS_REVISION = 'needs-revision',
@@ -65,6 +66,27 @@ export class Research {
 
   @Column({ type: 'text', nullable: true })
   cloudinary_secure_url!: string;
+
+  // File type/extension (pdf, doc, docx)
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  file_type!: string;
+
+  // File update tracking
+  @Column({ type: 'timestamp', nullable: true })
+  file_updated_at!: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  file_updated_by!: string;
+
+  // Acceptance Certificate
+  @Column({ type: 'text', nullable: true })
+  acceptance_certificate_url!: string;
+
+  @Column({ type: 'text', nullable: true })
+  acceptance_certificate_cloudinary_public_id!: string;
+
+  @Column({ type: 'text', nullable: true })
+  acceptance_certificate_cloudinary_secure_url!: string;
 
   // Status & Publication
   @Column({

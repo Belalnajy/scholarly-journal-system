@@ -33,6 +33,22 @@ export function AboutPage() {
                 <p className="text-lg text-[#093059] sm:text-xl lg:text-2xl" dir="auto">
                   تعرف على رسالة المجلة ورؤيتها وأهدافها في خدمة المجتمع العلمي والأكاديمي
                 </p>
+                {settings?.journal_issn && (
+                  <p className="mt-3 text-base font-semibold text-[#b2823e] sm:text-lg" dir="ltr">
+                    ISSN: {settings.journal_issn}
+                  </p>
+                )}
+                {settings?.university_url && (
+                  <a
+                    href={settings.university_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-block text-sm font-medium text-[#093059] hover:text-[#b2823e] transition-colors underline sm:text-base"
+                    dir="auto"
+                  >
+                    موقع الجامعة
+                  </a>
+                )}
               </div>
 
               {/* Introduction */}

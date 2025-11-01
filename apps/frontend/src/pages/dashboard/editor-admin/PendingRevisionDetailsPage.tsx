@@ -6,15 +6,9 @@ import type { StatusType } from '../../../components/dashboard';
 import { researchService, Research } from '../../../services/researchService';
 import { reviewsService, Review } from '../../../services/reviews.service';
 import { usersService } from '../../../services/users.service';
-
-// Types
-interface ReviewerComment {
-  reviewerName: string;
-  rating: number;
-  comment: string;
-  date: string;
-  recommendation: 'accepted' | 'rejected' | 'needs-revision';
-}
+import { researchRevisionsService, ResearchRevision } from '../../../services/research-revisions.service';
+import { downloadResearchPdf, downloadRevisionFile } from '../../../utils/downloadFile';
+import toast from 'react-hot-toast';
 
 // Star Rating Display Component (Read-only)
 function StarRatingDisplay({ rating }: { rating: number }) {
@@ -36,10 +30,82 @@ function StarRatingDisplay({ rating }: { rating: number }) {
   );
 }
 
+// Detailed Scores Display Component
+function DetailedScoresDisplay({ review }: { review: Review }) {
+  if (!review.detailed_scores) return null;
+
+  const categories = [
+    { id: 'title_score', name: 'العنوان', max: 3 },
+    { id: 'abstract_score', name: 'المستخلص', max: 2 },
+    { id: 'background_score', name: 'أدبيات البحث', max: 12 },
+    { id: 'methodology_score', name: 'منهج الرسالة', max: 12 },
+    { id: 'results_score', name: 'النتائج', max: 10 },
+    { id: 'documentation_score', name: 'التوثيق العلمي', max: 12 },
+    { id: 'originality_score', name: 'الأصالة والابتكار', max: 12 },
+    { id: 'formatting_score', name: 'إخراج البحث', max: 7 },
+    { id: 'condition_score', name: 'حالة البحث', max: 12 },
+    { id: 'sources_score', name: 'المصادر والمراجع', max: 8 },
+  ];
+
+  return (
+    <div className="mt-4 bg-blue-50 rounded-lg p-4 border border-blue-200">
+      <h4 className="text-sm font-bold text-gray-800 mb-3">التقييم التفصيلي:</h4>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {categories.map((cat) => {
+          const score = review.detailed_scores?.[cat.id] || 0;
+          const percentage = (score / cat.max) * 100;
+          return (
+            <div key={cat.id} className="bg-white rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700">{cat.name}</span>
+                <span className="text-sm font-bold text-[#0D3B66]">
+                  {score}/{cat.max}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${
+                    percentage >= 80 ? 'bg-green-500' :
+                    percentage >= 60 ? 'bg-yellow-500' :
+                    'bg-red-500'
+                  }`}
+                  style={{ width: `${percentage}%` }}
+                ></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {review.total_score && (
+        <div className="mt-4 pt-4 border-t border-blue-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-gray-800">الدرجة الإجمالية:</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-[#0D3B66]">{review.total_score}</span>
+              <span className="text-sm text-gray-600">/ 100</span>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                review.total_score >= 70 ? 'bg-green-100 text-green-700' :
+                review.total_score >= 60 ? 'bg-yellow-100 text-yellow-700' :
+                review.total_score >= 50 ? 'bg-orange-100 text-orange-700' :
+                'bg-red-100 text-red-700'
+              }`}>
+                {review.total_score >= 70 ? 'ممتاز' :
+                 review.total_score >= 60 ? 'جيد جداً' :
+                 review.total_score >= 50 ? 'جيد' :
+                 'يحتاج تحسين'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Reviewer Comment Card
-function ReviewerCommentCard({ comment }: { comment: ReviewerComment }) {
+function ReviewerCommentCard({ review }: { review: Review }) {
   const getRecommendationBadge = () => {
-    switch (comment.recommendation) {
+    switch (review.recommendation) {
       case 'accepted':
         return (
           <span className="bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-md text-xs font-semibold">
@@ -58,7 +124,17 @@ function ReviewerCommentCard({ comment }: { comment: ReviewerComment }) {
             يوصي بالقبول مع تعديلات
           </span>
         );
+      default:
+        return null;
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ar-EG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   return (
@@ -70,22 +146,44 @@ function ReviewerCommentCard({ comment }: { comment: ReviewerComment }) {
             <User className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-800">{comment.reviewerName}</h3>
+            <h3 className="font-bold text-gray-800">
+              {review.reviewer?.name || 'محكم'}
+            </h3>
+            {review.reviewer?.email && (
+              <p className="text-xs text-gray-500">{review.reviewer.email}</p>
+            )}
             <div className="flex items-center gap-2 mt-1">
               <Calendar className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-500">{comment.date}</span>
+              <span className="text-sm text-gray-500">
+                {review.submitted_at
+                  ? formatDate(review.submitted_at)
+                  : 'غير محدد'}
+              </span>
             </div>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           {getRecommendationBadge()}
-          <StarRatingDisplay rating={comment.rating} />
+          {review.total_score ? (
+            <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-blue-100 px-3 py-1.5 rounded-lg border border-blue-200">
+              <span className="text-xs font-medium text-gray-600">الدرجة:</span>
+              <span className="text-lg font-bold text-[#0D3B66]">{review.total_score}/100</span>
+            </div>
+          ) : review.average_rating ? (
+            <StarRatingDisplay rating={review.average_rating} />
+          ) : null}
         </div>
       </div>
 
+      {/* Detailed Scores */}
+      <DetailedScoresDisplay review={review} />
+
       {/* Comment */}
-      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <p className="text-gray-700 leading-relaxed text-sm">{comment.comment}</p>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-4">
+        <h4 className="text-sm font-bold text-gray-800 mb-2">التعليقات العامة:</h4>
+        <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-line">
+          {review.general_comments}
+        </p>
       </div>
     </div>
   );
@@ -98,6 +196,7 @@ export function PendingRevisionDetailsPage() {
 
   const [research, setResearch] = useState<Research | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [revisions, setRevisions] = useState<ResearchRevision[]>([]);
   const [author, setAuthor] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -115,13 +214,15 @@ export function PendingRevisionDetailsPage() {
       setIsLoading(true);
       setError(null);
 
-      const [researchData, reviewsData] = await Promise.all([
+      const [researchData, reviewsData, revisionsData] = await Promise.all([
         researchService.getById(researchId),
         reviewsService.getByResearch(researchId),
+        researchRevisionsService.getByResearch(researchId).catch(() => []),
       ]);
 
       setResearch(researchData);
       setReviews(reviewsData.filter(r => r.status === 'completed'));
+      setRevisions(revisionsData);
 
       // Load author data
       if (researchData.user_id) {
@@ -171,9 +272,24 @@ export function PendingRevisionDetailsPage() {
     );
   }
 
-  const averageRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + (r.average_rating || 0), 0) / reviews.length
-    : 0;
+  // Calculate average score (new system) or rating (old system)
+  const calculateAverageScore = () => {
+    const reviewsWithScores = reviews.filter((r) => r.total_score);
+    if (reviewsWithScores.length > 0) {
+      const sum = reviewsWithScores.reduce((acc, r) => acc + (r.total_score || 0), 0);
+      return { type: 'score', value: sum / reviewsWithScores.length };
+    }
+    
+    const reviewsWithRatings = reviews.filter((r) => r.average_rating);
+    if (reviewsWithRatings.length > 0) {
+      const sum = reviewsWithRatings.reduce((acc, r) => acc + (r.average_rating || 0), 0);
+      return { type: 'rating', value: sum / reviewsWithRatings.length };
+    }
+    
+    return { type: 'none', value: 0 };
+  };
+
+  const avgScore = calculateAverageScore();
 
   const handleBack = () => {
     navigate('/dashboard/manage-research');
@@ -270,28 +386,81 @@ export function PendingRevisionDetailsPage() {
             </div>
           </div>
 
-          {/* Average Rating */}
-          <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-gray-800 mb-1">التقييم الإجمالي من المحكمين</h3>
-                <p className="text-xs text-gray-600">بناءً على تقييمات {reviews.length} محكمين</p>
+          {/* Average Score/Rating */}
+          {avgScore.type !== 'none' && (
+            <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-800 mb-1">التقييم الإجمالي من المحكمين</h3>
+                  <p className="text-xs text-gray-600">بناءً على تقييمات {reviews.length} محكمين</p>
+                </div>
+                {avgScore.type === 'score' ? (
+                  <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-yellow-300">
+                    <span className="text-2xl font-bold text-[#0D3B66]">{avgScore.value.toFixed(1)}</span>
+                    <span className="text-sm text-gray-600">/ 100</span>
+                  </div>
+                ) : (
+                  <StarRatingDisplay rating={avgScore.value} />
+                )}
               </div>
-              <StarRatingDisplay rating={averageRating} />
             </div>
-          </div>
+          )}
         </div>
 
         {/* Download Buttons */}
         <div className="p-6 bg-gray-50 flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium">
+          {/* Download Original */}
+          <button
+            onClick={async () => {
+              try {
+                await downloadResearchPdf(
+                  research.cloudinary_secure_url,
+                  research.file_url,
+                  research.research_number,
+                  research.file_type
+                );
+                toast.success('تم بدء التحميل');
+              } catch (error) {
+                toast.error('فشل تحميل الملف');
+              }
+            }}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium"
+          >
             <Download className="w-4 h-4" />
             <span>تحميل النسخة الأصلية</span>
           </button>
-          <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
-            <FileText className="w-4 h-4" />
-            <span>تحميل المرفقات</span>
-          </button>
+          
+          {/* Download Revised Version (if exists) */}
+          {(() => {
+            const latestRevision = revisions
+              .filter(r => r.status === 'submitted' && r.file_url)
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+            
+            if (latestRevision) {
+              return (
+                <button
+                  onClick={async () => {
+                    try {
+                      await downloadRevisionFile(
+                        latestRevision.cloudinary_secure_url,
+                        latestRevision.file_url,
+                        latestRevision.revision_number,
+                        latestRevision.file_type
+                      );
+                      toast.success('تم بدء التحميل');
+                    } catch (error) {
+                      toast.error('فشل تحميل الملف');
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>تحميل النسخة المعدلة</span>
+                </button>
+              );
+            }
+            return null;
+          })()}
         </div>
       </div>
 
@@ -325,13 +494,7 @@ export function PendingRevisionDetailsPage() {
           {reviews.map((review) => (
             <ReviewerCommentCard 
               key={review.id} 
-              comment={{
-                reviewerName: review.reviewer?.name || 'محكم',
-                rating: review.average_rating || 0,
-                comment: review.general_comments,
-                date: new Date(review.submitted_at || review.created_at).toLocaleDateString('ar-EG'),
-                recommendation: review.recommendation,
-              }} 
+              review={review}
             />
           ))}
         </div>

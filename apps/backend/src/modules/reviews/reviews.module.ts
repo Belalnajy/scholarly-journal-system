@@ -8,6 +8,7 @@ import { User } from '../../database/entities/user.entity';
 import { ResearchModule } from '../research/research.module';
 import { ReviewerAssignmentsModule } from '../reviewer-assignments/reviewer-assignments.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     forwardRef(() => ResearchModule),
     forwardRef(() => ReviewerAssignmentsModule),
     NotificationsModule,
+    CloudinaryModule,
   ],
   controllers: [ReviewsController],
   providers: [ReviewsService],

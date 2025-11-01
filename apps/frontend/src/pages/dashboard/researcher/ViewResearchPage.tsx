@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Bell, ArrowRight, Download, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { Bell, ArrowRight, Download, FileText, Loader2, AlertCircle, Award } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { researchService, Research, ResearchFile } from '../../../services/researchService';
 import { researchRevisionsService, ResearchRevision } from '../../../services/research-revisions.service';
 import { ResearchTimeline } from '../../../components/ResearchTimeline';
-import { downloadResearchPdf, downloadSupplementaryFile, downloadRevisionFile } from '../../../utils/downloadFile';
+import { downloadResearchPdf, downloadSupplementaryFile, downloadRevisionFile, downloadAcceptanceCertificate } from '../../../utils/downloadFile';
 import toast from 'react-hot-toast';
 
 export function ViewResearchPage() {
@@ -85,6 +85,14 @@ export function ViewResearchPage() {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
+  // Helper function to get file type display name
+  const getFileType = (fileType: string | undefined | null): string => {
+    if (!fileType) return 'PDF';
+    const type = fileType.toLowerCase();
+    if (type === 'doc' || type === 'docx') return 'Word';
+    return 'PDF';
+  };
+
   const handleDownload = async (file: ResearchFile) => {
     try {
       toast.loading('جاري تحميل الملف...', { id: 'download-file' });
@@ -104,7 +112,12 @@ export function ViewResearchPage() {
 
     try {
       toast.loading('جاري تحميل الملف...', { id: 'download-pdf' });
-      await downloadResearchPdf(research.cloudinary_secure_url, research.file_url, research.research_number);
+      await downloadResearchPdf(
+        research.cloudinary_secure_url, 
+        research.file_url, 
+        research.research_number,
+        research.file_type
+      );
       toast.success('تم بدء التحميل', { id: 'download-pdf' });
     } catch (error) {
       toast.error('فشل تحميل الملف', { id: 'download-pdf' });
@@ -120,7 +133,12 @@ export function ViewResearchPage() {
 
     try {
       toast.loading('جاري تحميل الملف...', { id: 'download-revision' });
-      await downloadRevisionFile(revision.cloudinary_secure_url, revision.file_url, revision.revision_number);
+      await downloadRevisionFile(
+        revision.cloudinary_secure_url, 
+        revision.file_url, 
+        revision.revision_number,
+        revision.file_type
+      );
       toast.success('تم بدء التحميل', { id: 'download-revision' });
     } catch (error) {
       toast.error('فشل تحميل ملف التعديل', { id: 'download-revision' });
@@ -136,6 +154,7 @@ export function ViewResearchPage() {
 
     const originalCloudinaryUrl = firstRevision?.original_data?.cloudinary_secure_url;
     const originalFileUrl = firstRevision?.original_data?.file_url;
+    const originalFileType = firstRevision?.original_data?.file_type;
 
     if (!originalCloudinaryUrl && !originalFileUrl) {
       toast.error('لا يوجد ملف أصلي للتحميل');
@@ -144,11 +163,38 @@ export function ViewResearchPage() {
 
     try {
       toast.loading('جاري تحميل الملف الأصلي...', { id: 'download-original-pdf' });
-      await downloadResearchPdf(originalCloudinaryUrl, originalFileUrl, research?.research_number || 'original');
+      await downloadResearchPdf(
+        originalCloudinaryUrl, 
+        originalFileUrl, 
+        research?.research_number || 'original',
+        originalFileType
+      );
       toast.success('تم بدء التحميل', { id: 'download-original-pdf' });
     } catch (error) {
       toast.error('فشل تحميل الملف الأصلي', { id: 'download-original-pdf' });
       console.error('Error downloading original PDF:', error);
+    }
+  };
+
+  const handleDownloadAcceptanceCertificate = async () => {
+    if (!research?.id) {
+      toast.error('معرف البحث غير صحيح');
+      return;
+    }
+
+    try {
+      toast.loading('جاري تحميل شهادة القبول...', { id: 'download-certificate' });
+      
+      // Get certificate URL from API
+      const certificateUrl = await researchService.getAcceptanceCertificateUrl(research.id);
+      
+      // Download the certificate
+      await downloadAcceptanceCertificate(certificateUrl, research.research_number);
+      
+      toast.success('تم بدء التحميل', { id: 'download-certificate' });
+    } catch (error) {
+      toast.error('فشل تحميل شهادة القبول', { id: 'download-certificate' });
+      console.error('Error downloading acceptance certificate:', error);
     }
   };
 
@@ -336,6 +382,41 @@ export function ViewResearchPage() {
             </div>
           )}
 
+          {/* Acceptance Certificate Section - Show only if research is accepted or published */}
+          {(research.status === 'accepted' || research.status === 'published') && 
+           research.acceptance_certificate_cloudinary_public_id && (
+            <div>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">شهادة قبول البحث</h3>
+              <div className="bg-gradient-to-r from-green-50 to-emerald-100 rounded-lg p-6 border-2 border-green-300">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 bg-white rounded-lg border-2 border-green-400 shadow-sm">
+                      <Award className="w-10 h-10 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-800 text-lg">شهادة قبول البحث</p>
+                      <p className="text-sm text-gray-600">
+                        تهانينا! تم قبول بحثك للنشر • {research.research_number}
+                      </p>
+                      {research.evaluation_date && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          تاريخ القبول: {formatDate(research.evaluation_date)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleDownloadAcceptanceCertificate}
+                    className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold shadow-lg hover:shadow-xl"
+                  >
+                    <Download className="w-5 h-5" />
+                    <span>تحميل الشهادة</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Original PDF Section - Show only if there are submitted revisions */}
           {hasOriginalFile && (
             <div>
@@ -382,14 +463,14 @@ export function ViewResearchPage() {
                     <div>
                       <p className="font-bold text-gray-800 text-lg">
                         {hasSubmittedRevisions 
-                          ? 'الملف الحالي (PDF)' 
-                          : 'ملف البحث (PDF)'}
+                          ? `الملف الحالي (${getFileType(research.file_type)})` 
+                          : `ملف البحث (${getFileType(research.file_type)})`}
                       </p>
                       <p className="text-sm text-gray-600">
                         {research.research_number} • 
                         {hasSubmittedRevisions 
                           ? `النسخة المعدلة (${submittedRevisions.length} تعديل)` 
-                          : 'PDF Document'}
+                          : `${getFileType(research.file_type)} Document`}
                       </p>
                     </div>
                   </div>

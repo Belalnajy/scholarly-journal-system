@@ -22,6 +22,18 @@ export class SiteSettings {
   site_name_en!: string;
 
   @Column({ nullable: true })
+  journal_doi!: string;
+
+  @Column({ nullable: true })
+  journal_url!: string;
+
+  @Column({ nullable: true })
+  journal_issn!: string;
+
+  @Column({ nullable: true })
+  university_url!: string;
+
+  @Column({ nullable: true })
   logo_url!: string;
 
   @Column({ nullable: true })
@@ -45,8 +57,14 @@ export class SiteSettings {
   contact_info!: {
     email?: string;
     phone?: string;
+    whatsapp?: string;
     address?: string;
     fax?: string;
+    website?: string;
+    whatsapp_numbers?: Array<{
+      number: string;
+      label: string;
+    }>;
   };
 
   @Column({ type: 'json', nullable: true })
@@ -56,6 +74,8 @@ export class SiteSettings {
     linkedin?: string;
     instagram?: string;
     youtube?: string;
+    telegram?: string;
+    whatsapp_channel?: string;
   };
 
   // Settings
@@ -64,6 +84,20 @@ export class SiteSettings {
 
   @Column({ type: 'text', nullable: true })
   maintenance_message!: string;
+
+  // Submission Fee
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  submission_fee!: number;
+
+  @Column({ type: 'text', nullable: true })
+  submission_fee_currency!: string;
+
+  @Column({ type: 'text', nullable: true })
+  payment_instructions!: string;
+
+  // Acceptance Letter Content
+  @Column({ type: 'text', nullable: true })
+  acceptance_letter_content!: string;
 
   // Timestamps
   @UpdateDateColumn()

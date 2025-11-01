@@ -1,12 +1,13 @@
 import { ArrowRight, Calendar, BookOpen, CheckCircle, Search, FileText, Loader2, AlertCircle, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { DashboardHeader, ReviewerCard } from '../../../components/dashboard';
+import { ReviewerCard } from '../../../components/dashboard';
 import type { Reviewer } from '../../../components/dashboard';
 import { researchService, Research } from '../../../services/researchService';
 import { reviewerAssignmentsService } from '../../../services/reviewer-assignments.service';
 import { usersService } from '../../../services/users.service';
 import { useAuth } from '../../../contexts';
+import toast, { Toaster } from 'react-hot-toast';
 
 
 export function AssignReviewerPage() {
@@ -126,27 +127,43 @@ export function AssignReviewerPage() {
     try {
       await reviewerAssignmentsService.delete(assignmentId);
       await loadCurrentAssignments(selectedResearchId);
-      alert('تم إزالة المحكم بنجاح');
+      toast.success('تم إزالة المحكم بنجاح', {
+        icon: '✅',
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
     } catch (err) {
-      alert('حدث خطأ أثناء إزالة المحكم');
+      toast.error('حدث خطأ أثناء إزالة المحكم', {
+        icon: '❌',
+      });
     }
   };
 
   const handleSubmit = async () => {
     if (!selectedResearchId) {
-      setError('يرجى اختيار بحث أولاً');
+      const msg = 'يرجى اختيار البحث أولاً';
+      setError(msg);
+      toast.error(msg, { icon: '⚠️' });
       return;
     }
     if (selectedReviewers.length === 0) {
-      setError('يرجى اختيار محكم واحد على الأقل');
+      const msg = 'يرجى اختيار محكم واحد على الأقل';
+      setError(msg);
+      toast.error(msg, { icon: '⚠️' });
       return;
     }
     if (!deadline) {
-      setError('يرجى تحديد الموعد النهائي للمراجعة');
+      const msg = 'يرجى تحديد الموعد النهائي للمراجعة';
+      setError(msg);
+      toast.error(msg, { icon: '⚠️' });
       return;
     }
     if (!user?.id) {
-      setError('خطأ في تحديد المستخدم');
+      const msg = 'خطأ في تحديد المستخدم';
+      setError(msg);
+      toast.error(msg, { icon: '❌' });
       return;
     }
 
@@ -167,15 +184,50 @@ export function AssignReviewerPage() {
 
       await Promise.all(assignments);
 
-      // Success - navigate back
-      navigate('/dashboard/manage-research', {
-        state: { 
-          message: `تم تعيين ${selectedReviewers.length} محكم بنجاح!`,
-          type: 'success'
+      // Get research title for the toast message
+      const selectedResearch = researches.find(r => r.id === selectedResearchId);
+      const researchTitle = selectedResearch?.title || 'البحث';
+      
+      // Get reviewer names
+      const assignedReviewerNames = reviewers
+        .filter(r => selectedReviewers.includes(r.id))
+        .map(r => r.name)
+        .join('، ');
+
+      // Show success toast
+      toast.success(
+        `تم تعيين ${selectedReviewers.length} محكم بنجاح!\n${assignedReviewerNames}\nللبحث: ${researchTitle}`,
+        {
+          duration: 5000,
+          style: {
+            background: '#10B981',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            padding: '16px',
+          },
+          icon: '✅',
         }
-      });
+      );
+
+      // Navigate back after a short delay to show the toast
+      setTimeout(() => {
+        navigate('/dashboard/manage-research');
+      }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ أثناء تعيين المحكمين');
+      const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء تعيين المحكمين';
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        duration: 4000,
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          padding: '16px',
+        },
+        icon: '❌',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -216,34 +268,28 @@ export function AssignReviewerPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
+      <Toaster position="top-center" reverseOrder={false} />
+      
       {/* Header with Back Button */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <button
           onClick={() => navigate('/dashboard/manage-research')}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
         >
-          <ArrowRight className="w-6 h-6" />
+          <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
-        <div className="flex-1">
-          <DashboardHeader 
-            title="إدارة الأبحاث" 
-            subtitle="مراجعة ومتابعة الأبحاث المقدمة" 
-          />
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">تعيين محكم للبحث</h1>
+          <p className="text-gray-600 text-sm sm:text-base mt-1">
+            اختر البحث العلمي ثم اختر المحكمين المناسبين حسب التخصص والخبرة
+          </p>
         </div>
       </div>
 
-      {/* Page Title */}
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">تعيين محكم للبحث</h2>
-        <p className="text-gray-600 text-sm">
-          اختر البحث العلمي ثم اختر المحكمين المناسبين حسب التخصص والخبرة
-        </p>
-      </div>
-
       {/* Research Selection */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-800">اختيار البحث</h3>
+      <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+          <h3 className="text-base sm:text-lg font-bold text-gray-800">اختيار البحث</h3>
           {selectedResearch && (
             <button
               onClick={() => setShowResearchList(true)}
@@ -407,15 +453,15 @@ export function AssignReviewerPage() {
       )}
 
       {/* Reviewers Selection */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-800">اختيار محكمين إضافيين</h3>
-          <div className="flex items-center gap-2">
+      <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          <h3 className="text-base sm:text-lg font-bold text-gray-800">اختيار محكمين إضافيين</h3>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
             <span className="text-sm text-gray-600">تصنيف حسب التخصص</span>
             <select 
               value={specializationFilter}
               onChange={(e) => setSpecializationFilter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+              className="w-full sm:w-auto px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
             >
               <option value="all">جميع التخصصات</option>
               {Array.from(new Set(reviewers.map(r => r.specialization))).map(spec => (
@@ -469,8 +515,8 @@ export function AssignReviewerPage() {
       </div>
 
       {/* Assignment Details */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">تفاصيل التعيين</h3>
+      <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-4">تفاصيل التعيين</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Reviewer Count */}
@@ -517,11 +563,11 @@ export function AssignReviewerPage() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <button
           onClick={handleSubmit}
           disabled={!selectedResearchId || selectedReviewers.length === 0 || !deadline || isSubmitting}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#C9A961] text-white rounded-lg hover:bg-[#B89851] transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-[#C9A961] text-white rounded-lg hover:bg-[#B89851] transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
         >
           {isSubmitting ? (
             <>
@@ -537,7 +583,7 @@ export function AssignReviewerPage() {
         </button>
         <button
           onClick={() => navigate('/dashboard/manage-research')}
-          className="px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm sm:text-base"
         >
           إلغاء التعيين
         </button>

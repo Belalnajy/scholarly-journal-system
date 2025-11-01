@@ -4,14 +4,18 @@ import { ResearchService } from './research.service';
 import { ResearchController } from './research.controller';
 import { Research } from '../../database/entities/research.entity';
 import { ResearchFile } from '../../database/entities/research-file.entity';
+import { User } from '../../database/entities/user.entity';
+import { SiteSettings } from '../../database/entities/site-settings.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { PdfModule } from '../pdf/pdf.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Research, ResearchFile]),
+    TypeOrmModule.forFeature([Research, ResearchFile, User, SiteSettings]),
     NotificationsModule,
     CloudinaryModule,
+    PdfModule,
   ],
   controllers: [ResearchController],
   providers: [ResearchService],

@@ -1,19 +1,11 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
-import { DashboardHomePage, ResearcherDashboard, ReviewerDashboard, EditorDashboard, AdminDashboard, ReviseResearchPage, MyTasksPage, EvaluationFormPage, CompletedResearchPage, ReviewerResearchViewPage, EditorResearchDetailsPage, EditorReviewDetailsPage, PendingRevisionDetailsPage, PendingDecisionPage, ManageResearchPage, ManageReviewersPage, ManageReportsPage, ManageIssuesPage, AddArticleToIssuePage, EditIssuePage, ViewIssueArticlesPage, ManageArticlesPage, ArticleDetailsPage, EditArticlePage, AssignReviewerPage, ManageUsersPage, AddUserPage, EditUserPage, ManageContactSubmissionsPage, ReportsStatisticsPage, NotificationsPage, ProfilePage, SettingsPage, SubmitResearchPage, MyResearchPage, ViewResearchPage, SiteSettingsPage } from './';
+import { DashboardHomePage, ResearcherDashboard, ReviewerDashboard, EditorDashboard, AdminDashboard, ReviseResearchPage, MyTasksPage, EvaluationFormPage, CompletedResearchPage, ReviewerResearchViewPage, EditorResearchDetailsPage, EditorReviewDetailsPage, PendingRevisionDetailsPage, PendingDecisionPage, ManageResearchPage, ManageReviewersPage, ManageReportsPage, ManageIssuesPage, AddArticleToIssuePage, EditIssuePage, ViewIssueArticlesPage, ManageArticlesPage, ArticleDetailsPage, EditArticlePage, AssignReviewerPage, ManageUsersPage, AddUserPage, EditUserPage, ManageContactSubmissionsPage, ReportsStatisticsPage, NotificationsPage, ProfilePage, SettingsPage, SubmitResearchPage, MyResearchPage, ViewResearchPage, SiteSettingsPage, PaymentInstructionsPage, ManagePaymentsPage, ManageTeamSectionsPage, ManageTeamMembersPage } from './';
 import { UserRole } from '../../types/user.types';
 import { getNavigationByRole } from '../../data/dashboardNavigation';
 import { useAuth } from '../../contexts';
 import activityLogsService, { ActivityAction } from '../../services/activity-logs.service';
-
-// Placeholder pages for role-specific pages
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="bg-white rounded-lg shadow-md p-8">
-    <h1 className="text-3xl font-bold text-gray-800 mb-4">{title}</h1>
-    <p className="text-gray-600">هذه الصفحة قيد التطوير...</p>
-  </div>
-);
 
 export function DashboardPage() {
   const navigate = useNavigate();
@@ -83,6 +75,11 @@ export function DashboardPage() {
         } />
         
         {/* Researcher Routes - Only for Researchers */}
+        <Route path="payment-instructions" element={
+          <ProtectedRoute allowedRoles={[UserRole.RESEARCHER]}>
+            <PaymentInstructionsPage />
+          </ProtectedRoute>
+        } />
         <Route path="submit-research" element={
           <ProtectedRoute allowedRoles={[UserRole.RESEARCHER]}>
             <SubmitResearchPage />
@@ -258,6 +255,21 @@ export function DashboardPage() {
         <Route path="site-settings" element={
           <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
             <SiteSettingsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="manage-payments" element={
+          <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.EDITOR]}>
+            <ManagePaymentsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="manage-team-sections" element={
+          <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ManageTeamSectionsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="manage-team-members" element={
+          <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ManageTeamMembersPage />
           </ProtectedRoute>
         } />
         

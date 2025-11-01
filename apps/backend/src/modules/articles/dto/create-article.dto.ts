@@ -65,8 +65,8 @@ export class CreateArticleDto {
   abstract_en?: string;
 
   @IsArray({ message: 'الكلمات المفتاحية يجب أن تكون مصفوفة' })
-  @IsNotEmpty({ message: 'الكلمات المفتاحية مطلوبة' })
-  keywords!: string[];
+  @IsOptional()
+  keywords?: string[];
 
   @IsArray({ message: 'الكلمات المفتاحية بالإنجليزية يجب أن تكون مصفوفة' })
   @IsOptional()

@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Loader2 } from 'lucide-react';
+import { ArrowRight, BookOpen, Loader2, Download, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -30,27 +30,29 @@ export function IssueDetailsPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Direct fetch to get issue with articles
       try {
-        const directUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/issues/${issueId}`;
+        const directUrl = `${
+          import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+        }/issues/${issueId}`;
         const directResponse = await fetch(directUrl);
-        
+
         if (directResponse.ok) {
           const directData = await directResponse.json();
           setIssue(directData);
-          
+
           if (directData.articles && Array.isArray(directData.articles)) {
             setArticles(directData.articles);
           }
-          
+
           setLoading(false);
           return;
         }
       } catch (fetchErr) {
         // Fallback to axios
       }
-      
+
       const issueData = await issuesService.getIssueById(issueId!);
       setIssue(issueData);
 
@@ -58,7 +60,9 @@ export function IssueDetailsPage() {
       if (issueData.articles && Array.isArray(issueData.articles)) {
         setArticles(issueData.articles as any);
       } else {
-        const issueArticles = await articlesService.getArticlesByIssueId(issueId!);
+        const issueArticles = await articlesService.getArticlesByIssueId(
+          issueId!
+        );
         setArticles(issueArticles);
       }
 
@@ -70,7 +74,7 @@ export function IssueDetailsPage() {
       }
     } catch (err: any) {
       let errorMsg = 'فشل في تحميل بيانات العدد';
-      
+
       if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
         errorMsg = 'فشل الاتصال بالخادم. تأكد من تشغيل Backend على المنفذ 3000';
       } else if (err.response?.status === 404) {
@@ -78,7 +82,7 @@ export function IssueDetailsPage() {
       } else if (err.message) {
         errorMsg = err.message;
       }
-      
+
       setError(errorMsg);
       console.error('Error loading issue details:', err);
     } finally {
@@ -91,7 +95,9 @@ export function IssueDetailsPage() {
       <div className="min-h-screen bg-[#f5f7fa] pt-[130px] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-[#093059] mx-auto mb-4 animate-spin" />
-          <p className="text-[#666666]" dir="rtl">جاري تحميل بيانات العدد...</p>
+          <p className="text-[#666666]" dir="rtl">
+            جاري تحميل بيانات العدد...
+          </p>
         </div>
       </div>
     );
@@ -101,7 +107,9 @@ export function IssueDetailsPage() {
     return (
       <div className="min-h-screen bg-[#f5f7fa] pt-[130px] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4" dir="rtl">{error || 'العدد غير موجود'}</p>
+          <p className="text-red-600 mb-4" dir="rtl">
+            {error || 'العدد غير موجود'}
+          </p>
           <Link
             to="/issues"
             className="inline-flex items-center gap-2 px-6 py-2 bg-[#093059] text-white rounded-lg hover:bg-[#0a3d6b]"
@@ -115,36 +123,43 @@ export function IssueDetailsPage() {
   }
 
   // Calculate stats
-  const totalDownloads = articles.reduce((sum, article) => sum + (article.downloads_count || 0), 0);
-  const totalViews = articles.reduce((sum, article) => sum + (article.views_count || 0), 0);
-  
+  const totalDownloads = articles.reduce(
+    (sum, article) => sum + (article.downloads_count || 0),
+    0
+  );
+  const totalViews = articles.reduce(
+    (sum, article) => sum + (article.views_count || 0),
+    0
+  );
+
   // Calculate total pages from articles
   const totalPages = articles.reduce((sum, article) => {
     if (!article.pages) return sum;
-    
+
     // Handle different page formats: "1-15", "15", "1 - 15", etc.
     const pageStr = article.pages.toString().trim();
-    
+
     // If it contains a dash, it's a range (e.g., "1-15" or "125-156")
     if (pageStr.includes('-')) {
-      const [start, end] = pageStr.split('-').map(p => parseInt(p.trim()));
+      const [start, end] = pageStr.split('-').map((p) => parseInt(p.trim()));
       if (!isNaN(start) && !isNaN(end)) {
         return sum + (end - start + 1);
       }
     }
-    
+
     // If it's just a number, treat it as page count
     const pageNum = parseInt(pageStr);
     if (!isNaN(pageNum)) {
       return sum + pageNum;
     }
-    
+
     return sum;
   }, 0);
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] pt-[130px]">{/* Header Section */}
-      <motion.div 
+    <div className="min-h-screen bg-[#f5f7fa] pt-[130px]">
+      {/* Header Section */}
+      <motion.div
         className="bg-[#e8f0f8] py-12"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -171,18 +186,21 @@ export function IssueDetailsPage() {
 
             {/* Title and Info */}
             <div className="flex flex-col items-center gap-4 text-center">
-              <motion.div 
+              <motion.div
                 className="flex items-center justify-center gap-3"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <BookOpen className="size-10 text-[#093059]" />
-                <h1 className="text-3xl font-bold text-[#093059] md:text-4xl" dir="rtl">
+                <h1
+                  className="text-3xl font-bold text-[#093059] md:text-4xl"
+                  dir="rtl"
+                >
                   الأبحاث المنشورة في هذا العدد
                 </h1>
               </motion.div>
-              <motion.div 
+              <motion.div
                 className="space-y-2"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -192,10 +210,18 @@ export function IssueDetailsPage() {
                   {issue.title}
                 </h2>
                 <p className="text-base text-[#666666]" dir="rtl">
-                  العدد {issue.issue_number} - {new Date(issue.publish_date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' })}
+                  العدد {issue.issue_number} -{' '}
+                  {new Date(issue.publish_date).toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                  })}
                 </p>
-                <p className="max-w-3xl text-base text-[#666666] sm:text-lg" dir="rtl">
-                  يحتوي هذا العدد على {articles.length} أبحاث محكمة في مجالات مختلفة
+                <p
+                  className="max-w-3xl text-base text-[#666666] sm:text-lg"
+                  dir="rtl"
+                >
+                  يحتوي هذا العدد على {articles.length} أبحاث محكمة في مجالات
+                  مختلفة
                 </p>
                 {issue.description && (
                   <p className="max-w-3xl text-sm text-[#666666]" dir="rtl">
@@ -209,7 +235,7 @@ export function IssueDetailsPage() {
       </motion.div>
 
       {/* Stats Section */}
-      <motion.div 
+      <motion.div
         className="container mx-auto px-4 py-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -230,9 +256,7 @@ export function IssueDetailsPage() {
               transition={{ duration: 0.5, delay: stat.delay }}
               whileHover={{ y: -5, boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
             >
-              <p className="text-3xl font-bold text-[#093059]">
-                {stat.value}
-              </p>
+              <p className="text-3xl font-bold text-[#093059]">{stat.value}</p>
               <p className="text-sm text-[#666666]" dir="rtl">
                 {stat.label}
               </p>
@@ -241,10 +265,92 @@ export function IssueDetailsPage() {
         </div>
       </motion.div>
 
+      {/* Download Full Issue PDF Button */}
+      {issue.issue_pdf_url && (
+        <motion.div
+          className="container mx-auto px-4 pb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 1 }}
+        >
+          <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border-2 border-green-200 p-6 shadow-lg">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex-1 text-center md:text-right">
+                <h3 className="text-xl font-bold text-gray-800 mb-2" dir="rtl">
+                  تحميل العدد الكامل
+                </h3>
+                <p className="text-sm text-gray-600" dir="rtl">
+                  احصل على جميع أبحاث العدد في ملف PDF واحد ({articles.length}{' '}
+                  بحث)
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Preview Button */}
+                <a
+                  href={issue.issue_pdf_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg font-bold text-lg"
+                >
+                  <Eye className="w-6 h-6" />
+                  <span>معاينة العدد</span>
+                </a>
+
+                {/* Download Button */}
+                <button
+                  onClick={async () => {
+                    if (!issue.issue_pdf_url) return;
+
+                    try {
+                      // Increment download count
+                      await issuesService.incrementIssueDownloads(issue.id);
+
+                      // Extract file extension from URL
+                      const getFileExtension = (url: string) => {
+                        const urlParts = url.split('?')[0].split('.');
+                        const ext = urlParts[urlParts.length - 1].toLowerCase();
+                        return ['pdf', 'doc', 'docx'].includes(ext)
+                          ? ext
+                          : 'pdf';
+                      };
+
+                      // Download the file
+                      const response = await fetch(issue.issue_pdf_url);
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+
+                      const fileExtension = getFileExtension(
+                        issue.issue_pdf_url
+                      );
+                      link.download = `issue-${issue.issue_number}.${fileExtension}`;
+
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                    } catch (err) {
+                      console.error('Failed to download:', err);
+                      // Fallback: open in new tab
+                      window.open(issue.issue_pdf_url, '_blank');
+                    }
+                  }}
+                  className="flex items-center justify-center gap-3 px-8 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all transform hover:scale-105 shadow-lg font-bold text-lg"
+                >
+                  <Download className="w-6 h-6" />
+                  <span>تحميل العدد</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Articles List */}
       <div className="container mx-auto px-4 pb-16">
         {articles.length === 0 ? (
-          <motion.div 
+          <motion.div
             className="text-center py-12 bg-white rounded-xl"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

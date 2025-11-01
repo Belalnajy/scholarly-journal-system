@@ -1,4 +1,4 @@
-import { Calendar, Download, FileText } from 'lucide-react';
+import { Calendar, Download, FileText, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Issue } from '../../services/issuesService';
 
@@ -19,39 +19,46 @@ export function IssueCard({ issue }: IssueCardProps) {
   }, 0) || 0;
 
   // Handle issue download
-  const handleDownloadIssue = async () => {
-    // Option 1: If issue has a combined PDF, download it
-    if (issue.issue_pdf_url) {
+  const handleDownloadIssue = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default link behavior
+    
+    if (!issue.issue_pdf_url) return;
+    
+    try {
+      // Increment download count
       try {
-        // Increment download count
-        try {
-          const issuesService = await import('../../services/issuesService');
-          await issuesService.default.incrementIssueDownloads(issue.id);
-          console.log('✅ Issue download counted');
-        } catch (err) {
-          console.error('Failed to increment issue downloads:', err);
-        }
-
-        // Download the PDF
-        const response = await fetch(issue.issue_pdf_url);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `issue-${issue.issue_number}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error('Error downloading issue PDF:', error);
-        window.open(issue.issue_pdf_url, '_blank');
+        const issuesService = await import('../../services/issuesService');
+        await issuesService.default.incrementIssueDownloads(issue.id);
+      } catch (err) {
+        console.error('Failed to increment issue downloads:', err);
       }
-      return;
-    }
 
-    // Option 2: Download all articles (redirect to issue page)
-    alert(`العدد يحتوي على ${issue.total_articles} مقالات. اذهب لصفحة العدد لتحميل كل مقال على حدة.`);
+      // Extract file extension from URL
+      const getFileExtension = (url: string) => {
+        const urlParts = url.split('?')[0].split('.');
+        const ext = urlParts[urlParts.length - 1].toLowerCase();
+        return ['pdf', 'doc', 'docx'].includes(ext) ? ext : 'pdf';
+      };
+
+      // Download the file
+      const response = await fetch(issue.issue_pdf_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const fileExtension = getFileExtension(issue.issue_pdf_url);
+      link.download = `issue-${issue.issue_number}.${fileExtension}`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      // Fallback: open in new tab
+      window.open(issue.issue_pdf_url, '_blank');
+    }
   };
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-2xl border border-[#e5e5e5] bg-white shadow-sm transition-all hover:shadow-lg">
@@ -120,15 +127,29 @@ export function IssueCard({ issue }: IssueCardProps) {
 
       {/* Action Buttons */}
       <div className="flex gap-3 px-5 pb-5">
-        <Link 
-          to={`/issues/${issue.id}`}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#093059] px-4 py-2 transition-colors hover:bg-[#0a3d6b]"
-        >
-          <span className="text-sm text-white" dir="rtl">
-            تحميل المقالات ({issue.total_articles})
-          </span>
-          <Download className="size-4 text-white" />
-        </Link>
+        {/* Download Magazine Button - Only show if PDF exists */}
+        {issue.issue_pdf_url ? (
+          <button
+            onClick={handleDownloadIssue}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-green-600 px-4 py-2 transition-colors hover:bg-green-700"
+          >
+            <span className="text-sm text-white" dir="rtl">
+              تحميل المجلة
+            </span>
+            <Download className="size-4 text-white" />
+          </button>
+        ) : (
+          <Link 
+            to={`/issues/${issue.id}`}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#093059] px-4 py-2 transition-colors hover:bg-[#0a3d6b]"
+          >
+            <span className="text-sm text-white" dir="rtl">
+              عرض المقالات ({issue.total_articles})
+            </span>
+            <Eye className="size-4 text-white" />
+          </Link>
+        )}
+        
         <Link 
           to={`/issues/${issue.id}`}
           className="group flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-[#b2823e] px-4 py-2 transition-colors hover:bg-[#b2823e]"
