@@ -25,8 +25,8 @@ export class CreateTeamMemberDto {
   @IsOptional()
   country?: string;
 
-  @IsEmail()
   @IsOptional()
+  @IsEmail({}, { message: 'البريد الإلكتروني غير صحيح' })
   email?: string;
 
   @IsString()

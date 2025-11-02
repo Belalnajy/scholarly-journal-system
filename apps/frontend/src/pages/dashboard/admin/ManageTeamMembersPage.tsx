@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Upload, Save, X, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload, Save, X, Search, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import teamService from '../../../services/teamService';
@@ -11,6 +11,7 @@ export function ManageTeamMembersPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [deletingMember, setDeletingMember] = useState<TeamMember | null>(null);
   const [filterSection, setFilterSection] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -36,13 +37,10 @@ export function ManageTeamMembersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا العضو؟')) {
-      return;
-    }
-
     try {
       await teamService.deleteMember(id);
       toast.success('تم حذف العضو بنجاح');
+      setDeletingMember(null);
       fetchData();
     } catch (error: any) {
       toast.error('فشل في حذف العضو');
@@ -189,7 +187,7 @@ export function ManageTeamMembersPage() {
                     <span>تعديل</span>
                   </button>
                   <button
-                    onClick={() => handleDelete(member.id)}
+                    onClick={() => setDeletingMember(member)}
                     className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-100"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -217,6 +215,17 @@ export function ManageTeamMembersPage() {
               setEditingMember(null);
               fetchData();
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deletingMember && (
+          <DeleteConfirmationModal
+            member={deletingMember}
+            onClose={() => setDeletingMember(null)}
+            onConfirm={() => handleDelete(deletingMember.id)}
           />
         )}
       </AnimatePresence>
@@ -318,9 +327,19 @@ function MemberFormModal({ member, sections, onClose, onSuccess }: MemberFormMod
     setSaving(true);
 
     try {
+      // Clean up empty strings for optional fields
+      const cleanedData = {
+        ...formData,
+        description: formData.description?.trim() || undefined,
+        university: formData.university?.trim() || undefined,
+        country: formData.country?.trim() || undefined,
+        email: formData.email?.trim() || undefined,
+        image_url: formData.image_url?.trim() || undefined,
+      };
+
       if (member) {
         // Update existing member
-        await teamService.updateMember(member.id, formData as UpdateTeamMemberDto);
+        await teamService.updateMember(member.id, cleanedData as UpdateTeamMemberDto);
         
         // Upload image if selected
         if (selectedImageFile) {
@@ -330,7 +349,7 @@ function MemberFormModal({ member, sections, onClose, onSuccess }: MemberFormMod
         toast.success('تم تحديث العضو بنجاح');
       } else {
         // Create new member
-        const newMember = await teamService.createMember(formData);
+        const newMember = await teamService.createMember(cleanedData);
         
         // Upload image if selected
         if (selectedImageFile && newMember.id) {
@@ -586,6 +605,86 @@ function MemberFormModal({ member, sections, onClose, onSuccess }: MemberFormMod
             </button>
           </div>
         </form>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Delete Confirmation Modal Component
+interface DeleteConfirmationModalProps {
+  member: TeamMember;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+function DeleteConfirmationModal({ member, onClose, onConfirm }: DeleteConfirmationModalProps) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleConfirm = async () => {
+    setDeleting(true);
+    await onConfirm();
+    setDeleting(false);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+        dir="rtl"
+      >
+        {/* Icon */}
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+          <AlertTriangle className="h-8 w-8 text-red-600" />
+        </div>
+
+        {/* Content */}
+        <div className="mt-4 text-center">
+          <h3 className="text-xl font-bold text-gray-900">تأكيد الحذف</h3>
+          <p className="mt-2 text-gray-600">
+            هل أنت متأكد من حذف العضو <span className="font-bold text-[#093059]">{member.name}</span>؟
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
+            لن تتمكن من التراجع عن هذا الإجراء
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={handleConfirm}
+            disabled={deleting}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+          >
+            {deleting ? (
+              <>
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                <span>جاري الحذف...</span>
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-5 w-5" />
+                <span>حذف</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={deleting}
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+          >
+            إلغاء
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   );
