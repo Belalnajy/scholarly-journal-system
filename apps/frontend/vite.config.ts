@@ -33,8 +33,7 @@ export default defineConfig(() => ({
           // Split vendor chunks for better caching
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'ui-vendor': ['framer-motion', 'lucide-react'],
-          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'utils': ['axios', 'date-fns'],
+          'utils': ['axios'],
         },
         // Optimize chunk file names
         chunkFileNames: 'assets/js/[name]-[hash].js',
