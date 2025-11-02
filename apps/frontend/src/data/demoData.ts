@@ -87,7 +87,6 @@ export const footerLinks = {
   quickLinks: [
     { label: 'الرئيسية', href: '/' },
     { label: 'عن المجلة', href: '/about' },
-    { label: 'هيئة التحرير', href: '/editorial' },
     { label: 'الفريق الأكاديمي', href: '/team' },
     { label: 'اتصل بنا', href: '/contact' },
   ],
