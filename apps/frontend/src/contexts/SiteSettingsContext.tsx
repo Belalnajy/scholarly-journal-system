@@ -47,15 +47,46 @@ export function SiteSettingsProvider({ children }: SiteSettingsProviderProps) {
         document.title = settings.site_name;
       }
       
-      // Update favicon
+      // Update favicon - remove all existing favicons and add the new one
       if (settings.favicon_url) {
-        const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement || document.createElement('link');
-        link.type = 'image/x-icon';
-        link.rel = 'icon';
-        link.href = settings.favicon_url;
-        if (!document.querySelector("link[rel*='icon']")) {
+        // Remove all existing favicon links
+        const existingLinks = document.querySelectorAll("link[rel*='icon']");
+        existingLinks.forEach(link => link.remove());
+        
+        // Add new favicon with multiple sizes for better compatibility
+        const sizes = ['16x16', '32x32', '192x192', '512x512'];
+        sizes.forEach(size => {
+          const link = document.createElement('link');
+          link.type = 'image/png';
+          link.rel = 'icon';
+          link.sizes = size;
+          link.href = settings.favicon_url!;
           document.head.appendChild(link);
+        });
+        
+        // Add shortcut icon
+        const shortcutLink = document.createElement('link');
+        shortcutLink.rel = 'shortcut icon';
+        shortcutLink.href = settings.favicon_url;
+        document.head.appendChild(shortcutLink);
+        
+        // Add apple touch icon
+        const appleLink = document.createElement('link');
+        appleLink.rel = 'apple-touch-icon';
+        appleLink.sizes = '180x180';
+        appleLink.href = settings.favicon_url;
+        document.head.appendChild(appleLink);
+      }
+      
+      // Update Open Graph image
+      if (settings.logo_url) {
+        let ogImage = document.querySelector("meta[property='og:image']") as HTMLMetaElement;
+        if (!ogImage) {
+          ogImage = document.createElement('meta');
+          ogImage.setAttribute('property', 'og:image');
+          document.head.appendChild(ogImage);
         }
+        ogImage.content = settings.logo_url;
       }
     }
   }, [settings]);
