@@ -56,9 +56,24 @@ export class TeamMembersService {
    * Update a team member
    */
   async update(id: string, updateDto: UpdateTeamMemberDto): Promise<TeamMember> {
-    const member = await this.findOne(id);
-    Object.assign(member, updateDto);
-    return await this.teamMemberRepository.save(member);
+    // Update the member directly
+    const result = await this.teamMemberRepository.update(id, updateDto);
+    
+    if (result.affected === 0) {
+      throw new NotFoundException(`Team member with ID ${id} not found`);
+    }
+    
+    // Fetch the updated member with fresh relations using a new query
+    const updatedMember = await this.teamMemberRepository.findOne({
+      where: { id },
+      relations: ['section'],
+    });
+    
+    if (!updatedMember) {
+      throw new NotFoundException(`Team member with ID ${id} not found`);
+    }
+    
+    return updatedMember;
   }
 
   /**

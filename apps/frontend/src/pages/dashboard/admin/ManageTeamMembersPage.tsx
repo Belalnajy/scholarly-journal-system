@@ -251,6 +251,26 @@ function MemberFormModal({ member, sections, onClose, onSuccess }: MemberFormMod
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(member?.image_url || '');
 
+  // Update formData when member changes
+  useEffect(() => {
+    if (member) {
+      setFormData({
+        name: member.name,
+        title: member.title,
+        role: member.role,
+        description: member.description || '',
+        university: member.university || '',
+        country: member.country || '',
+        email: member.email || '',
+        image_url: member.image_url || '',
+        display_order: member.display_order,
+        is_active: member.is_active,
+        section_id: member.section_id,
+      });
+      setPreviewUrl(member.image_url || '');
+    }
+  }, [member]);
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -541,13 +561,13 @@ function MemberFormModal({ member, sections, onClose, onSuccess }: MemberFormMod
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || uploadingImage}
               className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#093059] px-6 py-3 text-white transition-colors hover:bg-[#0a4a7a] disabled:opacity-50"
             >
-              {saving ? (
+              {saving || uploadingImage ? (
                 <>
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  <span>جاري الحفظ...</span>
+                  <span>{uploadingImage ? 'جاري رفع الصورة...' : 'جاري الحفظ...'}</span>
                 </>
               ) : (
                 <>
@@ -559,7 +579,8 @@ function MemberFormModal({ member, sections, onClose, onSuccess }: MemberFormMod
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-gray-300 px-6 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+              disabled={saving || uploadingImage}
+              className="rounded-lg border border-gray-300 px-6 py-3 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
               إلغاء
             </button>
