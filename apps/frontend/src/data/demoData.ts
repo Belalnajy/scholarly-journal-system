@@ -72,8 +72,8 @@ export const features = [
   {
     id: 3,
     icon: 'users',
-    title: 'هيئة التحرير',
-    description: 'تعرف على أعضاء هيئة التحرير والمراجعين',
+    title: 'الفريق الأكاديمي',
+    description: 'تعرف على أعضاء الفريق الأكاديمي',
   },
   {
     id: 4,
