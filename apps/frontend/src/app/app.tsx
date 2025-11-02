@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Header, Footer } from '../components/layout';
@@ -5,9 +6,28 @@ import { ScrollToTop, ProtectedRoute } from '../components/common';
 import { PublicRoute } from '../components/PublicRoute';
 import { MaintenanceGuard } from '../components/MaintenanceGuard';
 import { FloatingWhatsAppButton } from '../components/FloatingWhatsAppButton';
-import { LandingPage, AboutPage, EditorialBoardPage, TeamPage, IssuesArchivePage, PrivacyPolicyPage, TermsAndConditionsPage, ContactPage, IssueDetailsPage, ResearchDetailsPage, VerifyArticlePage, ArticlePublicPage, LoginPage, RegistrationPage, ForgotPasswordPage, VerifyCodePage, ResetPasswordPage, DashboardPage, MaintenancePage } from '../pages';
-import { SearchResultsPage } from '../pages/SearchResultsPage';
 import { AuthProvider, SiteSettingsProvider } from '../contexts';
+
+// Lazy load pages for better performance
+const LandingPage = lazy(() => import('../pages/LandingPage').then(m => ({ default: m.LandingPage })));
+const AboutPage = lazy(() => import('../pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const TeamPage = lazy(() => import('../pages/TeamPage').then(m => ({ default: m.TeamPage })));
+const IssuesArchivePage = lazy(() => import('../pages/IssuesArchivePage').then(m => ({ default: m.IssuesArchivePage })));
+const IssueDetailsPage = lazy(() => import('../pages/IssueDetailsPage').then(m => ({ default: m.IssueDetailsPage })));
+const ResearchDetailsPage = lazy(() => import('../pages/ResearchDetailsPage').then(m => ({ default: m.ResearchDetailsPage })));
+const ArticlePublicPage = lazy(() => import('../pages/ArticlePublicPage').then(m => ({ default: m.ArticlePublicPage })));
+const VerifyArticlePage = lazy(() => import('../pages/VerifyArticlePage').then(m => ({ default: m.VerifyArticlePage })));
+const SearchResultsPage = lazy(() => import('../pages/SearchResultsPage').then(m => ({ default: m.SearchResultsPage })));
+const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
+const TermsAndConditionsPage = lazy(() => import('../pages/TermsAndConditionsPage').then(m => ({ default: m.TermsAndConditionsPage })));
+const ContactPage = lazy(() => import('../pages/ContactPage').then(m => ({ default: m.ContactPage })));
+const LoginPage = lazy(() => import('../pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegistrationPage = lazy(() => import('../pages/RegistrationPage').then(m => ({ default: m.RegistrationPage })));
+const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+const VerifyCodePage = lazy(() => import('../pages/VerifyCodePage').then(m => ({ default: m.VerifyCodePage })));
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
+const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const MaintenancePage = lazy(() => import('../pages/MaintenancePage').then(m => ({ default: m.MaintenancePage })));
 import {
   navLinks,
   footerLinks,
@@ -15,6 +35,13 @@ import {
   contactInfo,
   siteInfo,
 } from '../data/demoData';
+
+// Loading component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#093059]"></div>
+  </div>
+);
 
 export function App() {
   return (
@@ -51,6 +78,7 @@ export function App() {
           }}
         />
       
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Maintenance Page - No guard needed, always accessible */}
         <Route path="/maintenance" element={<MaintenancePage />} />
@@ -101,7 +129,7 @@ export function App() {
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/editorial" element={<EditorialBoardPage />} />
+                {/* Editorial route removed - using /team instead */}
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/issues" element={<IssuesArchivePage />} />
                 <Route path="/issues/:id" element={<IssueDetailsPage />} />
@@ -124,6 +152,7 @@ export function App() {
           }
         />
       </Routes>
+      </Suspense>
       </div>
       </SiteSettingsProvider>
     </AuthProvider>
