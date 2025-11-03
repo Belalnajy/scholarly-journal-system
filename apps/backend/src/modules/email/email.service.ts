@@ -24,6 +24,70 @@ export class EmailService {
     });
   }
 
+  async sendWelcomeEmail(
+    email: string,
+    name: string,
+    role: string,
+  ): Promise<void> {
+    const emailUser = this.configService.get<string>('EMAIL_USER') || 'journalresearchut@gmail.com';
+    
+    const roleText = role === 'researcher' ? 'باحث' : role === 'reviewer' ? 'محكم' : role === 'editor' ? 'محرر' : 'مستخدم';
+    
+    const content = `
+      <p>مرحباً <strong>${name}</strong>،</p>
+      <p>نرحب بك في <strong>مجلة البحوث والدراسات</strong>!</p>
+      <p>تم إنشاء حسابك بنجاح كـ <strong>${roleText}</strong>.</p>
+      
+      <div class="info-box">
+        <p><strong>معلومات حسابك:</strong></p>
+        <p>البريد الإلكتروني: ${email}</p>
+        <p>الدور: ${roleText}</p>
+      </div>
+      
+      <p>يمكنك الآن تسجيل الدخول والبدء في استخدام المنصة:</p>
+      
+      ${role === 'researcher' ? `
+        <ul style="text-align: right; line-height: 2;">
+          <li>تقديم الأبحاث العلمية</li>
+          <li>متابعة حالة أبحاثك</li>
+          <li>الرد على ملاحظات المحكمين</li>
+          <li>تعديل وتحديث أبحاثك</li>
+        </ul>
+      ` : role === 'reviewer' ? `
+        <ul style="text-align: right; line-height: 2;">
+          <li>استلام طلبات التحكيم</li>
+          <li>مراجعة وتقييم الأبحاث</li>
+          <li>تقديم الملاحظات والتوصيات</li>
+        </ul>
+      ` : role === 'editor' ? `
+        <ul style="text-align: right; line-height: 2;">
+          <li>إدارة الأبحاث المقدمة</li>
+          <li>تعيين المحكمين</li>
+          <li>متابعة عملية التحكيم</li>
+          <li>اتخاذ القرارات النهائية</li>
+        </ul>
+      ` : ''}
+      
+      <p>إذا كان لديك أي استفسارات، لا تتردد في التواصل معنا.</p>
+      <p>نتمنى لك تجربة ممتعة ومثمرة!</p>
+    `;
+
+    const mailOptions = {
+      from: `"مجلة البحوث والدراسات" <${emailUser}>`,
+      to: email,
+      subject: 'مرحباً بك في مجلة البحوث والدراسات',
+      html: getEmailTemplate('مرحباً بك في المجلة', content, '#093059'),
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Welcome email sent successfully to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send welcome email to ${email}:`, error);
+      throw error;
+    }
+  }
+
   async sendPasswordResetEmail(
     email: string,
     resetCode: string,

@@ -12,6 +12,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../../database/entities/notification.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { EmailService } from '../email/email.service';
 
 // Type for user response without password
 type UserResponse = Omit<User, 'password' | 'hashPassword' | 'comparePassword'>;
@@ -23,6 +24,7 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
     private readonly notificationsService: NotificationsService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly emailService: EmailService,
   ) {}
 
   // Create new user
@@ -51,6 +53,18 @@ export class UsersService {
     } catch (error) {
       // Log error but don't fail user creation
       console.error('Failed to send welcome notification:', error);
+    }
+
+    // Send welcome email
+    try {
+      await this.emailService.sendWelcomeEmail(
+        savedUser.email,
+        savedUser.name,
+        savedUser.role,
+      );
+    } catch (error) {
+      // Log error but don't fail user creation
+      console.error('Failed to send welcome email:', error);
     }
 
     // Remove password from response
