@@ -10,7 +10,6 @@ import {
   XCircle,
   Edit3,
   Loader2,
-  Upload,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -57,7 +56,7 @@ function ScoreInput({
   // Generate quick score buttons based on maxScore
   const generateQuickScores = () => {
     const scores: number[] = [];
-    
+
     if (maxScore <= 5) {
       // For small scores (2-5), show all values
       for (let i = 0; i <= maxScore; i += 0.5) {
@@ -78,7 +77,7 @@ function ScoreInput({
       scores.push(Math.round(maxScore * 0.9)); // 90%
       scores.push(maxScore); // 100%
     }
-    
+
     return scores.filter((s, i, arr) => arr.indexOf(s) === i); // Remove duplicates
   };
 
@@ -88,16 +87,24 @@ function ScoreInput({
     <div className="py-4 border-b border-gray-100 last:border-0">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 pr-4">
-          <h4 className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">{title}</h4>
+          <h4 className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">
+            {title}
+          </h4>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={`text-2xl font-bold ${score >= 0 ? 'text-[#0D3B66]' : 'text-gray-400'}`}>
+          <span
+            className={`text-2xl font-bold ${
+              score >= 0 ? 'text-[#0D3B66]' : 'text-gray-400'
+            }`}
+          >
             {score >= 0 ? score : '-'}
           </span>
-          <span className="text-sm text-gray-500 font-semibold">/ {maxScore}</span>
+          <span className="text-sm text-gray-500 font-semibold">
+            / {maxScore}
+          </span>
         </div>
       </div>
-      
+
       {/* Quick Score Buttons */}
       <div className="flex flex-wrap gap-2">
         {quickScores.map((quickScore) => (
@@ -114,7 +121,7 @@ function ScoreInput({
             {quickScore}
           </button>
         ))}
-        
+
         {/* Custom Input for precise values */}
         <div className="flex items-center gap-1 ml-2">
           <input
@@ -124,7 +131,8 @@ function ScoreInput({
             step="0.5"
             value={score >= 0 ? score : ''}
             onChange={(e) => {
-              const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+              const val =
+                e.target.value === '' ? 0 : parseFloat(e.target.value);
               if (!isNaN(val) && val >= minScore && val <= maxScore) {
                 onChange(val);
               }
@@ -152,7 +160,7 @@ export function EvaluationFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Detailed scoring system (out of 100) - Simplified
+  // Detailed scoring system (out of 100)
   const [detailedScores, setDetailedScores] = useState<DetailedScore[]>([
     {
       id: 'title',
@@ -160,9 +168,9 @@ export function EvaluationFormPage() {
       items: [
         {
           id: 'title_score',
-          title: ' الصياغة اللغوية\n الدلالة على المضمون ومناسبته له',
+          title: 'الصياغة اللغوية والدلالة على المضمون ومناسبته له',
           score: 0,
-          maxScore: 3,
+          maxScore: 5,
         },
       ],
     },
@@ -172,9 +180,9 @@ export function EvaluationFormPage() {
       items: [
         {
           id: 'abstract_score',
-          title: 'شمولية المستخلص',
+          title: 'شمولية المستخلص ووضوحه',
           score: 0,
-          maxScore: 2,
+          maxScore: 5,
         },
       ],
     },
@@ -184,47 +192,47 @@ export function EvaluationFormPage() {
       items: [
         {
           id: 'background_score',
-          title: 'الخلفية العلمية',
+          title: 'الخلفية العلمية والإطار النظري',
           score: 0,
-          maxScore: 12,
+          maxScore: 15,
         },
       ],
     },
     {
       id: 'methodology',
-      category: 'منهج الرسالة',
+      category: 'منهج البحث',
       items: [
         {
           id: 'methodology_score',
           title:
-            '- مشكلة البحث\n- أهدافه\n- أهميته\n- تحليل المعلومات ومناقشتها\n- التناسق الفكري للبحث\n- صحة المعلومات ودقتها',
+            '- مشكلة البحث وأهدافه وأهميته\n- تحليل المعلومات ومناقشتها\n- التناسق الفكري للبحث\n- صحة المعلومات ودقتها',
           score: 0,
-          maxScore: 12,
+          maxScore: 20,
         },
       ],
     },
     {
       id: 'results',
-      category: 'النتائج',
+      category: 'النتائج والتوصيات',
       items: [
         {
           id: 'results_score',
-          title: '- ربط النتائج بالفروض والأهداف\n- التوصيات',
+          title: '- ربط النتائج بالفروض والأهداف\n- التوصيات والمقترحات',
           score: 0,
-          maxScore: 10,
+          maxScore: 15,
         },
       ],
     },
     {
       id: 'documentation',
-      category: 'التوثيق العلمي والمراجع',
+      category: 'التوثيق العلمي',
       items: [
         {
           id: 'documentation_score',
           title:
             '- تنوع المصادر والمراجع\n- أسلوب التوثيق العلمي\n- الأمانة العلمية',
           score: 0,
-          maxScore: 12,
+          maxScore: 10,
         },
       ],
     },
@@ -237,7 +245,7 @@ export function EvaluationFormPage() {
           title:
             '- أصالة الموضوع والابتكار فيه\n- الإسهام الفاعل في إنماء المعرفة في التخصص',
           score: 0,
-          maxScore: 12,
+          maxScore: 15,
         },
       ],
     },
@@ -249,32 +257,20 @@ export function EvaluationFormPage() {
           id: 'formatting_score',
           title: 'إخراج البحث وتنسيقه',
           score: 0,
-          maxScore: 7,
+          maxScore: 5,
         },
       ],
     },
     {
-      id: 'research_condition',
-      category: 'حالة البحث',
+      id: 'language',
+      category: 'اللغة والأسلوب',
       items: [
         {
-          id: 'condition_score',
+          id: 'language_score',
           title:
-            '- أسلوب الباحث وشخصيته\n- نسبة الاقتباس\n- سلامة الرسالة لغوياً وإملائياً\n- عدم وجود: ركاكة الألفاظ، كثرة الأخطاء، ضعف التحليل والاستنتاج',
+            '- أسلوب الباحث وشخصيته\n- سلامة اللغة والإملاء\n- وضوح التعبير وقوة الصياغة',
           score: 0,
-          maxScore: 12,
-        },
-      ],
-    },
-    {
-      id: 'sources',
-      category: 'المصادر والمراجع',
-      items: [
-        {
-          id: 'sources_score',
-          title: '- تنوع المصادر والمراجع\n- ترتيبها\n- استيفاء معلومات الكتاب',
-          score: 0,
-          maxScore: 8,
+          maxScore: 10,
         },
       ],
     },
@@ -285,9 +281,7 @@ export function EvaluationFormPage() {
     'accepted' | 'needs-revision' | 'rejected' | ''
   >('');
 
-  // File upload state
-  const [editedFile, setEditedFile] = useState<File | null>(null);
-  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  // File upload state removed - reviewers can no longer edit files to protect researcher identity
 
   const handleDownloadOriginal = async () => {
     if (!research) return;
@@ -317,56 +311,6 @@ export function EvaluationFormPage() {
       toast.success('تم بدء التحميل', { id: 'download-revision' });
     } catch (error) {
       toast.error('فشل تحميل الملف', { id: 'download-revision' });
-    }
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Check file type (PDF or Word)
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword', // .doc
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('يرجى اختيار ملف PDF أو Word (doc/docx) فقط');
-      return;
-    }
-
-    // Check file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('حجم الملف يجب أن يكون أقل من 10 ميجابايت');
-      return;
-    }
-
-    setEditedFile(file);
-  };
-
-  const handleUploadEditedFile = async () => {
-    if (!editedFile || !research) return;
-
-    try {
-      setIsUploadingFile(true);
-      toast.loading('جاري رفع الملف المعدل...', { id: 'upload-edited' });
-
-      // Upload file directly to research without creating/updating review
-      await researchService.uploadEditedByReviewer(research.id, editedFile);
-
-      toast.success('تم رفع الملف المعدل بنجاح! الملف الأصلي تم استبداله.', {
-        id: 'upload-edited',
-      });
-      setEditedFile(null);
-
-      // Reload page to show updated file
-      window.location.reload();
-    } catch (error) {
-      console.error('Error uploading edited file:', error);
-      toast.error('فشل رفع الملف المعدل', { id: 'upload-edited' });
-    } finally {
-      setIsUploadingFile(false);
     }
   };
 
@@ -445,7 +389,10 @@ export function EvaluationFormPage() {
 
   // Check if all scores are filled (including zero)
   const allScoresFilled = detailedScores.every((category) =>
-    category.items.every((item) => item.score !== undefined && item.score !== null && item.score >= 0)
+    category.items.every(
+      (item) =>
+        item.score !== undefined && item.score !== null && item.score >= 0
+    )
   );
 
   const isFormComplete =
@@ -482,7 +429,7 @@ export function EvaluationFormPage() {
     if (!isFormComplete) {
       const msg = 'يرجى إكمال جميع الحقول قبل الإرسال';
       setError(msg);
-      toast.error(msg, { 
+      toast.error(msg, {
         icon: '⚠️',
         duration: 4000,
       });
@@ -492,7 +439,7 @@ export function EvaluationFormPage() {
     if (!user?.id || !research?.id) {
       const msg = 'خطأ في تحديد المستخدم أو البحث';
       setError(msg);
-      toast.error(msg, { 
+      toast.error(msg, {
         icon: '❌',
         duration: 4000,
       });
@@ -554,9 +501,11 @@ export function EvaluationFormPage() {
       // Show success toast with research details
       toast.success(
         `تم إرسال المراجعة بنجاح!\nالبحث: ${research.title}\nالتوصية: ${
-          recommendation === 'accepted' ? 'قبول' : 
-          recommendation === 'needs-revision' ? 'قبول مع تعديلات' : 
-          'رفض'
+          recommendation === 'accepted'
+            ? 'قبول'
+            : recommendation === 'needs-revision'
+            ? 'قبول مع تعديلات'
+            : 'رفض'
         }\nالدرجة الإجمالية: ${totalScore}/${maxTotalScore}`,
         {
           duration: 5000,
@@ -576,7 +525,8 @@ export function EvaluationFormPage() {
         navigate('/dashboard/my-tasks');
       }, 1500);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال المراجعة';
+      const errorMessage =
+        err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال المراجعة';
       setError(errorMessage);
       toast.error(errorMessage, {
         duration: 4000,
@@ -707,7 +657,7 @@ export function EvaluationFormPage() {
   return (
     <div className="space-y-6" dir="rtl">
       <Toaster position="top-center" reverseOrder={false} />
-      
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -769,78 +719,6 @@ export function EvaluationFormPage() {
               <span>تحميل البحث الأصلي</span>
             </button>
           </div>
-
-          {/* Upload Edited File Section - Show for all reviewers */}
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start gap-3 mb-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-bold text-gray-800 mb-1">
-                  رفع ملف معدل (اختياري)
-                </h3>
-                <p className="text-sm text-gray-600">
-                  يمكنك تحميل الملف، تعديله (مثل حذف اسم الباحث)، ثم رفعه هنا.
-                  <strong className="text-yellow-700">
-                    {' '}
-                    الملف الجديد سيستبدل الملف الأصلي تلقائياً.
-                  </strong>
-                </p>
-              </div>
-            </div>
-
-            {!editedFile ? (
-              <div>
-                <input
-                  type="file"
-                  id="edited-file-upload"
-                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="edited-file-upload"
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50 transition-colors font-medium cursor-pointer"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>اختيار ملف معدل (PDF أو Word)</span>
-                </label>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-white border border-yellow-300 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-yellow-600" />
-                    <span className="text-sm font-medium text-gray-800">
-                      {editedFile.name}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setEditedFile(null)}
-                    className="text-red-500 hover:text-red-700 text-sm font-medium"
-                  >
-                    إلغاء
-                  </button>
-                </div>
-                <button
-                  onClick={handleUploadEditedFile}
-                  disabled={isUploadingFile}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isUploadingFile ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>جاري الرفع...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      <span>رفع الملف المعدل (سيستبدل الأصلي)</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -865,48 +743,66 @@ export function EvaluationFormPage() {
 
       {/* Deadline Warning */}
       {assignment?.deadline && (
-        <div className={`rounded-xl border p-6 ${
-          new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-            ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
-            : 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200'
-        }`}>
+        <div
+          className={`rounded-xl border p-6 ${
+            new Date(assignment.deadline) <
+            new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+              ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
+              : 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200'
+          }`}
+        >
           <div className="flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-              new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-                ? 'bg-red-500'
-                : 'bg-blue-500'
-            }`}>
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                new Date(assignment.deadline) <
+                new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                  ? 'bg-red-500'
+                  : 'bg-blue-500'
+              }`}
+            >
               <Bell className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className={`text-lg font-bold mb-2 ${
-                new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-                  ? 'text-red-800'
-                  : 'text-blue-800'
-              }`}>
+              <h3
+                className={`text-lg font-bold mb-2 ${
+                  new Date(assignment.deadline) <
+                  new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                    ? 'text-red-800'
+                    : 'text-blue-800'
+                }`}
+              >
                 {new Date(assignment.deadline) < new Date()
                   ? '⚠️ تجاوز الموعد النهائي'
-                  : new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                  : new Date(assignment.deadline) <
+                    new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
                   ? '⏰ الموعد النهائي قريب'
                   : '📅 الموعد النهائي للتقييم'}
               </h3>
-              <p className={`${
-                new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-                  ? 'text-red-700'
-                  : 'text-blue-700'
-              }`}>
+              <p
+                className={`${
+                  new Date(assignment.deadline) <
+                  new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+                    ? 'text-red-700'
+                    : 'text-blue-700'
+                }`}
+              >
                 {new Date(assignment.deadline).toLocaleDateString('ar-EG', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
                 })}
                 {new Date(assignment.deadline) < new Date() && (
-                  <span className="font-bold mr-2">- يرجى إكمال التقييم في أقرب وقت</span>
+                  <span className="font-bold mr-2">
+                    - يرجى إكمال التقييم في أقرب وقت
+                  </span>
                 )}
-                {new Date(assignment.deadline) >= new Date() && 
-                 new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && (
-                  <span className="font-bold mr-2">- يرجى إكمال التقييم قبل انتهاء الموعد</span>
-                )}
+                {new Date(assignment.deadline) >= new Date() &&
+                  new Date(assignment.deadline) <
+                    new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && (
+                    <span className="font-bold mr-2">
+                      - يرجى إكمال التقييم قبل انتهاء الموعد
+                    </span>
+                  )}
               </p>
             </div>
           </div>

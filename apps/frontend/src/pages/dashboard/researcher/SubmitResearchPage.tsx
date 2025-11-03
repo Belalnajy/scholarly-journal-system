@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Upload, Send, Bell, Loader2, CheckCircle, X, AlertCircle, DollarSign } from 'lucide-react';
+import {
+  Upload,
+  Send,
+  Bell,
+  Loader2,
+  CheckCircle,
+  X,
+  AlertCircle,
+  DollarSign,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { researchService } from '../../../services/researchService';
 import toast from 'react-hot-toast';
@@ -26,7 +35,9 @@ export function SubmitResearchPage() {
   const [keywordInput, setKeywordInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadedResearchId, setUploadedResearchId] = useState<string | null>(null);
+  const [uploadedResearchId, setUploadedResearchId] = useState<string | null>(
+    null
+  );
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [researchSubmitted, setResearchSubmitted] = useState(false);
 
@@ -47,7 +58,9 @@ export function SubmitResearchPage() {
       }
 
       // Check site settings first to see if payment system is enabled
-      const settingsResponse = await axios.get(`${API_URL}/site-settings/public`);
+      const settingsResponse = await axios.get(
+        `${API_URL}/site-settings/public`
+      );
       const submissionFee = settingsResponse.data.submission_fee || 0;
 
       // If submission fee is 0, payment system is disabled - allow submission
@@ -58,9 +71,12 @@ export function SubmitResearchPage() {
       }
 
       // Check payment status
-      const response = await axios.get(`${API_URL}/users/${userId}/payment-status`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        `${API_URL}/users/${userId}/payment-status`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       setPaymentStatus(response.data.payment_status);
     } catch (error) {
@@ -93,7 +109,9 @@ export function SubmitResearchPage() {
     'تقنيات التعليم',
   ];
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -103,7 +121,7 @@ export function SubmitResearchPage() {
       'application/msword', // .doc
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
     ];
-    
+
     if (!allowedTypes.includes(file.type)) {
       toast.error('يرجى اختيار ملف PDF أو Word (doc/docx) فقط');
       return;
@@ -129,7 +147,7 @@ export function SubmitResearchPage() {
 
       // Get current user ID
       const userId = localStorage.getItem('userId');
-      
+
       if (!userId) {
         toast.error('يجب تسجيل الدخول أولاً', { id: 'upload-file' });
         return;
@@ -137,9 +155,11 @@ export function SubmitResearchPage() {
 
       // Generate research number
       const year = new Date().getFullYear();
-      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      const random = Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, '0');
       const research_number = `RES-${year}-${random}`;
-      
+
       // Create temporary research entry (will be updated when form is submitted)
       const research = await researchService.create({
         user_id: userId,
@@ -153,9 +173,11 @@ export function SubmitResearchPage() {
 
       // Upload PDF to Cloudinary
       await researchService.uploadPDF(research.id, file);
-      
+
       setUploadedResearchId(research.id);
-      toast.success('تم رفع الملف بنجاح! أكمل بيانات البحث', { id: 'upload-file' });
+      toast.success('تم رفع الملف بنجاح! أكمل بيانات البحث', {
+        id: 'upload-file',
+      });
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('فشل رفع الملف', { id: 'upload-file' });
@@ -176,12 +198,12 @@ export function SubmitResearchPage() {
 
     try {
       toast.loading('جاري حذف الملف...', { id: 'remove-file' });
-      
+
       // Delete the temporary research entry
       await researchService.delete(uploadedResearchId);
-      
+
       toast.success('تم حذف الملف بنجاح', { id: 'remove-file' });
-      
+
       // Reset state instead of reloading
       setUploadedResearchId(null);
       setFormData({ ...formData, file: null });
@@ -234,7 +256,8 @@ export function SubmitResearchPage() {
 
       // Keywords are already arrays
       const keywords = formData.keywords;
-      const keywords_en = formData.keywords_en.length > 0 ? formData.keywords_en : undefined;
+      const keywords_en =
+        formData.keywords_en.length > 0 ? formData.keywords_en : undefined;
 
       toast.loading('جاري إرسال البحث...', { id: 'submit-research' });
 
@@ -253,9 +276,11 @@ export function SubmitResearchPage() {
       } else {
         // Fallback: create new research if file wasn't uploaded
         const year = new Date().getFullYear();
-        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const random = Math.floor(Math.random() * 10000)
+          .toString()
+          .padStart(4, '0');
         const research_number = `RES-${year}-${random}`;
-        
+
         const research = await researchService.create({
           user_id: userId,
           research_number,
@@ -296,7 +321,10 @@ export function SubmitResearchPage() {
         navigate('/dashboard/my-research');
       }, 1500);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال البحث', { id: 'submit-research' });
+      toast.error(
+        err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال البحث',
+        { id: 'submit-research' }
+      );
       setIsSubmitting(false); // Re-enable only on error
     }
   };
@@ -349,10 +377,12 @@ export function SubmitResearchPage() {
             </div>
             <div className="flex-1">
               <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                {paymentStatus === 'pending' ? 'يجب دفع رسوم التقديم أولاً' : 'في انتظار موافقة الإدارة'}
+                {paymentStatus === 'pending'
+                  ? 'يجب دفع رسوم التقديم أولاً'
+                  : 'في انتظار موافقة الإدارة'}
               </h3>
               <p className="text-gray-700 mb-4">
-                {paymentStatus === 'pending' 
+                {paymentStatus === 'pending'
                   ? 'لتتمكن من تقديم بحثك، يرجى إتمام عملية دفع رسوم التقديم أولاً.'
                   : 'تم إرسال طلب الدفع للإدارة. سيتم مراجعته والموافقة عليه قريباً. بعد الموافقة ستتمكن من تقديم بحثك.'}
               </p>
@@ -380,10 +410,12 @@ export function SubmitResearchPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">تقديم بحث جديد</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            تقديم بحث جديد
+          </h1>
           <p className="text-gray-600">إضافة بحث جديد للمراجعة</p>
         </div>
         <button className="p-3 text-gray-600 hover:text-[#0D3B66] transition-colors">
@@ -396,16 +428,21 @@ export function SubmitResearchPage() {
         {/* Form Header */}
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-800">تقديم بحث جديد</h2>
-          <p className="text-sm text-gray-500 mt-1">املأ النموذج التالي لتقديم بحثك للمراجعة</p>
-          
+          <p className="text-sm text-gray-500 mt-1">
+            املأ النموذج التالي لتقديم بحثك للمراجعة
+          </p>
+
           {/* Important Notice */}
           <div className="mt-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-bold text-yellow-800 mb-1">⚠️ ملاحظة هامة</p>
+                <p className="text-sm font-bold text-yellow-800 mb-1">
+                  ⚠️ ملاحظة هامة
+                </p>
                 <p className="text-sm text-yellow-700">
-                  بعد تقديم هذا البحث، سيتم إلغاء تفعيل حسابك تلقائياً. لتقديم بحث جديد، ستحتاج إلى دفع رسوم التقديم مرة أخرى.
+                  بعد تقديم هذا البحث، سيتم إلغاء تفعيل حسابك تلقائياً. لتقديم
+                  بحث جديد، ستحتاج إلى دفع رسوم التقديم مرة أخرى.
                 </p>
               </div>
             </div>
@@ -424,7 +461,9 @@ export function SubmitResearchPage() {
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="ادخل عنوان البحث..."
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0D3B66] focus:border-[#0D3B66] transition-all"
                 required
@@ -438,7 +477,9 @@ export function SubmitResearchPage() {
               </label>
               <select
                 value={formData.specialization}
-                onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, specialization: e.target.value })
+                }
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0D3B66] focus:border-[#0D3B66] transition-all appearance-none bg-white"
                 required
               >
@@ -459,7 +500,9 @@ export function SubmitResearchPage() {
             </label>
             <textarea
               value={formData.abstract}
-              onChange={(e) => setFormData({ ...formData, abstract: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, abstract: e.target.value })
+              }
               placeholder="اكتب ملخصاً شاملاً للبحث..."
               rows={6}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0D3B66] focus:border-[#0D3B66] transition-all resize-none"
@@ -473,7 +516,8 @@ export function SubmitResearchPage() {
               الكلمات المفتاحية<span className="text-red-500">*</span>
             </label>
             <p className="text-xs text-gray-500 mb-2">
-              اكتب الكلمة واضغط Enter أو زر "إضافة" (يمكنك استخدام الفواصل والمسافات)
+              اكتب الكلمة واضغط Enter أو زر "إضافة" (يمكنك استخدام الفواصل
+              والمسافات)
             </p>
             <div className="flex gap-2">
               <input
@@ -485,7 +529,10 @@ export function SubmitResearchPage() {
                     e.preventDefault();
                     const keyword = keywordInput.trim();
                     if (keyword && !formData.keywords.includes(keyword)) {
-                      setFormData({ ...formData, keywords: [...formData.keywords, keyword] });
+                      setFormData({
+                        ...formData,
+                        keywords: [...formData.keywords, keyword],
+                      });
                       setKeywordInput('');
                     }
                   }
@@ -498,7 +545,10 @@ export function SubmitResearchPage() {
                 onClick={() => {
                   const keyword = keywordInput.trim();
                   if (keyword && !formData.keywords.includes(keyword)) {
-                    setFormData({ ...formData, keywords: [...formData.keywords, keyword] });
+                    setFormData({
+                      ...formData,
+                      keywords: [...formData.keywords, keyword],
+                    });
                     setKeywordInput('');
                   }
                 }}
@@ -521,17 +571,21 @@ export function SubmitResearchPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {formData.keywords.map((keyword, index) => (
-                    <span 
-                      key={index} 
+                    <span
+                      key={index}
                       className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm flex items-center gap-2 border border-blue-200"
                     >
                       {keyword}
                       <button
                         type="button"
-                        onClick={() => setFormData({
-                          ...formData,
-                          keywords: formData.keywords.filter((_, i) => i !== index)
-                        })}
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            keywords: formData.keywords.filter(
+                              (_, i) => i !== index
+                            ),
+                          })
+                        }
                         className="text-blue-600 hover:text-red-600 font-bold text-base leading-none"
                         title="حذف"
                       >
@@ -549,9 +603,13 @@ export function SubmitResearchPage() {
             <label className="block text-sm font-bold text-gray-700 mb-2">
               رفع ملف البحث<span className="text-red-500">*</span>
             </label>
-            <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              fileName ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#0D3B66]'
-            }`}>
+            <div
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                fileName
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-gray-300 hover:border-[#0D3B66]'
+              }`}
+            >
               <input
                 type="file"
                 id="file-upload"
@@ -572,19 +630,25 @@ export function SubmitResearchPage() {
                   )}
                 </div>
                 <p className="text-gray-700 font-medium mb-2">
-                  {isUploading ? 'جاري رفع الملف...' : (fileName || 'اسحب وأفلت ملف البحث هنا')}
+                  {isUploading
+                    ? 'جاري رفع الملف...'
+                    : fileName || 'اسحب وأفلت ملف البحث هنا'}
                 </p>
                 <p className="text-sm text-gray-500 mb-4">
-                  {isUploading ? 'يرجى الانتظار...' : 'أو انقر لاختيار الملف (سيتم الرفع فوراً)'}
+                  {isUploading
+                    ? 'يرجى الانتظار...'
+                    : 'أو انقر لاختيار الملف (سيتم الرفع فوراً)'}
                 </p>
                 {!fileName && (
                   <button
                     type="button"
-                    onClick={() => document.getElementById('file-upload')?.click()}
+                    onClick={() =>
+                      document.getElementById('file-upload')?.click()
+                    }
                     disabled={isUploading}
                     className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isUploading ? 'جاري الرفع...' : 'اختيار ملف (PDF أو Word)'}
+                    {isUploading ? 'جاري الرفع...' : 'اختيار ملف ( Word)'}
                   </button>
                 )}
               </label>
@@ -650,7 +714,10 @@ export function SubmitResearchPage() {
 
       {/* Cancel Confirmation Modal */}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" dir="rtl">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          dir="rtl"
+        >
           <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -658,11 +725,12 @@ export function SubmitResearchPage() {
               </div>
               <h3 className="text-xl font-bold text-gray-800">تأكيد الإلغاء</h3>
             </div>
-            
+
             <p className="text-gray-600 mb-6">
-              هل أنت متأكد من إلغاء تقديم البحث؟ سيتم حذف جميع البيانات والملفات المرفوعة بشكل نهائي.
+              هل أنت متأكد من إلغاء تقديم البحث؟ سيتم حذف جميع البيانات والملفات
+              المرفوعة بشكل نهائي.
             </p>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={handleConfirmCancel}

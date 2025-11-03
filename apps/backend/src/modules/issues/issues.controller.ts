@@ -160,10 +160,10 @@ export class IssuesController {
   }
 
   /**
-   * Delete an issue (Admin only)
+   * Delete an issue (Admin/Editor only)
    */
   @Delete(':id')
-  @Roles('admin')
+  @Roles('admin', 'editor')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.issuesService.remove(id);
   }

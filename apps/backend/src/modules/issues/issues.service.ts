@@ -127,13 +127,20 @@ export class IssuesService {
   async remove(id: string): Promise<void> {
     const issue = await this.findOne(id);
 
-    // Check if issue has articles
-    if (issue.articles && issue.articles.length > 0) {
-      throw new BadRequestException(
-        'لا يمكن حذف العدد لأنه يحتوي على مقالات',
-      );
+    // Delete issue PDF from Cloudinary if exists
+    if (issue.issue_pdf_public_id) {
+      try {
+        await this.cloudinaryService.deleteFile(
+          issue.issue_pdf_public_id,
+          'raw',
+        );
+      } catch (error) {
+        console.error('Failed to delete issue PDF from Cloudinary:', error);
+        // Continue with deletion even if Cloudinary deletion fails
+      }
     }
 
+    // Delete the issue (articles will be deleted automatically via cascade)
     await this.issueRepository.remove(issue);
   }
 

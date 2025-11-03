@@ -19,6 +19,7 @@ import { SiteSettings } from '../../database/entities/site-settings.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { PdfGeneratorService } from '../pdf/pdf-generator.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class ResearchService {
@@ -33,7 +34,8 @@ export class ResearchService {
     private readonly siteSettingsRepository: Repository<SiteSettings>,
     private readonly notificationsService: NotificationsService,
     private readonly cloudinaryService: CloudinaryService,
-    private readonly pdfGeneratorService: PdfGeneratorService
+    private readonly pdfGeneratorService: PdfGeneratorService,
+    private readonly emailService: EmailService
   ) {}
 
   async create(createResearchDto: CreateResearchDto): Promise<Research> {
@@ -58,6 +60,41 @@ export class ResearchService {
       );
     } catch (error) {
       console.error('Failed to send research submission notification:', error);
+    }
+
+    // Send email to researcher and admins
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: savedResearch.user_id },
+      });
+
+      if (user && user.email) {
+        // Email to researcher
+        await this.emailService.sendResearchSubmittedEmail(
+          user.email,
+          user.name,
+          savedResearch.title,
+          savedResearch.research_number
+        );
+
+        // Email to admins
+        const admins = await this.userRepository.find({
+          where: { role: 'admin' as any },
+        });
+
+        for (const admin of admins) {
+          if (admin.email) {
+            await this.emailService.sendAdminNewResearchEmail(
+              admin.email,
+              savedResearch.title,
+              savedResearch.research_number,
+              user.name
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send research submission emails:', error);
     }
 
     return savedResearch;
@@ -122,9 +159,21 @@ export class ResearchService {
 
   async update(
     id: string,
-    updateResearchDto: UpdateResearchDto
+    updateResearchDto: UpdateResearchDto,
+    user?: any
   ): Promise<Research> {
     const research = await this.findOne(id);
+
+    // Check if user has permission to update
+    // Only admin, editor, or the researcher who owns the research can update
+    if (user) {
+      const isOwner = research.user_id === user.id;
+      const isAdminOrEditor = user.role === 'admin' || user.role === 'editor';
+      
+      if (!isOwner && !isAdminOrEditor) {
+        throw new ForbiddenException('ليس لديك صلاحية لتعديل هذا البحث');
+      }
+    }
 
     // If updating research_number, check for conflicts
     if (
@@ -210,6 +259,10 @@ export class ResearchService {
 
     // Send notifications based on status change
     try {
+      const user = await this.userRepository.findOne({
+        where: { id: savedResearch.user_id },
+      });
+
       if (
         status === ResearchStatus.ACCEPTED &&
         previousStatus !== ResearchStatus.ACCEPTED
@@ -219,6 +272,16 @@ export class ResearchService {
           savedResearch.title,
           savedResearch.user_id
         );
+
+        // Send email
+        if (user && user.email) {
+          await this.emailService.sendResearchAcceptedEmail(
+            user.email,
+            user.name,
+            savedResearch.title,
+            savedResearch.research_number
+          );
+        }
       } else if (
         status === ResearchStatus.REJECTED &&
         previousStatus !== ResearchStatus.REJECTED
@@ -228,6 +291,16 @@ export class ResearchService {
           savedResearch.title,
           savedResearch.user_id
         );
+
+        // Send email
+        if (user && user.email) {
+          await this.emailService.sendResearchRejectedEmail(
+            user.email,
+            user.name,
+            savedResearch.title,
+            savedResearch.research_number
+          );
+        }
       } else if (
         status === ResearchStatus.PUBLISHED &&
         previousStatus !== ResearchStatus.PUBLISHED
@@ -246,6 +319,16 @@ export class ResearchService {
           savedResearch.title,
           savedResearch.user_id
         );
+
+        // Send email
+        if (user && user.email) {
+          await this.emailService.sendResearchNeedsRevisionEmail(
+            user.email,
+            user.name,
+            savedResearch.title,
+            savedResearch.research_number
+          );
+        }
       }
     } catch (error) {
       console.error('Failed to send status change notification:', error);
@@ -425,6 +508,21 @@ export class ResearchService {
     updated_by_user_id: string
   ): Promise<Research> {
     const research = await this.findOne(research_id);
+
+    // Check if reviewers have been assigned
+    // Only allow file update if no reviewers are assigned (to protect researcher identity)
+    const reviewerAssignments = await this.researchRepository.manager.query(
+      `SELECT COUNT(*) as count FROM reviewer_assignment WHERE research_id = $1`,
+      [research_id]
+    );
+
+    const hasReviewers = reviewerAssignments[0]?.count > 0;
+    
+    if (hasReviewers) {
+      throw new ForbiddenException(
+        'لا يمكن تعديل الملف بعد تعيين المحكمين. هذا الإجراء لحماية هوية الباحث.'
+      );
+    }
 
     // Delete old file from Cloudinary if exists
     if (research.cloudinary_public_id) {

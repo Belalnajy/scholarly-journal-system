@@ -353,14 +353,22 @@ export function EditorResearchDetailsPage() {
             )}
 
             {/* Update Research File Button (Admin/Editor only) */}
-            {(research.status === 'accepted' ||
+            {/* Allow file update if: under-review OR accepted OR published */}
+            {(research.status === 'under-review' ||
+              research.status === 'accepted' ||
               research.status === 'published') && (
               <button
                 onClick={() => setShowUpdateFileModal(true)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 <Upload className="w-4 h-4" />
-                <span>تحديث ملف البحث (إضافة الغلاف والتنسيق)</span>
+                <span>
+                  {assignments.length === 0 
+                    ? 'تحديث ملف البحث (قبل تعيين المحكمين)'
+                    : research.status === 'under-review'
+                    ? 'تحديث ملف البحث (تعديل أو إزالة معلومات)'
+                    : 'تحديث ملف البحث (إضافة الغلاف والتنسيق)'}
+                </span>
               </button>
             )}
 
@@ -639,61 +647,76 @@ export function EditorResearchDetailsPage() {
         </div>
         <div className="p-6">
           {assignments.length > 0 ? (
-            <div className="space-y-3">
-              {assignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                      <User className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-gray-800 font-medium">
-                        {assignment.reviewer?.name || 'محكم معين'}
-                      </p>
-                      {assignment.reviewer?.email && (
-                        <p className="text-xs text-gray-500">
-                          {assignment.reviewer.email}
+            <>
+              <div className="space-y-3">
+                {assignments.map((assignment) => (
+                  <div
+                    key={assignment.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                        <User className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-gray-800 font-medium">
+                          {assignment.reviewer?.name || 'محكم معين'}
                         </p>
-                      )}
-                      {assignment.reviewer?.specialization && (
-                        <p className="text-xs text-blue-600 mt-1">
-                          التخصص: {assignment.reviewer.specialization}
+                        {assignment.reviewer?.email && (
+                          <p className="text-xs text-gray-500">
+                            {assignment.reviewer.email}
+                          </p>
+                        )}
+                        {assignment.reviewer?.specialization && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            التخصص: {assignment.reviewer.specialization}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`px-3 py-1 rounded-md text-xs font-semibold ${
+                          assignment.status === 'completed'
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : assignment.status === 'accepted'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : assignment.status === 'declined'
+                            ? 'bg-red-50 text-red-700 border border-red-200'
+                            : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                        }`}
+                      >
+                        {assignment.status === 'completed'
+                          ? 'مكتمل'
+                          : assignment.status === 'accepted'
+                          ? 'مقبول'
+                          : assignment.status === 'declined'
+                          ? 'مرفوض'
+                          : 'معين'}
+                      </span>
+                      {assignment.deadline && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          الموعد: {formatDate(assignment.deadline)}
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span
-                      className={`px-3 py-1 rounded-md text-xs font-semibold ${
-                        assignment.status === 'completed'
-                          ? 'bg-green-50 text-green-700 border border-green-200'
-                          : assignment.status === 'accepted'
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                          : assignment.status === 'declined'
-                          ? 'bg-red-50 text-red-700 border border-red-200'
-                          : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                      }`}
-                    >
-                      {assignment.status === 'completed'
-                        ? 'مكتمل'
-                        : assignment.status === 'accepted'
-                        ? 'مقبول'
-                        : assignment.status === 'declined'
-                        ? 'مرفوض'
-                        : 'معين'}
-                    </span>
-                    {assignment.deadline && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        الموعد: {formatDate(assignment.deadline)}
-                      </p>
-                    )}
+                ))}
+              </div>
+              
+              {/* Privacy Protection Notice - Show when reviewers are assigned */}
+              {research.status === 'under-review' && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                  <div className="flex items-start gap-2 text-right">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-800">
+                      <p className="font-bold mb-1">🔒 تنبيه: الملف محمي</p>
+                      <p>تم تعيين محكمين لهذا البحث. لا يمكن تعديل الملف الآن لحماية هوية الباحث من المحكمين.</p>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
@@ -702,6 +725,18 @@ export function EditorResearchDetailsPage() {
               <p className="text-gray-600 mb-4">
                 لم يتم تعيين محكمين لهذا البحث بعد
               </p>
+              
+              {/* Privacy Protection Notice */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 max-w-md mx-auto">
+                <div className="flex items-start gap-2 text-right">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-bold mb-1">⚠️ تنبيه مهم</p>
+                    <p>يمكنك تعديل ملف البحث الآن لإزالة معلومات الباحث. بعد تعيين المحكمين، لن يمكن تعديل الملف لحماية هوية الباحث.</p>
+                  </div>
+                </div>
+              </div>
+
               {research.status === 'under-review' && (
                 <button
                   onClick={handleAssignReviewer}
@@ -749,16 +784,53 @@ export function EditorResearchDetailsPage() {
             {/* Modal Body */}
             <div className="p-6 space-y-6" dir="rtl">
               {/* Info Alert */}
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+              <div className={`border-2 rounded-xl p-4 ${
+                assignments.length === 0 
+                  ? 'bg-yellow-50 border-yellow-200' 
+                  : research.status === 'under-review'
+                  ? 'bg-red-50 border-red-200'
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className={`w-6 h-6 flex-shrink-0 mt-0.5 ${
+                    assignments.length === 0 
+                      ? 'text-yellow-600' 
+                      : research.status === 'under-review'
+                      ? 'text-red-600'
+                      : 'text-blue-600'
+                  }`} />
                   <div className="flex-1">
-                    <h3 className="font-bold text-blue-900 mb-1">
+                    <h3 className={`font-bold mb-1 ${
+                      assignments.length === 0 
+                        ? 'text-yellow-900' 
+                        : research.status === 'under-review'
+                        ? 'text-red-900'
+                        : 'text-blue-900'
+                    }`}>
                       معلومات مهمة
                     </h3>
-                    <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                    <ul className={`text-sm space-y-1 list-disc list-inside ${
+                      assignments.length === 0 
+                        ? 'text-yellow-800' 
+                        : research.status === 'under-review'
+                        ? 'text-red-800'
+                        : 'text-blue-800'
+                    }`}>
                       <li>سيتم استبدال الملف الحالي بالملف الجديد</li>
-                      <li>يمكنك إضافة الغلاف والتنسيق النهائي للبحث</li>
+                      {assignments.length === 0 ? (
+                        <>
+                          <li className="font-bold">يمكنك تعديل الملف الآن لإزالة معلومات الباحث قبل تعيين المحكمين</li>
+                          <li className="font-bold text-red-700">⚠️ بعد تعيين المحكمين، لن يمكن تعديل الملف (لحماية هوية الباحث)</li>
+                        </>
+                      ) : research.status === 'under-review' && assignments.length > 0 ? (
+                        <>
+                          <li className="font-bold text-red-700">⚠️ تحذير: تم تعيين محكمين لهذا البحث!</li>
+                          <li className="font-bold text-red-700">إذا قمت بتحديث الملف، سيتم رفض العملية من الخادم لحماية هوية الباحث.</li>
+                          <li>يمكنك المحاولة، لكن سيظهر لك خطأ: "لا يمكن تعديل الملف بعد تعيين المحكمين"</li>
+                        </>
+                      ) : (
+                        <li>يمكنك إضافة الغلاف والتنسيق النهائي للبحث</li>
+                      )}
                       <li>سيتم إرسال إشعار للباحث بتحديث الملف</li>
                       <li>الملف المدعوم: PDF أو Word (حتى 10 ميجابايت)</li>
                     </ul>

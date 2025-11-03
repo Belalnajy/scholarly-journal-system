@@ -67,12 +67,13 @@ export class ResearchController {
   }
 
   @Patch(':id')
-  @Roles('researcher', 'admin', 'editor') // Researchers can update their own research
+  @Roles('researcher', 'admin', 'editor') // Researchers, admins and editors can update research
   update(
     @Param('id') id: string,
-    @Body() updateResearchDto: UpdateResearchDto
+    @Body() updateResearchDto: UpdateResearchDto,
+    @Req() req: any
   ) {
-    return this.researchService.update(id, updateResearchDto);
+    return this.researchService.update(id, updateResearchDto, req.user);
   }
 
   @Patch(':id/status')
@@ -136,33 +137,7 @@ export class ResearchController {
     );
   }
 
-  // Upload edited file by reviewer (replaces original without creating review)
-  @Post(':id/upload-edited-by-reviewer')
-  @Roles('reviewer', 'admin', 'editor')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadEditedByReviewer(
-    @Param('id') research_id: string,
-    @UploadedFile() file: Express.Multer.File
-  ) {
-    // Validate file type
-    const allowedMimeTypes = [
-      'application/pdf',
-      'application/msword', // .doc
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-    ];
-    
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException('نوع الملف غير مدعوم. يرجى رفع ملف PDF أو Word (doc/docx) فقط');
-    }
-    
-    // Simply replace the file without affecting review status
-    return this.researchService.uploadResearchPDF(
-      research_id,
-      file.buffer,
-      file.originalname,
-      file.size
-    );
-  }
+  // REMOVED: Reviewers can no longer edit files to protect researcher identity
 
   // Update research file by admin (with tracking)
   @Patch(':id/update-file')

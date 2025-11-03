@@ -5,7 +5,9 @@ import { CreateReviewerAssignmentDto } from './dto/create-reviewer-assignment.dt
 import { UpdateReviewerAssignmentDto } from './dto/update-reviewer-assignment.dto';
 import { ReviewerAssignment, ReviewerAssignmentStatus } from '../../database/entities/reviewer-assignment.entity';
 import { Research } from '../../database/entities/research.entity';
+import { User } from '../../database/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class ReviewerAssignmentsService {
@@ -14,7 +16,10 @@ export class ReviewerAssignmentsService {
     private readonly reviewerAssignmentRepository: Repository<ReviewerAssignment>,
     @InjectRepository(Research)
     private readonly researchRepository: Repository<Research>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly notificationsService: NotificationsService,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(createDto: CreateReviewerAssignmentDto): Promise<ReviewerAssignment> {
@@ -45,6 +50,20 @@ export class ReviewerAssignmentsService {
           research.title,
           createDto.reviewer_id,
         );
+
+        // Send email to reviewer
+        const reviewer = await this.userRepository.findOne({
+          where: { id: createDto.reviewer_id },
+        });
+
+        if (reviewer && reviewer.email) {
+          await this.emailService.sendReviewerAssignmentEmail(
+            reviewer.email,
+            reviewer.name,
+            research.title,
+            research.research_number
+          );
+        }
       }
     } catch (error) {
       console.error('Failed to send reviewer assignment notification:', error);
@@ -108,7 +127,39 @@ export class ReviewerAssignmentsService {
   async updateStatus(id: string, status: ReviewerAssignmentStatus): Promise<ReviewerAssignment> {
     const assignment = await this.findOne(id);
     assignment.status = status;
-    return await this.reviewerAssignmentRepository.save(assignment);
+    const savedAssignment = await this.reviewerAssignmentRepository.save(assignment);
+
+    // Send email to admin when reviewer accepts
+    if (status === ReviewerAssignmentStatus.ACCEPTED) {
+      try {
+        const research = await this.researchRepository.findOne({
+          where: { id: assignment.research_id },
+        });
+        const reviewer = await this.userRepository.findOne({
+          where: { id: assignment.reviewer_id },
+        });
+        const admins = await this.userRepository.find({
+          where: { role: 'admin' as any },
+        });
+
+        if (research && reviewer) {
+          for (const admin of admins) {
+            if (admin.email) {
+              await this.emailService.sendReviewerAcceptedEmail(
+                admin.email,
+                reviewer.name,
+                research.title,
+                research.research_number
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to send reviewer acceptance email:', error);
+      }
+    }
+
+    return savedAssignment;
   }
 
   async remove(id: string): Promise<void> {

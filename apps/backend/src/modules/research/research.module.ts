@@ -9,6 +9,7 @@ import { SiteSettings } from '../../database/entities/site-settings.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { PdfModule } from '../pdf/pdf.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PdfModule } from '../pdf/pdf.module';
     NotificationsModule,
     CloudinaryModule,
     PdfModule,
+    EmailModule,
   ],
   controllers: [ResearchController],
   providers: [ResearchService],

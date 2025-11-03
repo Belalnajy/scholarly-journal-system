@@ -412,32 +412,7 @@ export const researchService = {
     }
   },
 
-  /**
-   * Upload edited file by reviewer (replaces original without creating review)
-   * POST /api/research/:id/upload-edited-by-reviewer
-   */
-  async uploadEditedByReviewer(
-    research_id: string,
-    file: File
-  ): Promise<Research> {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await api.post<Research>(
-        `/research/${research_id}/upload-edited-by-reviewer`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(getErrorMessage(error));
-    }
-  },
+  // REMOVED: uploadEditedByReviewer - Reviewers can no longer edit files to protect researcher identity
 
   /**
    * Update research file by admin (with tracking)

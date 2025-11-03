@@ -57,7 +57,7 @@ export function ResearchTimeline({ research, reviews = [], revisions = [] }: Res
         icon: <Users className="w-5 h-5" />,
         color: 'green',
         details: completedReviews.map(r => 
-          `${r.reviewer?.name || 'محكم'}: ${r.recommendation === 'accepted' ? 'قبول' : r.recommendation === 'rejected' ? 'رفض' : 'يحتاج تعديلات'} (${r.average_rating}/5)`
+          `محكم (الهوية محجوبة): ${r.recommendation === 'accepted' ? 'قبول' : r.recommendation === 'rejected' ? 'رفض' : 'يحتاج تعديلات'} (${r.average_rating}/5)`
         ),
       });
     }

@@ -3,7 +3,6 @@ import {
   Download,
   FileText,
   User,
-  Calendar,
   AlertCircle,
   Loader2,
   Clock,
@@ -218,47 +217,27 @@ export function ReviewerResearchViewPage() {
         </button>
       </div>
 
-      {/* Researcher Info Card */}
-      {research.user && (
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-gray-800">
-                معلومات الباحث
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium text-gray-700">الاسم:</span>
-                  <span className="text-gray-600">{research.user.name}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium text-gray-700">
-                    البريد الإلكتروني:
-                  </span>
-                  <span className="text-gray-600">{research.user.email}</span>
-                </div>
-                {research.user.phone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-700">الهاتف:</span>
-                    <span className="text-gray-600">{research.user.phone}</span>
-                  </div>
-                )}
-                {research.user.affiliation && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-700">الجهة:</span>
-                    <span className="text-gray-600">
-                      {research.user.affiliation}
-                    </span>
-                  </div>
-                )}
+      {/* Privacy Notice - Researcher info is hidden */}
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-6">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center">
+            <User className="w-8 h-8 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-gray-800">
+              معلومات الباحث
+            </h3>
+            <div className="mt-2">
+              <div className="flex items-center gap-2 text-sm bg-blue-100 p-3 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <span className="text-blue-800 font-medium">
+                  معلومات الباحث محجوبة لضمان التحكيم المحايد والعادل
+                </span>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Assignment Notes */}
       {assignment?.assignment_notes && (
