@@ -1,4 +1,4 @@
-import { Calendar, User, Download, Eye, FileText } from 'lucide-react';
+import { Calendar, User, Download, Eye, FileText, BookMarked } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Link } from 'react-router-dom';
 import type { Article } from '../../services/articlesService';
@@ -124,6 +124,16 @@ export function ArticleCard({ article, articleNumber }: ArticleCardProps) {
             </>
           )}
         </div>
+
+        {/* Specialization */}
+        {article.research?.specialization && (
+          <div className="mb-4 flex items-center justify-end gap-2 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-4 py-2">
+            <span className="text-sm font-medium text-[#093059] sm:text-base" dir="rtl">
+              {article.research.specialization}
+            </span>
+            <BookMarked className="size-5 text-[#b2823e]" />
+          </div>
+        )}
 
         {/* Abstract */}
         <div className="mb-4">

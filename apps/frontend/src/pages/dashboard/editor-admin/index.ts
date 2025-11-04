@@ -15,3 +15,4 @@ export { ManageReportsPage } from './ManageReportsPage';
 export { ManageArticlesPage } from './ManageArticlesPage';
 export { ArticleDetailsPage } from './ArticleDetailsPage';
 export { EditArticlePage } from './EditArticlePage';
+export { CreateManualArticlePage } from './CreateManualArticlePage';

@@ -59,14 +59,14 @@ function DetailedScoresDisplay({ review }: { review: Review }) {
 
   const categories = [
     { id: 'title_score', name: 'العنوان', max: 3 },
-    { id: 'abstract_score', name: 'المستخلص', max: 2 },
-    { id: 'background_score', name: 'أدبيات البحث', max: 12 },
-    { id: 'methodology_score', name: 'منهج الرسالة', max: 12 },
-    { id: 'results_score', name: 'النتائج', max: 10 },
-    { id: 'documentation_score', name: 'التوثيق العلمي', max: 12 },
-    { id: 'originality_score', name: 'الأصالة والابتكار', max: 12 },
-    { id: 'formatting_score', name: 'إخراج البحث', max: 7 },
-    { id: 'condition_score', name: 'حالة البحث', max: 12 },
+    { id: 'abstract_score', name: 'مستخلص البحث', max: 2 },
+    { id: 'methodology_score', name: 'منهج الرسالة', max: 15 },
+    { id: 'background_score', name: 'أدبيات الرسالة', max: 15 },
+    { id: 'results_score', name: 'نتائج البحث وتوصياته', max: 15 },
+    { id: 'documentation_score', name: 'التوثيق العلمي', max: 15 },
+    { id: 'originality_score', name: 'الأصالة والابتكار', max: 15 },
+    { id: 'formatting_score', name: 'إخراج البحث', max: 2 },
+    { id: 'research_condition_score', name: 'حالة البحث', max: 10 },
     { id: 'sources_score', name: 'المصادر والمراجع', max: 8 },
   ];
 
@@ -326,14 +326,14 @@ export function EditorReviewDetailsPage() {
 
     const categories = [
       { id: 'title_score', name: 'العنوان', max: 3 },
-      { id: 'abstract_score', name: 'المستخلص', max: 2 },
-      { id: 'background_score', name: 'أدبيات البحث', max: 12 },
-      { id: 'methodology_score', name: 'منهج الرسالة', max: 12 },
-      { id: 'results_score', name: 'النتائج', max: 10 },
-      { id: 'documentation_score', name: 'التوثيق العلمي', max: 12 },
-      { id: 'originality_score', name: 'الأصالة والابتكار', max: 12 },
-      { id: 'formatting_score', name: 'إخراج البحث', max: 7 },
-      { id: 'condition_score', name: 'حالة البحث', max: 12 },
+      { id: 'abstract_score', name: 'مستخلص البحث', max: 2 },
+      { id: 'methodology_score', name: 'منهج الرسالة', max: 15 },
+      { id: 'background_score', name: 'أدبيات الرسالة', max: 15 },
+      { id: 'results_score', name: 'نتائج البحث وتوصياته', max: 15 },
+      { id: 'documentation_score', name: 'التوثيق العلمي', max: 15 },
+      { id: 'originality_score', name: 'الأصالة والابتكار', max: 15 },
+      { id: 'formatting_score', name: 'إخراج البحث', max: 2 },
+      { id: 'research_condition_score', name: 'حالة البحث', max: 10 },
       { id: 'sources_score', name: 'المصادر والمراجع', max: 8 },
     ];
 

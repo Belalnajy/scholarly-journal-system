@@ -8,6 +8,7 @@ import {
   MaxLength,
   ValidateNested,
   IsEmail,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ArticleStatus } from '../../../database/entities/article.entity';
@@ -72,6 +73,11 @@ export class CreateArticleDto {
   @IsOptional()
   keywords_en?: string[];
 
+  @IsString({ message: 'التخصص يجب أن يكون نصاً' })
+  @IsOptional()
+  @MaxLength(255, { message: 'التخصص يجب ألا يتجاوز 255 حرفاً' })
+  specialization?: string;
+
   @IsString({ message: 'الصفحات يجب أن تكون نصاً' })
   @IsOptional()
   pages?: string; // "1-15"
@@ -88,4 +94,8 @@ export class CreateArticleDto {
   @IsEnum(ArticleStatus, { message: 'حالة المقال غير صحيحة' })
   @IsOptional()
   status?: ArticleStatus;
+
+  @IsDateString({}, { message: 'تاريخ النشر غير صحيح' })
+  @IsOptional()
+  published_date?: string;
 }

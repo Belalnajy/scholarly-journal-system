@@ -10,6 +10,7 @@ import {
   XCircle,
   Edit3,
   Loader2,
+  Eye,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -26,6 +27,8 @@ import {
   downloadRevisionFile,
 } from '../../../utils/downloadFile';
 import toast, { Toaster } from 'react-hot-toast';
+import { PDFViewer } from '../../../components/PDFViewer';
+import { isPdfFile } from '../../../utils/fileUtils';
 
 // Types
 interface DetailedScore {
@@ -170,25 +173,38 @@ export function EvaluationFormPage() {
           id: 'title_score',
           title: 'الصياغة اللغوية والدلالة على المضمون ومناسبته له',
           score: 0,
-          maxScore: 5,
+          maxScore: 3,
         },
       ],
     },
     {
       id: 'abstract',
-      category: 'المستخلص',
+      category: 'مستخلص البحث',
       items: [
         {
           id: 'abstract_score',
           title: 'شمولية المستخلص ووضوحه',
           score: 0,
-          maxScore: 5,
+          maxScore: 2,
+        },
+      ],
+    },
+    {
+      id: 'methodology',
+      category: 'منهج الرسالة',
+      items: [
+        {
+          id: 'methodology_score',
+          title:
+            '- مشكلة البحث وأهدافه وأهميته\n- تحليل المعلومات ومناقشتها\n- التناسق الفكري للبحث\n- صحة المعلومات ودقتها',
+          score: 0,
+          maxScore: 15,
         },
       ],
     },
     {
       id: 'research_background',
-      category: 'أدبيات البحث',
+      category: 'أدبيات الرسالة',
       items: [
         {
           id: 'background_score',
@@ -199,21 +215,8 @@ export function EvaluationFormPage() {
       ],
     },
     {
-      id: 'methodology',
-      category: 'منهج البحث',
-      items: [
-        {
-          id: 'methodology_score',
-          title:
-            '- مشكلة البحث وأهدافه وأهميته\n- تحليل المعلومات ومناقشتها\n- التناسق الفكري للبحث\n- صحة المعلومات ودقتها',
-          score: 0,
-          maxScore: 20,
-        },
-      ],
-    },
-    {
       id: 'results',
-      category: 'النتائج والتوصيات',
+      category: 'نتائج البحث وتوصياته',
       items: [
         {
           id: 'results_score',
@@ -232,7 +235,7 @@ export function EvaluationFormPage() {
           title:
             '- تنوع المصادر والمراجع\n- أسلوب التوثيق العلمي\n- الأمانة العلمية',
           score: 0,
-          maxScore: 10,
+          maxScore: 15,
         },
       ],
     },
@@ -257,20 +260,31 @@ export function EvaluationFormPage() {
           id: 'formatting_score',
           title: 'إخراج البحث وتنسيقه',
           score: 0,
-          maxScore: 5,
+          maxScore: 2,
         },
       ],
     },
     {
-      id: 'language',
-      category: 'اللغة والأسلوب',
+      id: 'research_condition',
+      category: 'حالة البحث',
       items: [
         {
-          id: 'language_score',
-          title:
-            '- أسلوب الباحث وشخصيته\n- سلامة اللغة والإملاء\n- وضوح التعبير وقوة الصياغة',
+          id: 'research_condition_score',
+          title: 'الحالة العامة للبحث ومدى جاهزيته للنشر',
           score: 0,
           maxScore: 10,
+        },
+      ],
+    },
+    {
+      id: 'sources',
+      category: 'المصادر والمراجع',
+      items: [
+        {
+          id: 'sources_score',
+          title: 'حداثة المصادر وتنوعها وملاءمتها للموضوع',
+          score: 0,
+          maxScore: 8,
         },
       ],
     },
@@ -280,8 +294,21 @@ export function EvaluationFormPage() {
   const [recommendation, setRecommendation] = useState<
     'accepted' | 'needs-revision' | 'rejected' | ''
   >('');
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
 
   // File upload state removed - reviewers can no longer edit files to protect researcher identity
+
+  const handlePreviewResearch = () => {
+    if (!research) return;
+    const url = research.cloudinary_secure_url || research.file_url;
+    if (url) {
+      setPdfUrl(url);
+      setShowPDFViewer(true);
+    } else {
+      toast.error('لا يوجد ملف للمعاينة');
+    }
+  };
 
   const handleDownloadOriginal = async () => {
     if (!research) return;
@@ -294,7 +321,7 @@ export function EvaluationFormPage() {
       );
       toast.success('تم بدء التحميل', { id: 'download-original' });
     } catch (error) {
-      toast.error('فشل تحميل الملف', { id: 'download-original' });
+      toast.error('فشل في تحميل البحث', { id: 'download-original' });
     }
   };
 
@@ -658,11 +685,47 @@ export function EvaluationFormPage() {
     <div className="space-y-6" dir="rtl">
       <Toaster position="top-center" reverseOrder={false} />
 
+      {/* IMPORTANT: Research Returned After Revision Banner */}
+      {revisions.filter((r) => r.status === 'submitted').length > 0 && (
+        <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 rounded-xl p-6 shadow-2xl border-4 border-orange-300 animate-pulse-slow">
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Edit3 className="w-8 h-8 text-orange-600 animate-bounce" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="text-2xl font-black text-white">
+                  🔄 البحث عاد بعد التعديل
+                </h2>
+                <span className="px-4 py-1.5 bg-white text-orange-600 rounded-full text-sm font-bold shadow-md">
+                  مراجعة {revisions.filter((r) => r.status === 'submitted').length}
+                </span>
+              </div>
+              <p className="text-white text-base font-semibold mb-3 leading-relaxed">
+                ⚠️ الباحث قام بإجراء التعديلات المطلوبة على البحث بناءً على ملاحظاتك السابقة.
+                يرجى مراجعة التعديلات بعناية وتقييم البحث مرة أخرى.
+              </p>
+              <div className="flex items-center gap-2 text-white text-sm">
+                <CheckCircle className="w-4 h-4" />
+                <span className="font-medium">
+                  تم استلام {revisions.filter((r) => r.status === 'submitted').length} نسخة معدلة
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             نموذج التحكيم الإلكتروني
+            {revisions.filter((r) => r.status === 'submitted').length > 0 && (
+              <span className="mr-3 px-3 py-1 bg-orange-500 text-white rounded-lg text-base font-bold animate-pulse">
+                بعد التعديل
+              </span>
+            )}
           </h1>
           <p className="text-gray-600">تقييم شامل للبحث الأكاديمي</p>
         </div>
@@ -709,8 +772,19 @@ export function EvaluationFormPage() {
             </div>
           </div>
 
-          {/* Download Buttons */}
+          {/* Action Buttons */}
           <div className="mt-4 space-y-2">
+            {/* Preview button - only for PDF files */}
+            {isPdfFile(research.cloudinary_secure_url || research.file_url) && (
+              <button
+                onClick={handlePreviewResearch}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C9A961] text-white rounded-lg hover:bg-[#B89851] transition-colors font-medium shadow-md hover:shadow-lg"
+              >
+                <Eye className="w-5 h-5" />
+                <span>معاينة البحث</span>
+              </button>
+            )}
+            
             <button
               onClick={handleDownloadOriginal}
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium"
@@ -1270,6 +1344,30 @@ export function EvaluationFormPage() {
           </p>
         </div>
       </form>
+
+      {/* Custom CSS for animations */}
+      <style>{`
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.95;
+          }
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
+
+      {/* PDF Viewer Modal */}
+      {showPDFViewer && pdfUrl && (
+        <PDFViewer
+          pdfUrl={pdfUrl}
+          title={`معاينة البحث - ${research?.research_number || ''}`}
+          onClose={() => setShowPDFViewer(false)}
+        />
+      )}
     </div>
   );
 }

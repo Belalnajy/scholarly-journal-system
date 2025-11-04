@@ -46,6 +46,7 @@ export class IssuesService {
     const query = this.issueRepository
       .createQueryBuilder('issue')
       .leftJoinAndSelect('issue.articles', 'articles')
+      .leftJoinAndSelect('articles.research', 'research')
       .orderBy('issue.publish_date', 'DESC');
 
     if (status) {
@@ -61,7 +62,7 @@ export class IssuesService {
   async findOne(id: string): Promise<Issue> {
     const issue = await this.issueRepository.findOne({
       where: { id },
-      relations: ['articles'],
+      relations: ['articles', 'articles.research'],
     });
 
     if (!issue) {
@@ -77,7 +78,7 @@ export class IssuesService {
   async findByIssueNumber(issueNumber: string): Promise<Issue> {
     const issue = await this.issueRepository.findOne({
       where: { issue_number: issueNumber },
-      relations: ['articles'],
+      relations: ['articles', 'articles.research'],
     });
 
     if (!issue) {
@@ -240,7 +241,7 @@ export class IssuesService {
   async getPublishedIssues(): Promise<Issue[]> {
     return await this.issueRepository.find({
       where: { status: IssueStatus.PUBLISHED },
-      relations: ['articles'],
+      relations: ['articles', 'articles.research'],
       order: { publish_date: 'DESC' },
     });
   }
@@ -251,7 +252,7 @@ export class IssuesService {
   async getLatestIssue(): Promise<Issue | null> {
     return await this.issueRepository.findOne({
       where: { status: IssueStatus.PUBLISHED },
-      relations: ['articles'],
+      relations: ['articles', 'articles.research'],
       order: { publish_date: 'DESC' },
     });
   }

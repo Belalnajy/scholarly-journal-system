@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Download, User, FileText, AlertCircle, Loader2, BookOpen, Mail, Eye } from 'lucide-react';
+import { Download, User, FileText, AlertCircle, Loader2, BookOpen, Mail, Eye, BookMarked } from 'lucide-react';
 import articlesService from '../services/articlesService';
 import type { Article } from '../services/articlesService';
 import { NewsletterSection } from '../components';
@@ -184,6 +184,16 @@ export function ArticlePublicPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* Specialization */}
+                {article.research?.specialization && (
+                  <div className="mb-4 sm:mb-6 flex items-center justify-start gap-2 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 px-4 py-3" dir="rtl">
+                    <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                      {article.research.specialization}
+                    </span>
+                    <BookMarked className="w-5 h-5 text-[#b2823e] flex-shrink-0" />
+                  </div>
+                )}
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-start gap-3 sm:gap-4 lg:gap-6 text-xs sm:text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200" dir="rtl">

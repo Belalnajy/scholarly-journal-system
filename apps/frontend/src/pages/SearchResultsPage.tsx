@@ -3,7 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import articlesService, { Article } from "../services/articlesService";
 import toast from "react-hot-toast";
-import { FileText, Calendar, User, Download, Eye } from "lucide-react";
+import { FileText, Calendar, User, Download, Eye, BookMarked } from "lucide-react";
 
 export function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -151,6 +151,16 @@ export function SearchResultsPage() {
                       <span dir="rtl">وآخرون ({article.authors.length})</span>
                     )}
                     <User className="h-4 w-4" />
+                  </div>
+                )}
+
+                {/* Specialization */}
+                {article.research?.specialization && (
+                  <div className="mb-4 flex items-center justify-end gap-2 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-3 py-2">
+                    <span className="text-xs font-medium text-gray-700" dir="rtl">
+                      {article.research.specialization}
+                    </span>
+                    <BookMarked className="h-4 w-4 text-[#b2823e]" />
                   </div>
                 )}
 

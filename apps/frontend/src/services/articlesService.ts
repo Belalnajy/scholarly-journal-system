@@ -51,6 +51,7 @@ export interface Article {
     submission_date?: string;
     evaluation_date?: string;
     published_date?: string;
+    specialization?: string;
   };
 }
 
@@ -63,7 +64,7 @@ export interface CreateArticleDto {
   authors: ArticleAuthor[];
   abstract: string;
   abstract_en?: string;
-  keywords: string[];
+  keywords?: string[];
   keywords_en?: string[];
   pages?: string;
   doi?: string;
@@ -83,6 +84,7 @@ export interface UpdateArticleDto {
   pages?: string;
   doi?: string;
   status?: ArticleStatus;
+  published_date?: string;
 }
 
 export interface ArticleStats {
@@ -146,6 +148,39 @@ export const getArticleByResearchId = async (researchId: string): Promise<Articl
  */
 export const createArticle = async (data: CreateArticleDto): Promise<Article> => {
   const response = await api.post('/articles', data);
+  return response.data;
+};
+
+/**
+ * Create manual article with PDF upload
+ */
+export const createManualArticle = async (data: Omit<CreateArticleDto, 'pdf_url'>, pdfFile: File): Promise<Article> => {
+  const formData = new FormData();
+  
+  // Add file
+  formData.append('file', pdfFile);
+  
+  // Add article data
+  formData.append('issue_id', data.issue_id);
+  formData.append('article_number', data.article_number);
+  formData.append('title', data.title);
+  if (data.title_en) formData.append('title_en', data.title_en);
+  formData.append('authors', JSON.stringify(data.authors));
+  formData.append('abstract', data.abstract);
+  if (data.abstract_en) formData.append('abstract_en', data.abstract_en);
+  if (data.keywords) formData.append('keywords', JSON.stringify(data.keywords));
+  if (data.keywords_en) formData.append('keywords_en', JSON.stringify(data.keywords_en));
+  if ((data as any).specialization) formData.append('specialization', (data as any).specialization);
+  if (data.pages) formData.append('pages', data.pages);
+  if (data.doi) formData.append('doi', data.doi);
+  if (data.status) formData.append('status', data.status);
+  if ((data as any).published_date) formData.append('published_date', (data as any).published_date);
+  
+  const response = await api.post('/articles/manual', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
@@ -249,6 +284,7 @@ const articlesService = {
   getArticleByNumber,
   getArticleByResearchId,
   createArticle,
+  createManualArticle,
   updateArticle,
   deleteArticle,
   publishArticle,

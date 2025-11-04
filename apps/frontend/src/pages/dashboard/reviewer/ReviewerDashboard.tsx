@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Eye, Loader2, AlertCircle } from 'lucide-react';
+import { Eye, Loader2, AlertCircle, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts';
 import { StatCard, DashboardHeader, WelcomeCard, StatusBadge } from '../../../components/dashboard';
 import type { StatusType } from '../../../components/dashboard';
 import { researchService, Research } from '../../../services/researchService';
 import { reviewerAssignmentsService } from '../../../services/reviewer-assignments.service';
+import { researchRevisionsService } from '../../../services/research-revisions.service';
 
 // Types
 type ReviewTaskStatus = StatusType;
 type AssignmentStatus = 'assigned' | 'accepted' | 'declined' | 'completed';
 interface ResearchWithAssignment extends Research {
   assignmentStatus: AssignmentStatus;
+  hasRevisions: boolean;
+  revisionCount: number;
 }
 
 // Action Button Component
@@ -93,7 +96,16 @@ export function ReviewerDashboard() {
           const research = await researchService.getById(assignment.research_id);
           // Only show if research is still under review
           if (research.status === 'under-review' || research.status === 'needs-revision') {
-            return { ...research, assignmentStatus: assignment.status as AssignmentStatus };
+            // Check if research has revisions
+            const revisions = await researchRevisionsService.getByResearch(assignment.research_id).catch(() => []);
+            const submittedRevisions = revisions.filter((r) => r.status === 'submitted');
+            
+            return { 
+              ...research, 
+              assignmentStatus: assignment.status as AssignmentStatus,
+              hasRevisions: submittedRevisions.length > 0,
+              revisionCount: submittedRevisions.length
+            } as ResearchWithAssignment;
           }
           return null;
         } catch (err) {
@@ -272,7 +284,20 @@ export function ReviewerDashboard() {
                   return (
                     <tr key={research.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-4 text-right">
-                        <p className="text-gray-800 font-medium">{research.title}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-gray-800 font-medium">{research.title}</p>
+                          {research.hasRevisions && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-xs font-bold shadow-md animate-pulse">
+                              <Edit3 className="w-3 h-3" />
+                              <span>بعد التعديل</span>
+                              {research.revisionCount > 1 && (
+                                <span className="mr-1 px-1.5 py-0.5 bg-white text-orange-600 rounded-full text-xs">
+                                  {research.revisionCount}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-4 text-center text-gray-600 text-sm">{research.research_number}</td>
                       <td className="py-4 px-4 text-center text-gray-600 text-sm">{research.specialization}</td>

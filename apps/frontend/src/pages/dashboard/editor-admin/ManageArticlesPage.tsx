@@ -1,4 +1,4 @@
-import { Eye, Edit, Trash2, Download, QrCode, CheckCircle } from 'lucide-react';
+import { Eye, Edit, Trash2, Download, QrCode, CheckCircle, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
@@ -106,7 +106,16 @@ export function ManageArticlesPage() {
     <div className="space-y-6" dir="rtl">
       <Toaster />
       {/* Header */}
-      <DashboardHeader title="إدارة المقالات" subtitle="عرض وتحرير المقالات المنشورة" />
+      <div className="flex items-center justify-between">
+        <DashboardHeader title="إدارة المقالات" subtitle="عرض وتحرير المقالات المنشورة" />
+        <button
+          onClick={() => navigate('/dashboard/create-manual-article')}
+          className="flex items-center gap-2 px-4 py-2 bg-[#C9A961] text-white rounded-lg hover:bg-[#B89851] transition-colors font-medium"
+        >
+          <Plus className="w-5 h-5" />
+          <span>إنشاء مقال يدوياً</span>
+        </button>
+      </div>
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">

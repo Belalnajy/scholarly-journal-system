@@ -35,6 +35,8 @@ export function SubmitResearchPage() {
   const [keywordInput, setKeywordInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showCustomSpecialization, setShowCustomSpecialization] = useState(false);
+  const [customSpecialization, setCustomSpecialization] = useState('');
   const [uploadedResearchId, setUploadedResearchId] = useState<string | null>(
     null
   );
@@ -107,7 +109,20 @@ export function SubmitResearchPage() {
     'أصول التربية',
     'القياس والتقويم',
     'تقنيات التعليم',
+    'أخرى (اكتب التخصص)',
   ];
+
+  const handleSpecializationChange = (value: string) => {
+    if (value === 'أخرى (اكتب التخصص)') {
+      setShowCustomSpecialization(true);
+      setFormData({ ...formData, specialization: '' });
+      setCustomSpecialization('');
+    } else {
+      setShowCustomSpecialization(false);
+      setFormData({ ...formData, specialization: value });
+      setCustomSpecialization('');
+    }
+  };
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -223,8 +238,10 @@ export function SubmitResearchPage() {
       return;
     }
 
-    if (!formData.specialization) {
-      toast.error('يرجى اختيار التخصص');
+    const finalSpecialization = showCustomSpecialization ? customSpecialization.trim() : formData.specialization;
+    
+    if (!finalSpecialization) {
+      toast.error('يرجى اختيار أو كتابة التخصص');
       return;
     }
 
@@ -270,7 +287,7 @@ export function SubmitResearchPage() {
           abstract_en: formData.abstract_en || undefined,
           keywords,
           keywords_en,
-          specialization: formData.specialization,
+          specialization: finalSpecialization,
           status: 'under-review', // ← Backend will set submission_date automatically
         });
       } else {
@@ -290,7 +307,7 @@ export function SubmitResearchPage() {
           abstract_en: formData.abstract_en || undefined,
           keywords,
           keywords_en,
-          specialization: formData.specialization,
+          specialization: finalSpecialization,
           status: 'under-review',
         });
 
@@ -316,6 +333,8 @@ export function SubmitResearchPage() {
           keywords_en: [],
           file: null,
         });
+        setShowCustomSpecialization(false);
+        setCustomSpecialization('');
         setFileName('');
         setKeywordInput('');
         navigate('/dashboard/my-research');
@@ -476,12 +495,10 @@ export function SubmitResearchPage() {
                 التخصص<span className="text-red-500">*</span>
               </label>
               <select
-                value={formData.specialization}
-                onChange={(e) =>
-                  setFormData({ ...formData, specialization: e.target.value })
-                }
+                value={showCustomSpecialization ? 'أخرى (اكتب التخصص)' : formData.specialization}
+                onChange={(e) => handleSpecializationChange(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0D3B66] focus:border-[#0D3B66] transition-all appearance-none bg-white"
-                required
+                required={!showCustomSpecialization}
               >
                 <option value="">اختر التخصص...</option>
                 {specializations.map((spec, index) => (
@@ -490,6 +507,24 @@ export function SubmitResearchPage() {
                   </option>
                 ))}
               </select>
+              
+              {/* Custom Specialization Input */}
+              {showCustomSpecialization && (
+                <div className="mt-3 animate-fadeIn">
+                  <input
+                    type="text"
+                    value={customSpecialization}
+                    onChange={(e) => setCustomSpecialization(e.target.value)}
+                    placeholder="اكتب التخصص الخاص بك..."
+                    className="w-full px-4 py-3 border-2 border-[#C9A961] rounded-lg focus:ring-2 focus:ring-[#C9A961] focus:border-[#C9A961] transition-all bg-amber-50"
+                    required
+                    autoFocus
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    💡 اكتب التخصص الدقيق لبحثك
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -711,6 +746,23 @@ export function SubmitResearchPage() {
           </div>
         </form>
       </div>
+
+      {/* Custom CSS for animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
 
       {/* Cancel Confirmation Modal */}
       {showCancelModal && (

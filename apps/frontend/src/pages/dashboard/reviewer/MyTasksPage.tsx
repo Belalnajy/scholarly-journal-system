@@ -1,9 +1,10 @@
-import { Bell, Search, SlidersHorizontal, FileText, Calendar, Tag, Clock, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Bell, Search, SlidersHorizontal, FileText, Calendar, Tag, Clock, Loader2, AlertCircle, CheckCircle, Edit3 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts';
 import { reviewerAssignmentsService, ReviewerAssignment } from '../../../services/reviewer-assignments.service';
 import { researchService } from '../../../services/researchService';
+import { researchRevisionsService } from '../../../services/research-revisions.service';
 
 // Types
 type TaskStatus = 'assigned' | 'accepted' | 'declined' | 'completed';
@@ -12,6 +13,8 @@ interface TaskWithResearch extends ReviewerAssignment {
   researchTitle?: string;
   researchSpecialization?: string;
   researchNumber?: string;
+  hasRevisions?: boolean;
+  revisionCount?: number;
 }
 
 // Task Card Component
@@ -64,7 +67,20 @@ function TaskCard({ assignment }: TaskCardProps) {
       </div>
 
       {/* Title */}
-      <h3 className="text-xl font-bold text-gray-800 mb-3">{assignment.researchTitle || 'بحث غير محدد'}</h3>
+      <div className="flex items-center gap-3 mb-3">
+        <h3 className="text-xl font-bold text-gray-800">{assignment.researchTitle || 'بحث غير محدد'}</h3>
+        {assignment.hasRevisions && (
+          <div className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-xs font-bold shadow-md animate-pulse">
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>بعد التعديل</span>
+            {assignment.revisionCount && assignment.revisionCount > 1 && (
+              <span className="mr-1 px-2 py-0.5 bg-white text-orange-600 rounded-full text-xs">
+                {assignment.revisionCount}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Research Number */}
       {assignment.researchNumber && (
@@ -160,11 +176,18 @@ export function MyTasksPage() {
         assignmentsData.map(async (assignment) => {
           try {
             const research = await researchService.getById(assignment.research_id);
+            
+            // Check if research has revisions
+            const revisions = await researchRevisionsService.getByResearch(assignment.research_id).catch(() => []);
+            const submittedRevisions = revisions.filter((r) => r.status === 'submitted');
+            
             return {
               ...assignment,
               researchTitle: research.title,
               researchSpecialization: research.specialization,
               researchNumber: research.research_number,
+              hasRevisions: submittedRevisions.length > 0,
+              revisionCount: submittedRevisions.length,
             };
           } catch (err) {
             return assignment;

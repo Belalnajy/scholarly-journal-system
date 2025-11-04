@@ -60,16 +60,16 @@ export class Review {
 
   @Column({ type: 'jsonb', nullable: true })
   detailed_scores?: {
-    title?: number; // العنوان (3 درجات)
-    abstract?: number; // المستخلص (2 درجات)
-    research_background?: number; // أدبيات البحث (12 درجة)
-    methodology?: number; // منهج الرسالة (12 درجة)
-    results?: number; // النتائج (10 درجات)
-    documentation?: number; // التوثيق العلمي والمراجع (12 درجة)
-    originality?: number; // الأصالة والابتكار (12 درجة)
-    formatting?: number; // إخراج البحث (7 درجات)
-    research_condition?: number; // حالة البحث (12 درجة)
-    sources?: number; // المصادر والمراجع (8 درجات)
+    title_score?: number; // العنوان (3 درجات)
+    abstract_score?: number; // مستخلص البحث (2 درجة)
+    methodology_score?: number; // منهج الرسالة (15 درجة)
+    background_score?: number; // أدبيات الرسالة (15 درجة)
+    results_score?: number; // نتائج البحث وتوصياته (15 درجة)
+    documentation_score?: number; // التوثيق العلمي (15 درجة)
+    originality_score?: number; // الأصالة والابتكار (15 درجة)
+    formatting_score?: number; // إخراج البحث (2 درجة)
+    research_condition_score?: number; // حالة البحث (10 درجات)
+    sources_score?: number; // المصادر والمراجع (8 درجات)
   };
 
   @Column({

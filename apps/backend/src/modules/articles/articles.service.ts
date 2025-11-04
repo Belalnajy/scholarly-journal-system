@@ -12,6 +12,7 @@ import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { IssuesService } from '../issues/issues.service';
 import { QRCodeService } from '../qrcode/qrcode.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class ArticlesService {
@@ -22,6 +23,7 @@ export class ArticlesService {
     private readonly researchRepository: Repository<Research>,
     private readonly issuesService: IssuesService,
     private readonly qrcodeService: QRCodeService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   /**
@@ -176,6 +178,90 @@ export class ArticlesService {
         published_article_id: savedArticle.id,
         published_date: new Date(),
       });
+    }
+
+    // Update issue stats
+    await this.issuesService.updateStats(createArticleDto.issue_id);
+
+    return savedArticle;
+  }
+
+  /**
+   * Create a manual article with PDF upload
+   */
+  async createManualArticle(
+    createArticleDto: CreateArticleDto,
+    file: Express.Multer.File,
+  ): Promise<Article> {
+    if (!file) {
+      throw new BadRequestException('ملف PDF مطلوب');
+    }
+
+    // Validate file type
+    if (file.mimetype !== 'application/pdf') {
+      throw new BadRequestException('يجب أن يكون الملف من نوع PDF');
+    }
+
+    // Check if article number already exists
+    const existingArticle = await this.articleRepository.findOne({
+      where: { article_number: createArticleDto.article_number },
+    });
+
+    if (existingArticle) {
+      throw new ConflictException('رقم المقال موجود بالفعل');
+    }
+
+    // Verify issue exists and check max articles limit
+    const issue = await this.issuesService.findOne(createArticleDto.issue_id);
+    
+    if (issue.total_articles >= issue.max_articles) {
+      throw new BadRequestException(
+        `لا يمكن إضافة المزيد من المقالات. الحد الأقصى للعدد هو ${issue.max_articles} مقال`,
+      );
+    }
+
+    // Upload PDF to Cloudinary
+    const uploadResult = await this.cloudinaryService.uploadFile(
+      file.buffer,
+      `articles/${createArticleDto.article_number}`,
+      'raw', // For PDF files
+    );
+
+    // Create article with uploaded PDF URL
+    const article = this.articleRepository.create({
+      ...createArticleDto,
+      pdf_url: uploadResult.url,
+      cloudinary_public_id: uploadResult.public_id,
+      cloudinary_secure_url: uploadResult.secure_url,
+    });
+
+    // If the article is being published to a published issue, set published_date
+    if (article.status === ArticleStatus.PUBLISHED || issue.status === 'published') {
+      // Use provided date or current date
+      article.published_date = createArticleDto.published_date 
+        ? new Date(createArticleDto.published_date) 
+        : new Date();
+      article.status = ArticleStatus.PUBLISHED;
+    }
+    
+    const savedArticle = await this.articleRepository.save(article);
+
+    // Generate QR Code for article verification
+    try {
+      const verificationUrl = this.qrcodeService.generateArticleVerificationUrl(
+        savedArticle.id,
+      );
+      const qrCodeResult = await this.qrcodeService.generateAndUploadQRCode(
+        verificationUrl,
+        `articles/qrcodes`,
+        `article_${savedArticle.article_number}_qr`,
+      );
+
+      savedArticle.qr_code_url = qrCodeResult.url;
+      savedArticle.qr_code_public_id = qrCodeResult.publicId;
+      await this.articleRepository.save(savedArticle);
+    } catch (error) {
+      console.error('فشل في توليد رمز QR للمقال:', error);
     }
 
     // Update issue stats
@@ -344,6 +430,7 @@ export class ArticlesService {
     const query = this.articleRepository
       .createQueryBuilder('article')
       .leftJoinAndSelect('article.issue', 'issue')
+      .leftJoinAndSelect('article.research', 'research')
       .where('article.status = :status', { status: ArticleStatus.PUBLISHED })
       .orderBy('article.published_date', 'DESC');
 
@@ -361,6 +448,7 @@ export class ArticlesService {
     return await this.articleRepository
       .createQueryBuilder('article')
       .leftJoinAndSelect('article.issue', 'issue')
+      .leftJoinAndSelect('article.research', 'research')
       .where('article.status = :status', { status: ArticleStatus.PUBLISHED })
       .andWhere(
         '(article.title ILIKE :query OR article.title_en ILIKE :query OR article.abstract ILIKE :query OR article.abstract_en ILIKE :query)',

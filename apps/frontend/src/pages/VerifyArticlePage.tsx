@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CheckCircle, Download, Calendar, User, FileText, AlertCircle, Loader2, BookOpen } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { CheckCircle, Download, Calendar, User, FileText, AlertCircle, Loader2, BookOpen, BookMarked } from 'lucide-react';
 import articlesService from '../services/articlesService';
 import type { Article } from '../services/articlesService';
 import { NewsletterSection } from '../components';
@@ -180,6 +179,19 @@ export function VerifyArticlePage() {
               </div>
             </div>
           </div>
+
+          {/* Specialization */}
+          {article.research?.specialization && (
+            <div dir="rtl" className="mb-8">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                التخصص:
+              </h3>
+              <div className="flex items-center justify-end gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg">
+                <span className="text-lg font-semibold text-gray-800">{article.research.specialization}</span>
+                <BookMarked className="w-6 h-6 text-[#b2823e]" />
+              </div>
+            </div>
+          )}
 
           {/* Abstract Section */}
           <div dir="rtl" className="mb-8">

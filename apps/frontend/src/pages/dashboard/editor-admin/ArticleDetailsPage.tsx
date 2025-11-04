@@ -1,4 +1,4 @@
-import { ArrowRight, Download, FileText, Calendar, User, BookOpen, Eye, Loader2 } from 'lucide-react';
+import { ArrowRight, Download, FileText, Calendar, User, BookOpen, Eye, Loader2, BookMarked } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { DashboardHeader, StatusBadge } from '../../../components/dashboard';
@@ -213,6 +213,17 @@ export function ArticleDetailsPage() {
               ))}
             </div>
           </div>
+
+          {/* Specialization */}
+          {article.research?.specialization && (
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">التخصص</h2>
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg">
+                <BookMarked className="w-6 h-6 text-[#b2823e] flex-shrink-0" />
+                <p className="text-lg font-semibold text-gray-800">{article.research.specialization}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar - 1/3 */}

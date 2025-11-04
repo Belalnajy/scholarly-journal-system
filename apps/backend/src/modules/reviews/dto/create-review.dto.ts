@@ -40,15 +40,15 @@ export class CreateReviewDto {
   @IsOptional()
   @IsObject({ message: 'الدرجات التفصيلية يجب أن تكون object' })
   detailed_scores?: {
-    title?: number;
-    abstract?: number;
-    research_background?: number;
-    methodology?: number;
-    results?: number;
-    documentation?: number;
-    originality?: number;
-    formatting?: number;
-    research_condition?: number;
-    sources?: number;
+    title_score?: number;
+    abstract_score?: number;
+    methodology_score?: number;
+    background_score?: number;
+    results_score?: number;
+    documentation_score?: number;
+    originality_score?: number;
+    formatting_score?: number;
+    research_condition_score?: number;
+    sources_score?: number;
   };
 }

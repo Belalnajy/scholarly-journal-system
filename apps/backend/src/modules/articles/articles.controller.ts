@@ -9,7 +9,10 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -31,6 +34,42 @@ export class ArticlesController {
   @Roles('admin', 'editor')
   create(@Body() createArticleDto: CreateArticleDto) {
     return this.articlesService.create(createArticleDto);
+  }
+
+  /**
+   * Create a manual article with PDF upload (Admin/Editor only)
+   */
+  @Post('manual')
+  @Roles('admin', 'editor')
+  @UseInterceptors(FileInterceptor('file'))
+  async createManualArticle(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
+  ) {
+    // Parse JSON fields
+    const authors = body.authors ? JSON.parse(body.authors) : [];
+    const keywords = body.keywords ? JSON.parse(body.keywords) : undefined;
+    const keywords_en = body.keywords_en ? JSON.parse(body.keywords_en) : undefined;
+
+    const createArticleDto: CreateArticleDto = {
+      issue_id: body.issue_id,
+      article_number: body.article_number,
+      title: body.title,
+      title_en: body.title_en,
+      authors,
+      abstract: body.abstract,
+      abstract_en: body.abstract_en,
+      keywords,
+      keywords_en,
+      specialization: body.specialization,
+      pages: body.pages,
+      doi: body.doi,
+      pdf_url: '', // Will be set by service after upload
+      status: body.status as ArticleStatus,
+      published_date: body.published_date,
+    };
+
+    return this.articlesService.createManualArticle(createArticleDto, file);
   }
 
   /**

@@ -4,7 +4,7 @@ import {
   FileText,
   User,
   Calendar,
-  Eye,
+  Eye as EyeIcon,
   Send,
   Loader2,
   AlertCircle,
@@ -28,12 +28,13 @@ import {
   downloadResearchPdf,
   downloadRevisionFile,
 } from '../../../utils/downloadFile';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
+import { PDFViewer } from '../../../components/PDFViewer';
+import { isPdfFile } from '../../../utils/fileUtils';
 
 export function EditorResearchDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
   const [research, setResearch] = useState<Research | null>(null);
   const [assignments, setAssignments] = useState<ReviewerAssignment[]>([]);
   const [revisions, setRevisions] = useState<ResearchRevision[]>([]);
@@ -42,6 +43,8 @@ export function EditorResearchDetailsPage() {
   const [showUpdateFileModal, setShowUpdateFileModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -137,6 +140,27 @@ export function EditorResearchDetailsPage() {
 
   const handleBack = () => {
     navigate('/dashboard/manage-research');
+  };
+
+  const handlePreviewResearch = () => {
+    if (!research) return;
+    const url = research.cloudinary_secure_url || research.file_url;
+    if (url) {
+      setPdfUrl(url);
+      setShowPDFViewer(true);
+    } else {
+      toast.error('لا يوجد ملف للمعاينة');
+    }
+  };
+
+  const handlePreviewRevision = (revision: ResearchRevision) => {
+    const url = revision.cloudinary_secure_url || revision.file_url;
+    if (url) {
+      setPdfUrl(url);
+      setShowPDFViewer(true);
+    } else {
+      toast.error('لا يوجد ملف للمعاينة');
+    }
   };
 
   const handleDownloadOriginal = async () => {
@@ -341,15 +365,28 @@ export function EditorResearchDetailsPage() {
         {/* Action Buttons */}
         <div className="p-6 bg-gray-50">
           <div className="space-y-2">
-            {/* Download Original Research */}
+            {/* Preview & Download Original Research */}
             {(research.file_url || research.cloudinary_secure_url) && (
-              <button
-                onClick={handleDownloadOriginal}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium"
-              >
-                <Download className="w-4 h-4" />
-                <span>تحميل البحث الأصلي </span>
-              </button>
+              <>
+                {/* Preview button - only for PDF files */}
+                {isPdfFile(research.cloudinary_secure_url || research.file_url) && (
+                  <button
+                    onClick={handlePreviewResearch}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C9A961] text-white rounded-lg hover:bg-[#B89851] transition-colors font-medium shadow-md hover:shadow-lg"
+                  >
+                    <EyeIcon className="w-5 h-5" />
+                    <span>معاينة البحث</span>
+                  </button>
+                )}
+                
+                <button
+                  onClick={handleDownloadOriginal}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>تحميل البحث الأصلي </span>
+                </button>
+              </>
             )}
 
             {/* Update Research File Button (Admin/Editor only) */}
@@ -372,21 +409,39 @@ export function EditorResearchDetailsPage() {
               </button>
             )}
 
-            {/* Download Latest Revision if exists */}
+            {/* Preview & Download Latest Revision if exists */}
             {revisions.filter((r) => r.status === 'submitted').length > 0 && (
-              <button
-                onClick={() =>
-                  handleDownloadRevision(
-                    revisions
-                      .filter((r) => r.status === 'submitted')
-                      .sort((a, b) => b.revision_number - a.revision_number)[0]
-                  )
-                }
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
-              >
-                <Download className="w-4 h-4" />
-                <span>تحميل البحث المعدل (PDF)</span>
-              </button>
+              <>
+                {/* Preview button - only for PDF files */}
+                {(() => {
+                  const latestRevision = revisions
+                    .filter((r) => r.status === 'submitted')
+                    .sort((a, b) => b.revision_number - a.revision_number)[0];
+                  return isPdfFile(latestRevision?.cloudinary_secure_url || latestRevision?.file_url) && (
+                    <button
+                      onClick={() => handlePreviewRevision(latestRevision)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C9A961] text-white rounded-lg hover:bg-[#B89851] transition-colors font-medium shadow-md hover:shadow-lg"
+                    >
+                      <EyeIcon className="w-5 h-5" />
+                      <span>معاينة البحث المعدل</span>
+                    </button>
+                  );
+                })()}
+                
+                <button
+                  onClick={() =>
+                    handleDownloadRevision(
+                      revisions
+                        .filter((r) => r.status === 'submitted')
+                        .sort((a, b) => b.revision_number - a.revision_number)[0]
+                    )
+                  }
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>تحميل البحث المعدل (PDF)</span>
+                </button>
+              </>
             )}
 
             {/* Assign Reviewer Button */}
@@ -621,9 +676,9 @@ export function EditorResearchDetailsPage() {
             )}
 
             {research.published_date && (
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-100 rounded-lg">
-                  <Eye className="w-5 h-5 text-purple-600" />
+                  <EyeIcon className="w-5 h-5 text-purple-600" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -918,6 +973,15 @@ export function EditorResearchDetailsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* PDF Viewer Modal */}
+      {showPDFViewer && pdfUrl && (
+        <PDFViewer
+          pdfUrl={pdfUrl}
+          title={`معاينة البحث - ${research?.research_number || ''}`}
+          onClose={() => setShowPDFViewer(false)}
+        />
       )}
     </div>
   );

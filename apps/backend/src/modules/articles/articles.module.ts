@@ -7,12 +7,14 @@ import { Research } from '../../database/entities/research.entity';
 import { IssuesModule } from '../issues/issues.module';
 import { QRCodeModule } from '../qrcode/qrcode.module';
 import { ResearchModule } from '../research/research.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Article, Research]),
     IssuesModule,
     QRCodeModule,
+    CloudinaryModule,
     forwardRef(() => ResearchModule),
   ],
   controllers: [ArticlesController],
