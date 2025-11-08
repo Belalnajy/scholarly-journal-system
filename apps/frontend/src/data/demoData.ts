@@ -88,6 +88,7 @@ export const footerLinks = {
     { label: 'الرئيسية', href: '/' },
     { label: 'عن المجلة', href: '/about' },
     { label: 'الفريق الأكاديمي', href: '/team' },
+    { label: 'التحقق من الشهادة', href: '/verify-certificate' },
     { label: 'اتصل بنا', href: '/contact' },
   ],
   forResearchers: [

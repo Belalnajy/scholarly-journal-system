@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import * as puppeteer from 'puppeteer-core';
+import * as chromium from '@sparticuz/chromium';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as QRCode from 'qrcode';
 import { Research } from '../../database/entities/research.entity';
 import { User } from '../../database/entities/user.entity';
 import { SiteSettings } from '../../database/entities/site-settings.entity';
+import { Article } from '../../database/entities/article.entity';
 
 @Injectable()
 export class PdfGeneratorService {
@@ -99,7 +103,8 @@ export class PdfGeneratorService {
     researcher: User,
     siteSettings: SiteSettings,
     logoBase64: string = '',
-    journalLogoBase64: string = ''
+    journalLogoBase64: string = '',
+    qrCodeDataUrl: string = ''
   ): string {
     const acceptanceDate = research.evaluation_date || new Date();
     const formattedDate = new Intl.DateTimeFormat('ar-EG', {
@@ -220,11 +225,44 @@ export class PdfGeneratorService {
         background: linear-gradient(90deg, transparent, #b2823e, transparent);
       }
 
+      .header-content {
+        position: relative;
+      }
+
       .journal-logo {
         width: 75px;
         height: auto;
         margin: 0 auto 10px auto;
         display: block;
+      }
+
+      /* QR Code في الهيدر */
+      .header-qr-code {
+        position: absolute;
+        left: 10mm;
+        top: 5px;
+        text-align: center;
+        background: white;
+        padding: 8px;
+        border: 2.5px solid #093059;
+        border-radius: 10px;
+        box-shadow: 0 3px 12px rgba(9, 48, 89, 0.2);
+      }
+
+      .header-qr-code img {
+        width: 85px;
+        height: 85px;
+        display: block;
+        margin: 0 auto 4px auto;
+      }
+
+      .header-qr-label {
+        font-size: 8.5px;
+        color: #093059;
+        font-weight: 700;
+        font-family: "Cairo", sans-serif;
+        line-height: 1.3;
+        text-align: center;
       }
 
       .journal-name {
@@ -540,20 +578,37 @@ export class PdfGeneratorService {
     
     <div class="content">
         <div class="header">
-            ${
-              journalLogoBase64
-                ? `<img src="${journalLogoBase64}" alt="شعار المجلة" class="journal-logo">`
-                : ''
-            }
-            <div class="journal-subtitle">مجلة علمية محكمة</div>
-            <div class="journal-info">
+            <div class="header-content">
                 ${
-                  siteSettings.journal_issn
-                    ? `<div class="journal-issn">ISSN: ${siteSettings.journal_issn}</div>`
+                  qrCodeDataUrl
+                    ? `
+                <div class="header-qr-code">
+                    <img src="${qrCodeDataUrl}" alt="QR Code للتحقق">
+                    <div class="header-qr-label">امسح للتحقق<br>من الشهادة</div>
+                </div>
+                `
                     : ''
                 }
-                <div class="journal-doi">${siteSettings.journal_doi || ''}</div>
-                <div class="journal-url">${siteSettings.journal_url || ''}</div>
+                
+                ${
+                  journalLogoBase64
+                    ? `<img src="${journalLogoBase64}" alt="شعار المجلة" class="journal-logo">`
+                    : ''
+                }
+                <div class="journal-subtitle">مجلة علمية محكمة</div>
+                <div class="journal-info">
+                    ${
+                      siteSettings.journal_issn
+                        ? `<div class="journal-issn">ISSN: ${siteSettings.journal_issn}</div>`
+                        : ''
+                    }
+                    <div class="journal-doi">${
+                      siteSettings.journal_doi || ''
+                    }</div>
+                    <div class="journal-url">${
+                      siteSettings.journal_url || ''
+                    }</div>
+                </div>
             </div>
         </div>
         
@@ -683,13 +738,35 @@ export class PdfGeneratorService {
       const logoBase64 = await this.getLogoBase64();
       const journalLogoBase64 = await this.getJournalLogoBase64();
 
+      // توليد QR Code للتحقق من الشهادة
+      // استخدام FRONTEND_URL من environment أو journal_url من الإعدادات
+      const baseUrl =
+        process.env.FRONTEND_URL ||
+        siteSettings.journal_url ||
+        'http://localhost:4200';
+      // إزالة أي slash في النهاية
+      const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+      const verificationUrl = `${cleanBaseUrl}/verify-certificate/${research.research_number}`;
+
+      console.log('🔗 QR Code Verification URL:', verificationUrl); // للتأكد من الرابط
+
+      const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
+        width: 150,
+        margin: 1,
+        color: {
+          dark: '#093059',
+          light: '#ffffff',
+        },
+      });
+
       // تحميل المحتوى HTML
       const htmlContent = this.generateAcceptanceLetterHTML(
         research,
         researcher,
         siteSettings,
         logoBase64,
-        journalLogoBase64
+        journalLogoBase64,
+        qrCodeDataUrl
       );
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
@@ -733,5 +810,94 @@ export class PdfGeneratorService {
       researcher,
       siteSettings
     );
+  }
+
+  /**
+   * Generate acceptance certificate for a manual article
+   */
+  async generateArticleAcceptanceCertificate(
+    article: Article,
+    siteSettings: SiteSettings
+  ): Promise<Buffer> {
+    let browser;
+
+    try {
+      browser = await this.createBrowser();
+      const page = await browser.newPage();
+
+      // تحديد حجم الصفحة
+      await page.setViewport({ width: 794, height: 1123 }); // A4 size in pixels
+
+      // تحميل الشعارات
+      const logoBase64 = await this.getLogoBase64();
+      const journalLogoBase64 = await this.getJournalLogoBase64();
+
+      // توليد QR Code للتحقق من الشهادة
+      const baseUrl = process.env.FRONTEND_URL || siteSettings.journal_url || 'http://localhost:4200';
+      const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+      const verificationUrl = `${cleanBaseUrl}/verify-certificate/${article.article_number}`;
+      
+      console.log('🔗 Article QR Code Verification URL:', verificationUrl);
+      
+      const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
+        width: 150,
+        margin: 1,
+        color: {
+          dark: '#093059',
+          light: '#ffffff'
+        }
+      });
+
+      // استخدام أول مؤلف كباحث رئيسي
+      const primaryAuthor = article.authors && article.authors.length > 0 
+        ? article.authors[0] 
+        : { name: 'غير محدد', affiliation: '', email: '' };
+
+      // إنشاء كائن مشابه للـ Research
+      const articleAsResearch = {
+        title: article.title,
+        research_number: article.article_number,
+        evaluation_date: article.published_date || article.created_at,
+      };
+
+      const authorAsUser = {
+        name: primaryAuthor.name,
+      };
+
+      // تحميل المحتوى HTML
+      const htmlContent = this.generateAcceptanceLetterHTML(
+        articleAsResearch as any,
+        authorAsUser as any,
+        siteSettings,
+        logoBase64,
+        journalLogoBase64,
+        qrCodeDataUrl
+      );
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+      // تحويل إلى PDF - صفحة واحدة فقط
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '0',
+          right: '0',
+          bottom: '0',
+          left: '0',
+        },
+        preferCSSPageSize: true,
+        pageRanges: '1',
+      });
+
+      await page.close();
+      return Buffer.from(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating article certificate PDF:', error);
+      throw new Error(`Failed to generate article certificate PDF: ${error.message}`);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
   }
 }

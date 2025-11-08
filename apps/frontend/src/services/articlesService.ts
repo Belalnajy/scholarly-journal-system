@@ -31,6 +31,9 @@ export interface Article {
   cloudinary_secure_url?: string;
   qr_code_url?: string;
   qr_code_public_id?: string;
+  acceptance_certificate_url?: string;
+  acceptance_certificate_cloudinary_public_id?: string;
+  acceptance_certificate_cloudinary_secure_url?: string;
   status: ArticleStatus;
   views_count: number;
   downloads_count: number;
@@ -52,6 +55,7 @@ export interface Article {
     evaluation_date?: string;
     published_date?: string;
     specialization?: string;
+    acceptance_certificate_cloudinary_public_id?: string;
   };
 }
 
@@ -276,6 +280,22 @@ export const incrementArticleDownloads = async (id: string): Promise<void> => {
   await api.post(`/articles/${id}/download`);
 };
 
+/**
+ * Generate acceptance certificate for article
+ */
+export const generateAcceptanceCertificate = async (id: string): Promise<Article> => {
+  const response = await api.post(`/articles/${id}/generate-acceptance-certificate`);
+  return response.data;
+};
+
+/**
+ * Regenerate acceptance certificate for article
+ */
+export const regenerateAcceptanceCertificate = async (id: string): Promise<Article> => {
+  const response = await api.post(`/articles/${id}/regenerate-acceptance-certificate`);
+  return response.data;
+};
+
 // Default export
 const articlesService = {
   getAllArticles,
@@ -297,6 +317,8 @@ const articlesService = {
   regenerateArticleQRCode,
   getArticlesByIssueId,
   getArticlePdfUrl,
+  generateAcceptanceCertificate,
+  regenerateAcceptanceCertificate,
 };
 
 export default articlesService;

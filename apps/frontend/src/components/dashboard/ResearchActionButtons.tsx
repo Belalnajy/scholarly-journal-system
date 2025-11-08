@@ -13,6 +13,7 @@ interface ResearchActionButtonsProps {
   showAssignButton?: boolean;
   hasCertificate?: boolean;
   onCertificateGenerated?: () => void;
+  originalStatus?: string; // Original research status for certificate logic
 }
 
 export function ResearchActionButtons({ 
@@ -20,7 +21,8 @@ export function ResearchActionButtons({
   status, 
   showAssignButton = true,
   hasCertificate = false,
-  onCertificateGenerated
+  onCertificateGenerated,
+  originalStatus
 }: ResearchActionButtonsProps) {
   const navigate = useNavigate();
 
@@ -66,10 +68,28 @@ export function ResearchActionButtons({
     }
   };
 
+  // Check if certificate button should be shown
+  const shouldShowCertificateButton = !hasCertificate && (
+    status === 'accepted' || 
+    originalStatus === 'accepted' || 
+    originalStatus === 'published'
+  );
+
   return (
     <div className="flex items-center justify-center gap-2">
+      {/* Certificate Status Indicator - Show if certificate exists */}
+      {hasCertificate && (status === 'accepted' || originalStatus === 'accepted' || originalStatus === 'published') && (
+        <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-lg group relative">
+          <Award className="w-4 h-4 text-green-600" />
+          <span className="text-xs font-medium text-green-700">تم التوليد</span>
+          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+            شهادة القبول موجودة ✓
+          </span>
+        </div>
+      )}
+      
       {/* Generate Certificate Button - Show for accepted/published without certificate */}
-      {(status === 'accepted') && !hasCertificate && (
+      {shouldShowCertificateButton && (
         <button 
           onClick={handleGenerateCertificate}
           className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors group relative"

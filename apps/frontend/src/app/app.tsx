@@ -17,6 +17,7 @@ const IssueDetailsPage = lazy(() => import('../pages/IssueDetailsPage').then(m =
 const ResearchDetailsPage = lazy(() => import('../pages/ResearchDetailsPage').then(m => ({ default: m.ResearchDetailsPage })));
 const ArticlePublicPage = lazy(() => import('../pages/ArticlePublicPage').then(m => ({ default: m.ArticlePublicPage })));
 const VerifyArticlePage = lazy(() => import('../pages/VerifyArticlePage').then(m => ({ default: m.VerifyArticlePage })));
+const VerifyCertificatePage = lazy(() => import('../pages/public/VerifyCertificatePage').then(m => ({ default: m.VerifyCertificatePage })));
 const SearchResultsPage = lazy(() => import('../pages/SearchResultsPage').then(m => ({ default: m.SearchResultsPage })));
 const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
 const TermsAndConditionsPage = lazy(() => import('../pages/TermsAndConditionsPage').then(m => ({ default: m.TermsAndConditionsPage })));
@@ -136,6 +137,7 @@ export function App() {
                 <Route path="/research/:id" element={<ResearchDetailsPage />} />
                 <Route path="/article/:id" element={<ArticlePublicPage />} />
                 <Route path="/verify-article/:id" element={<VerifyArticlePage />} />
+                <Route path="/verify-certificate/:researchNumber?" element={<VerifyCertificatePage />} />
                 <Route path="/search" element={<SearchResultsPage />} />
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
                 <Route path="/terms" element={<TermsAndConditionsPage />} />

@@ -271,7 +271,14 @@ export function EditorDashboard() {
                           {new Date(research.created_at).toLocaleDateString('ar-EG')}
                         </td>
                         <td className="py-4 px-4 text-center">
-                          <ResearchActionButtons researchId={research.id} status={research.status as StatusType} showAssignButton={false} />
+                          <ResearchActionButtons 
+                            researchId={research.id} 
+                            status={research.status as StatusType} 
+                            originalStatus={research.status}
+                            hasCertificate={!!research.acceptance_certificate_cloudinary_public_id}
+                            showAssignButton={false} 
+                            onCertificateGenerated={fetchDashboardData}
+                          />
                         </td>
                       </tr>
                     ))

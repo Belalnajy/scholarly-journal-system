@@ -221,4 +221,22 @@ export class ArticlesController {
   regenerateQRCode(@Param('id', ParseUUIDPipe) id: string) {
     return this.articlesService.regenerateQRCode(id);
   }
+
+  /**
+   * Generate acceptance certificate for article (Admin/Editor only)
+   */
+  @Post(':id/generate-acceptance-certificate')
+  @Roles('admin', 'editor')
+  generateAcceptanceCertificate(@Param('id', ParseUUIDPipe) id: string) {
+    return this.articlesService.generateAcceptanceCertificate(id);
+  }
+
+  /**
+   * Regenerate acceptance certificate for article (Admin/Editor only)
+   */
+  @Post(':id/regenerate-acceptance-certificate')
+  @Roles('admin', 'editor')
+  regenerateAcceptanceCertificate(@Param('id', ParseUUIDPipe) id: string) {
+    return this.articlesService.regenerateAcceptanceCertificate(id);
+  }
 }

@@ -1,4 +1,4 @@
-import { Eye, Edit, Trash2, Download, QrCode, CheckCircle, Plus } from 'lucide-react';
+import { Eye, Edit, Trash2, Download, QrCode, CheckCircle, Plus, Award, MoreVertical, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
@@ -24,6 +24,7 @@ export function ManageArticlesPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterIssue, setFilterIssue] = useState<string>('all');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -95,6 +96,18 @@ export function ManageArticlesPage() {
   const handleDownloadPDF = (article: Article) => {
     const pdfUrl = articlesService.getArticlePdfUrl(article);
     window.open(pdfUrl, '_blank');
+  };
+
+  const handleGenerateCertificate = async (articleId: string) => {
+    try {
+      toast.loading('جاري توليد شهادة القبول...', { id: 'gen-cert' });
+      await articlesService.generateAcceptanceCertificate(articleId);
+      toast.success('تم توليد الشهادة بنجاح!', { id: 'gen-cert' });
+      loadData();
+    } catch (error: any) {
+      console.error('Error generating certificate:', error);
+      toast.error(error.response?.data?.message || 'فشل في توليد الشهادة', { id: 'gen-cert' });
+    }
   };
 
   const getIssueTitle = (issueId: string): string => {
@@ -271,63 +284,124 @@ export function ManageArticlesPage() {
                   </td>
                   <td className="py-4 px-4 text-center text-sm text-gray-600">{getIssueTitle(article.issue_id)}</td>
                   <td className="py-4 px-4">
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-1.5">
+                      {/* Primary Actions */}
                       <button 
                         onClick={() => navigate(`/dashboard/articles/${article.id}`)}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="عرض التفاصيل"
+                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="عرض"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={() => navigate(`/dashboard/articles/${article.id}/edit`)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="تحرير"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {article.status === 'ready-to-publish' && (
-                        <button 
-                          onClick={() => handlePublishArticle(article.id)}
-                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="نشر المقال"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                        </button>
-                      )}
-                      {article.qr_code_url && (
-                        <button 
-                          onClick={() => window.open(article.qr_code_url, '_blank')}
-                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                          title="عرض QR Code"
-                        >
-                          <QrCode className="w-4 h-4" />
-                        </button>
-                      )}
+                      
                       <button 
                         onClick={() => handleDownloadPDF(article)}
-                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="تحميل PDF"
                       >
                         <Download className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={async () => {
-                          if (confirm('هل أنت متأكد من حذف هذا المقال؟')) {
-                            try {
-                              await articlesService.deleteArticle(article.id);
-                              toast.success('تم حذف المقال بنجاح!');
-                              loadData();
-                            } catch (error: any) {
-                              toast.error(error.response?.data?.message || 'فشل في حذف المقال');
-                            }
-                          }
-                        }}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="حذف"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+
+                      {/* Certificate Actions */}
+                      {!article.acceptance_certificate_cloudinary_public_id && 
+                       (!article.research || !article.research.acceptance_certificate_cloudinary_public_id) && (
+                        <button 
+                          onClick={() => handleGenerateCertificate(article.id)}
+                          className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                          title="توليد شهادة"
+                        >
+                          <Award className="w-4 h-4" />
+                        </button>
+                      )}
+                      
+                      {article.acceptance_certificate_cloudinary_public_id && (
+                        <button 
+                          onClick={() => window.open(article.acceptance_certificate_cloudinary_secure_url, '_blank')}
+                          className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="عرض الشهادة"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      )}
+
+                      {/* More Actions Menu */}
+                      <div className="relative">
+                        <button 
+                          onClick={() => setOpenMenuId(openMenuId === article.id ? null : article.id)}
+                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="المزيد"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        
+                        {openMenuId === article.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setOpenMenuId(null)}
+                            />
+                            <div className="absolute left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                              <button
+                                onClick={() => {
+                                  navigate(`/dashboard/articles/${article.id}/edit`);
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full px-4 py-2 text-right text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <Edit className="w-4 h-4" />
+                                <span>تحرير</span>
+                              </button>
+                              
+                              {article.status === 'ready-to-publish' && (
+                                <button
+                                  onClick={() => {
+                                    handlePublishArticle(article.id);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-right text-sm text-green-700 hover:bg-green-50 flex items-center gap-2"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span>نشر المقال</span>
+                                </button>
+                              )}
+                              
+                              {article.qr_code_url && (
+                                <button
+                                  onClick={() => {
+                                    window.open(article.qr_code_url, '_blank');
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-right text-sm text-purple-700 hover:bg-purple-50 flex items-center gap-2"
+                                >
+                                  <QrCode className="w-4 h-4" />
+                                  <span>عرض QR Code</span>
+                                </button>
+                              )}
+                              
+                              <div className="border-t border-gray-200 my-1" />
+                              
+                              <button
+                                onClick={async () => {
+                                  setOpenMenuId(null);
+                                  if (confirm('هل أنت متأكد من حذف هذا المقال؟')) {
+                                    try {
+                                      await articlesService.deleteArticle(article.id);
+                                      toast.success('تم حذف المقال بنجاح!');
+                                      loadData();
+                                    } catch (error: any) {
+                                      toast.error(error.response?.data?.message || 'فشل في حذف المقال');
+                                    }
+                                  }
+                                }}
+                                className="w-full px-4 py-2 text-right text-sm text-red-700 hover:bg-red-50 flex items-center gap-2"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span>حذف</span>
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>

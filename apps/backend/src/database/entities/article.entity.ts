@@ -87,6 +87,16 @@ export class Article {
   @Column({ type: 'text', nullable: true })
   qr_code_public_id!: string;
 
+  // Acceptance Certificate
+  @Column({ type: 'text', nullable: true })
+  acceptance_certificate_url!: string;
+
+  @Column({ type: 'text', nullable: true })
+  acceptance_certificate_cloudinary_public_id!: string;
+
+  @Column({ type: 'text', nullable: true })
+  acceptance_certificate_cloudinary_secure_url!: string;
+
   // Status
   @Column({
     type: 'enum',

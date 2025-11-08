@@ -13,6 +13,8 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { IssuesService } from '../issues/issues.service';
 import { QRCodeService } from '../qrcode/qrcode.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { PdfGeneratorService } from '../pdf/pdf-generator.service';
+import { SiteSettings } from '../../database/entities/site-settings.entity';
 
 @Injectable()
 export class ArticlesService {
@@ -21,9 +23,12 @@ export class ArticlesService {
     private readonly articleRepository: Repository<Article>,
     @InjectRepository(Research)
     private readonly researchRepository: Repository<Research>,
+    @InjectRepository(SiteSettings)
+    private readonly siteSettingsRepository: Repository<SiteSettings>,
     private readonly issuesService: IssuesService,
     private readonly qrcodeService: QRCodeService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly pdfGeneratorService: PdfGeneratorService,
   ) {}
 
   /**
@@ -265,9 +270,18 @@ export class ArticlesService {
     }
 
     // Update issue stats
-    await this.issuesService.updateStats(createArticleDto.issue_id);
+    try {
+      await this.issuesService.updateStats(createArticleDto.issue_id);
+    } catch (error) {
+      console.error('فشل في تحديث إحصائيات العدد:', error);
+      // Don't throw error, article is already created
+    }
 
-    return savedArticle;
+    // Reload article with all relations
+    return await this.articleRepository.findOne({
+      where: { id: savedArticle.id },
+      relations: ['issue'],
+    });
   }
 
   /**
@@ -559,5 +573,91 @@ export class ArticlesService {
     article.qr_code_public_id = qrCodeResult.publicId;
 
     return await this.articleRepository.save(article);
+  }
+
+  /**
+   * Generate acceptance certificate for article
+   */
+  async generateAcceptanceCertificate(id: string): Promise<Article> {
+    const article = await this.findOne(id);
+
+    // Check if certificate already exists for this article
+    if (article.acceptance_certificate_cloudinary_public_id) {
+      throw new ConflictException('الشهادة موجودة بالفعل. استخدم إعادة التوليد إذا كنت تريد تحديثها');
+    }
+
+    // Check if this article came from a research that already has a certificate
+    if (article.research_id) {
+      const research = await this.researchRepository.findOne({
+        where: { id: article.research_id },
+      });
+
+      if (research && research.acceptance_certificate_cloudinary_public_id) {
+        throw new ConflictException(
+          'هذا المقال مرتبط ببحث له شهادة قبول بالفعل. لا يمكن توليد شهادة جديدة للمقال'
+        );
+      }
+    }
+
+    // Get site settings
+    const siteSettings = await this.siteSettingsRepository.findOne({
+      where: {},
+    });
+
+    if (!siteSettings) {
+      throw new NotFoundException('إعدادات الموقع غير موجودة');
+    }
+
+    // Generate PDF certificate
+    const pdfBuffer = await this.pdfGeneratorService.generateArticleAcceptanceCertificate(
+      article,
+      siteSettings
+    );
+
+    // Upload to Cloudinary
+    const uploadResult = await this.cloudinaryService.uploadFile(
+      pdfBuffer,
+      'certificates',
+      'raw',
+      {
+        public_id: `${article.article_number}_acceptance_certificate`,
+        format: 'pdf',
+        access_mode: 'public',
+      }
+    );
+
+    // Update article with certificate info
+    article.acceptance_certificate_url = uploadResult.url;
+    article.acceptance_certificate_cloudinary_public_id = uploadResult.public_id;
+    article.acceptance_certificate_cloudinary_secure_url = uploadResult.secure_url;
+
+    return await this.articleRepository.save(article);
+  }
+
+  /**
+   * Regenerate acceptance certificate for article
+   */
+  async regenerateAcceptanceCertificate(id: string): Promise<Article> {
+    const article = await this.findOne(id);
+
+    // Delete old certificate from Cloudinary if exists
+    if (article.acceptance_certificate_cloudinary_public_id) {
+      try {
+        await this.cloudinaryService.deleteFile(
+          article.acceptance_certificate_cloudinary_public_id
+        );
+      } catch (error) {
+        console.error('فشل في حذف الشهادة القديمة:', error);
+      }
+    }
+
+    // Clear certificate fields
+    article.acceptance_certificate_url = null;
+    article.acceptance_certificate_cloudinary_public_id = null;
+    article.acceptance_certificate_cloudinary_secure_url = null;
+    await this.articleRepository.save(article);
+
+    // Generate new certificate
+    return await this.generateAcceptanceCertificate(id);
   }
 }

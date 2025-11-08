@@ -219,6 +219,7 @@ export function ManageResearchPage() {
                       <ResearchActionButtons 
                         researchId={research.id} 
                         status={mapStatus(research.status)}
+                        originalStatus={research.status}
                         hasCertificate={!!research.acceptance_certificate_cloudinary_public_id}
                         onCertificateGenerated={loadResearches}
                       />
