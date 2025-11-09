@@ -82,4 +82,21 @@ export class SiteSettingsController {
   uploadFavicon(@UploadedFile() file: Express.Multer.File) {
     return this.siteSettingsService.uploadFavicon(file);
   }
+
+  /**
+   * Upload official stamp
+   */
+  @Post('upload-stamp')
+  @Roles('admin')
+  @UseInterceptors(
+    FileInterceptor('stamp', {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 2 * 1024 * 1024, // 2MB
+      },
+    }),
+  )
+  uploadStamp(@UploadedFile() file: Express.Multer.File) {
+    return this.siteSettingsService.uploadStamp(file);
+  }
 }

@@ -186,14 +186,14 @@ export function PaymentInstructionsPage() {
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
               <CheckCircle className="w-5 h-5 flex-shrink-0 text-green-600" />
               <span className="text-sm sm:text-base text-green-800 font-medium">
-                ✅ تم تفعيل حسابك - يمكنك تقديم بحثك الآن
+                تم تفعيل حسابك - يمكنك تقديم بحثك الآن
               </span>
             </div>
           ) : (
             <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <Clock className="w-5 h-5 flex-shrink-0 text-yellow-600" />
               <span className="text-sm sm:text-base text-yellow-800 font-medium">
-                ⏳ في انتظار تفعيل الحساب من الإدارة
+                في انتظار تفعيل الحساب من الإدارة
               </span>
             </div>
           )}
@@ -294,7 +294,7 @@ export function PaymentInstructionsPage() {
       {/* Help Section */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
         <h4 className="text-base sm:text-lg font-bold text-blue-900 mb-3">
-          💡 ملاحظات مهمة
+          ملاحظات مهمة
         </h4>
         <ul className="space-y-2 text-xs sm:text-sm text-blue-800">
           <li className="flex items-start gap-2">
@@ -319,7 +319,7 @@ export function PaymentInstructionsPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-red-600 mt-1 font-bold flex-shrink-0">
-              ⚠️
+              •
             </span>
             <span className="font-bold text-red-700">
               رسوم التقديم صالحة لبحث واحد فقط. بعد تقديم البحث، ستحتاج إلى دفع

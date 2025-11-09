@@ -1,8 +1,10 @@
-import { Eye, Edit, Trash2, Download, QrCode, CheckCircle, Plus, Award, MoreVertical, FileText } from 'lucide-react';
+import { Eye, Edit, Trash2, Download, QrCode, CheckCircle, Plus, Award, MoreVertical, FileText, RefreshCw, FileCheck, BookOpen, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { DashboardHeader, StatusBadge } from '../../../components/dashboard';
+import { CustomizeCertificateModal } from '../../../components/dashboard/CustomizeCertificateModal';
+import { PDFViewer } from '../../../components/PDFViewer';
 import articlesService from '../../../services/articlesService';
 import issuesService from '../../../services/issuesService';
 import type { Article, ArticleStats } from '../../../services/articlesService';
@@ -25,6 +27,11 @@ export function ManageArticlesPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterIssue, setFilterIssue] = useState<string>('all');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [selectedArticleForCert, setSelectedArticleForCert] = useState<Article | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
 
   useEffect(() => {
     loadData();
@@ -98,15 +105,47 @@ export function ManageArticlesPage() {
     window.open(pdfUrl, '_blank');
   };
 
-  const handleGenerateCertificate = async (articleId: string) => {
+  const handleOpenCustomizeModal = (article: Article) => {
+    setSelectedArticleForCert(article);
+    setShowCustomizeModal(true);
+  };
+
+  const handleGenerateCertificate = async (customMessage?: string) => {
+    if (!selectedArticleForCert) return;
+    
+    const toastId = `article-cert-${selectedArticleForCert.id}`;
+    
     try {
-      toast.loading('جاري توليد شهادة القبول...', { id: 'gen-cert' });
-      await articlesService.generateAcceptanceCertificate(articleId);
-      toast.success('تم توليد الشهادة بنجاح!', { id: 'gen-cert' });
-      loadData();
+      setIsGenerating(true);
+      setShowCustomizeModal(false);
+      toast.loading('جاري توليد شهادة القبول...', { id: toastId });
+      
+      const hasCertificate = !!selectedArticleForCert.acceptance_certificate_cloudinary_public_id;
+      
+      if (hasCertificate) {
+        await articlesService.regenerateAcceptanceCertificate(selectedArticleForCert.id, customMessage);
+      } else {
+        await articlesService.generateAcceptanceCertificate(selectedArticleForCert.id, customMessage);
+      }
+      
+      toast.success('تم توليد الشهادة بنجاح!', { id: toastId });
+      setSelectedArticleForCert(null);
+      loadData(); // استدعاء بدون await لتجنب التكرار
     } catch (error: any) {
       console.error('Error generating certificate:', error);
-      toast.error(error.response?.data?.message || 'فشل في توليد الشهادة', { id: 'gen-cert' });
+      toast.error(error.response?.data?.message || 'فشل في توليد الشهادة', { id: toastId });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleViewCertificate = (article: Article) => {
+    const url = article.acceptance_certificate_cloudinary_secure_url || article.acceptance_certificate_url;
+    if (url) {
+      setPdfUrl(url);
+      setShowPDFViewer(true);
+    } else {
+      toast.error('لا يوجد خطاب قبول للمعاينة');
     }
   };
 
@@ -117,7 +156,6 @@ export function ManageArticlesPage() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
         <DashboardHeader title="إدارة المقالات" subtitle="عرض وتحرير المقالات المنشورة" />
@@ -167,7 +205,7 @@ export function ManageArticlesPage() {
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-700">إجمالي المقالات</h3>
             <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
-              <span className="text-blue-600 text-xl">📄</span>
+              <BookOpen className="w-5 h-5 text-blue-600" />
             </div>
           </div>
           <p className="text-4xl font-bold text-[#0D3B66]">{stats.totalArticles}</p>
@@ -177,7 +215,7 @@ export function ManageArticlesPage() {
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-700">المقالات المنشورة</h3>
             <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center">
-              <span className="text-green-600 text-xl">✓</span>
+              <FileCheck className="w-5 h-5 text-green-600" />
             </div>
           </div>
           <p className="text-4xl font-bold text-[#0D3B66]">{stats.publishedArticles}</p>
@@ -187,7 +225,7 @@ export function ManageArticlesPage() {
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-700">المقبولة للنشر</h3>
             <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center">
-              <span className="text-amber-600 text-xl">⏳</span>
+              <Clock className="w-5 h-5 text-amber-600" />
             </div>
           </div>
           <p className="text-4xl font-bold text-[#0D3B66]">{stats.readyToPublish}</p>
@@ -306,7 +344,7 @@ export function ManageArticlesPage() {
                       {!article.acceptance_certificate_cloudinary_public_id && 
                        (!article.research || !article.research.acceptance_certificate_cloudinary_public_id) && (
                         <button 
-                          onClick={() => handleGenerateCertificate(article.id)}
+                          onClick={() => handleOpenCustomizeModal(article)}
                           className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                           title="توليد شهادة"
                         >
@@ -315,13 +353,22 @@ export function ManageArticlesPage() {
                       )}
                       
                       {article.acceptance_certificate_cloudinary_public_id && (
-                        <button 
-                          onClick={() => window.open(article.acceptance_certificate_cloudinary_secure_url, '_blank')}
-                          className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="عرض الشهادة"
-                        >
-                          <FileText className="w-4 h-4" />
-                        </button>
+                        <>
+                          <button 
+                            onClick={() => handleViewCertificate(article)}
+                            className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="معاينة الشهادة"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleOpenCustomizeModal(article)}
+                            className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                            title="تعديل وإعادة توليد"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </button>
+                        </>
                       )}
 
                       {/* More Actions Menu */}
@@ -412,6 +459,35 @@ export function ManageArticlesPage() {
           </>
         )}
       </div>
+
+      {/* Customize Certificate Modal */}
+      {showCustomizeModal && selectedArticleForCert && (
+        <CustomizeCertificateModal
+          researchTitle={selectedArticleForCert.title}
+          researcherName={selectedArticleForCert.authors?.[0]?.name || 'المؤلف'}
+          onClose={() => {
+            setShowCustomizeModal(false);
+            setSelectedArticleForCert(null);
+          }}
+          onGenerate={handleGenerateCertificate}
+          isGenerating={isGenerating}
+          isRegenerate={!!selectedArticleForCert.acceptance_certificate_cloudinary_public_id}
+          currentMessage={selectedArticleForCert.acceptance_certificate_custom_message}
+        />
+      )}
+
+      {/* PDF Viewer Modal */}
+      {showPDFViewer && pdfUrl && (
+        <PDFViewer
+          pdfUrl={pdfUrl}
+          title="معاينة خطاب القبول"
+          onClose={() => setShowPDFViewer(false)}
+        />
+      )}
+
+      <Toaster position="top-center" />
     </div>
   );
 }
+
+export default ManageArticlesPage;

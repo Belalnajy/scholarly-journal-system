@@ -89,7 +89,7 @@ export function PDFViewer({ pdfUrl, title = 'معاينة المستند', onClo
         {/* Footer */}
         <div className="p-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            💡 <strong>نصيحة:</strong> استخدم Ctrl + F للبحث داخل المستند
+            <strong>نصيحة:</strong> استخدم Ctrl + F للبحث داخل المستند
           </div>
           <button
             onClick={onClose}

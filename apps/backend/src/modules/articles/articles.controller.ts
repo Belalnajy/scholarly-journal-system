@@ -223,20 +223,26 @@ export class ArticlesController {
   }
 
   /**
-   * Generate acceptance certificate for article (Admin/Editor only)
+   * Generate acceptance certificate for article
    */
   @Post(':id/generate-acceptance-certificate')
   @Roles('admin', 'editor')
-  generateAcceptanceCertificate(@Param('id', ParseUUIDPipe) id: string) {
-    return this.articlesService.generateAcceptanceCertificate(id);
+  generateAcceptanceCertificate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { customMessage?: string }
+  ) {
+    return this.articlesService.generateAcceptanceCertificate(id, body.customMessage);
   }
 
   /**
-   * Regenerate acceptance certificate for article (Admin/Editor only)
+   * Regenerate acceptance certificate for article
    */
   @Post(':id/regenerate-acceptance-certificate')
   @Roles('admin', 'editor')
-  regenerateAcceptanceCertificate(@Param('id', ParseUUIDPipe) id: string) {
-    return this.articlesService.regenerateAcceptanceCertificate(id);
+  regenerateAcceptanceCertificate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { customMessage?: string }
+  ) {
+    return this.articlesService.regenerateAcceptanceCertificate(id, body.customMessage);
   }
 }

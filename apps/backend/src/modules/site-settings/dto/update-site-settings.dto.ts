@@ -112,4 +112,12 @@ export class UpdateSiteSettingsDto {
   @IsOptional()
   @IsString()
   acceptance_letter_content?: string;
+
+  @IsOptional()
+  @IsString()
+  editor_in_chief_name?: string;
+
+  @IsOptional()
+  @IsString()
+  official_stamp_url?: string;
 }

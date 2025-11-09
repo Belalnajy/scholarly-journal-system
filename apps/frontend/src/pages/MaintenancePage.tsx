@@ -112,7 +112,7 @@ export function MaintenancePage() {
           {/* Footer Message */}
           <div className="border-t border-gray-200 pt-6">
             <p className="text-gray-600">
-              نشكركم على صبركم وتفهمكم. سنعود قريباً بخدمة أفضل! 🚀
+              نشكركم على صبركم وتفهمكم. سنعود قريباً بخدمة أفضل!
             </p>
           </div>
         </div>

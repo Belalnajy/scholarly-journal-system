@@ -97,6 +97,9 @@ export class Article {
   @Column({ type: 'text', nullable: true })
   acceptance_certificate_cloudinary_secure_url!: string;
 
+  @Column({ type: 'text', nullable: true })
+  acceptance_certificate_custom_message!: string;
+
   // Status
   @Column({
     type: 'enum',

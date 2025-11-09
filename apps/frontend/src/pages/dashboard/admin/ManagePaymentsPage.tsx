@@ -421,7 +421,7 @@ export function ManagePaymentsPage() {
           <AlertCircle className="w-6 h-6 text-blue-600 mt-1" />
           <div>
             <h4 className="text-lg font-bold text-blue-900 mb-2">
-              💡 كيفية العمل
+              كيفية العمل
             </h4>
             <ul className="space-y-2 text-blue-800">
               <li className="flex items-start gap-2">
@@ -430,7 +430,7 @@ export function ManagePaymentsPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-600 mt-1">2.</span>
-                <span>بعد التأكد من الدفع، اضغط زر "تفعيل الحساب" ✅</span>
+                <span>بعد التأكد من الدفع، اضغط زر "تفعيل الحساب"</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-600 mt-1">3.</span>
@@ -438,14 +438,14 @@ export function ManagePaymentsPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-600 mt-1">4.</span>
-                <span>يمكنك إلغاء التفعيل بالضغط على زر ❌ بجانب "مفعّل"</span>
+                <span>يمكنك إلغاء التفعيل بالضغط على زر إلغاء بجانب "مفعّل"</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-600 mt-1">5.</span>
                 <span>يتم إرسال إشعار تلقائي للباحث عند تفعيل حسابه</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-red-600 mt-1 font-bold">⚠️</span>
+                <span className="text-red-600 mt-1 font-bold">•</span>
                 <span className="font-bold">
                   بعد تقديم الباحث لبحثه، سيتم إلغاء تفعيل حسابه تلقائياً (رسوم لبحث واحد فقط)
                 </span>

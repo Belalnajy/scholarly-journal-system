@@ -457,7 +457,6 @@ export function EvaluationFormPage() {
       const msg = 'يرجى إكمال جميع الحقول قبل الإرسال';
       setError(msg);
       toast.error(msg, {
-        icon: '⚠️',
         duration: 4000,
       });
       return;
@@ -467,7 +466,6 @@ export function EvaluationFormPage() {
       const msg = 'خطأ في تحديد المستخدم أو البحث';
       setError(msg);
       toast.error(msg, {
-        icon: '❌',
         duration: 4000,
       });
       return;
@@ -564,7 +562,6 @@ export function EvaluationFormPage() {
           fontWeight: 'bold',
           padding: '16px',
         },
-        icon: '❌',
       });
     } finally {
       setIsSubmitting(false);
@@ -695,14 +692,14 @@ export function EvaluationFormPage() {
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <h2 className="text-2xl font-black text-white">
-                  🔄 البحث عاد بعد التعديل
+                  البحث عاد بعد التعديل
                 </h2>
                 <span className="px-4 py-1.5 bg-white text-orange-600 rounded-full text-sm font-bold shadow-md">
                   مراجعة {revisions.filter((r) => r.status === 'submitted').length}
                 </span>
               </div>
               <p className="text-white text-base font-semibold mb-3 leading-relaxed">
-                ⚠️ الباحث قام بإجراء التعديلات المطلوبة على البحث بناءً على ملاحظاتك السابقة.
+                الباحث قام بإجراء التعديلات المطلوبة على البحث بناءً على ملاحظاتك السابقة.
                 يرجى مراجعة التعديلات بعناية وتقييم البحث مرة أخرى.
               </p>
               <div className="flex items-center gap-2 text-white text-sm">
@@ -846,11 +843,11 @@ export function EvaluationFormPage() {
                 }`}
               >
                 {new Date(assignment.deadline) < new Date()
-                  ? '⚠️ تجاوز الموعد النهائي'
+                  ? 'تجاوز الموعد النهائي'
                   : new Date(assignment.deadline) <
                     new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-                  ? '⏰ الموعد النهائي قريب'
-                  : '📅 الموعد النهائي للتقييم'}
+                  ? 'الموعد النهائي قريب'
+                  : 'الموعد النهائي للتقييم'}
               </h3>
               <p
                 className={`${
@@ -953,7 +950,7 @@ export function EvaluationFormPage() {
                 {/* Original Abstract */}
                 <div className="bg-red-50 rounded-lg p-4 border border-red-200">
                   <h4 className="text-sm font-bold text-red-800 mb-2">
-                    ✖ الملخص الأصلي
+                    الملخص الأصلي
                   </h4>
                   <p className="text-sm text-gray-700 line-through opacity-75">
                     {revisions.find(
@@ -965,7 +962,7 @@ export function EvaluationFormPage() {
                 {/* Current Abstract */}
                 <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                   <h4 className="text-sm font-bold text-green-800 mb-2">
-                    ✔ الملخص المعدل
+                    الملخص المعدل
                   </h4>
                   <p className="text-sm text-gray-700">{research.abstract}</p>
                 </div>
@@ -976,7 +973,7 @@ export function EvaluationFormPage() {
                 )?.original_data?.keywords && (
                   <div className="bg-red-50 rounded-lg p-4 border border-red-200">
                     <h4 className="text-sm font-bold text-red-800 mb-2">
-                      ✖ الكلمات المفتاحية الأصلية:
+                      الكلمات المفتاحية الأصلية:
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {revisions
@@ -1001,7 +998,7 @@ export function EvaluationFormPage() {
                 {research.keywords && research.keywords.length > 0 && (
                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                     <h4 className="text-sm font-bold text-green-800 mb-2">
-                      ✔ الكلمات المفتاحية المعدلة:
+                      الكلمات المفتاحية المعدلة:
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {research.keywords.map((keyword, index) => (
@@ -1253,9 +1250,9 @@ export function EvaluationFormPage() {
               التقدم في التقييم
             </span>
             <span className="text-sm text-gray-600">
-              {allScoresFilled ? '✓' : '✗'} الدرجات •{' '}
-              {recommendation ? '✓' : '✗'} التوصية •{' '}
-              {generalComments.trim() ? '✓' : '✗'} التعليقات
+              {allScoresFilled ? '•' : '•'} الدرجات •{' '}
+              {recommendation ? '•' : '•'} التوصية •{' '}
+              {generalComments.trim() ? '•' : '•'} التعليقات
             </span>
           </div>
 
@@ -1275,10 +1272,10 @@ export function EvaluationFormPage() {
                     }`}
                   >
                     {recommendation === 'accepted'
-                      ? '✓ أوصي بالقبول'
+                      ? 'أوصي بالقبول'
                       : recommendation === 'needs-revision'
-                      ? '⚠ أوصي بالقبول مع تعديلات'
-                      : '✗ أوصي بالرفض'}
+                      ? 'أوصي بالقبول مع تعديلات'
+                      : 'أوصي بالرفض'}
                   </p>
                 </div>
                 <div className="text-right">

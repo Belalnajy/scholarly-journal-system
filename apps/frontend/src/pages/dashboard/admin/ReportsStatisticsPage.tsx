@@ -42,17 +42,17 @@ export function ReportsStatisticsPage() {
 تقرير الأداء الشامل
 =====================
 
-📊 الإحصائيات العامة:
+الإحصائيات العامة:
 - إجمالي التقديمات: ${stats.totalSubmissions}
 - الأبحاث المنشورة: ${stats.publishedResearch}
 - معدل القبول: ${stats.acceptanceRate}%
 - معدل الرفض: ${stats.rejectionRate}%
 - قيد المراجعة: ${stats.pendingReview}
 
-📈 تطور وقت المراجعة الشهري:
+تطور وقت المراجعة الشهري:
 ${monthlyReviewTime.map(item => `- ${item.month}: ${item.days} يوم`).join('\n')}
 
-📊 إنتاجية النشر الشهرية:
+إنتاجية النشر الشهرية:
 ${monthlyProductivity.map(item => `- ${item.month}: ${item.value} بحث`).join('\n')}
 
 تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG', { 

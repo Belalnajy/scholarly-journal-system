@@ -245,13 +245,25 @@ export class ResearchController {
 
   @Post(':id/generate-acceptance-certificate')
   @Roles('admin', 'editor') // Only admins and editors can generate certificates
-  generateAcceptanceCertificate(@Param('id') research_id: string) {
-    return this.researchService.generateAcceptanceCertificate(research_id);
+  generateAcceptanceCertificate(
+    @Param('id') research_id: string,
+    @Body() customContent?: { customMessage?: string }
+  ) {
+    return this.researchService.generateAcceptanceCertificate(
+      research_id,
+      customContent?.customMessage
+    );
   }
 
   @Post(':id/regenerate-acceptance-certificate')
   @Roles('admin', 'editor') // Only admins and editors can regenerate certificates
-  regenerateAcceptanceCertificate(@Param('id') research_id: string) {
-    return this.researchService.regenerateAcceptanceCertificate(research_id);
+  regenerateAcceptanceCertificate(
+    @Param('id') research_id: string,
+    @Body() customContent?: { customMessage?: string }
+  ) {
+    return this.researchService.regenerateAcceptanceCertificate(
+      research_id,
+      customContent?.customMessage
+    );
   }
 }

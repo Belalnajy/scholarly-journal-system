@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Upload,
   X,
+  Award,
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -193,6 +194,41 @@ export function EditorResearchDetailsPage() {
     } catch (error) {
       console.error('Download error:', error);
       toast.error('فشل تحميل الملف', { id: 'download-revision' });
+    }
+  };
+
+  const handlePreviewCertificate = () => {
+    if (!research) return;
+    const url = research.acceptance_certificate_cloudinary_secure_url || research.acceptance_certificate_url;
+    if (url) {
+      setPdfUrl(url);
+      setShowPDFViewer(true);
+    } else {
+      toast.error('لا يوجد خطاب قبول للمعاينة');
+    }
+  };
+
+  const handleDownloadCertificate = async () => {
+    if (!research) return;
+    const url = research.acceptance_certificate_cloudinary_secure_url || research.acceptance_certificate_url;
+    if (!url) {
+      toast.error('لا يوجد خطاب قبول للتحميل');
+      return;
+    }
+    
+    try {
+      toast.loading('جاري تحميل خطاب القبول...', { id: 'download-cert' });
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `acceptance-certificate-${research.research_number}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('تم بدء التحميل', { id: 'download-cert' });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('فشل تحميل خطاب القبول', { id: 'download-cert' });
     }
   };
 
@@ -385,6 +421,28 @@ export function EditorResearchDetailsPage() {
                 >
                   <Download className="w-4 h-4" />
                   <span>تحميل البحث الأصلي </span>
+                </button>
+              </>
+            )}
+
+            {/* Acceptance Certificate Buttons - Show for accepted/published research */}
+            {(research.status === 'accepted' || research.status === 'published') && 
+             (research.acceptance_certificate_cloudinary_secure_url || research.acceptance_certificate_url) && (
+              <>
+                <button
+                  onClick={handlePreviewCertificate}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-medium shadow-md hover:shadow-lg"
+                >
+                  <Award className="w-5 h-5" />
+                  <span>معاينة خطاب القبول</span>
+                </button>
+                
+                <button
+                  onClick={handleDownloadCertificate}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>تحميل خطاب القبول</span>
                 </button>
               </>
             )}

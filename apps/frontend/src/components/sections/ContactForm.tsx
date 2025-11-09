@@ -135,7 +135,7 @@ export function ContactForm({ formData }: ContactFormProps) {
         {user && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg" dir="rtl">
             <p className="text-sm text-blue-800 text-right">
-              ✓ تم ملء بياناتك تلقائياً. يمكنك تعديلها إذا أردت.
+              تم ملء بياناتك تلقائياً. يمكنك تعديلها إذا أردت.
             </p>
           </div>
         )}

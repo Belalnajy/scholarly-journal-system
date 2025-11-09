@@ -1,4 +1,4 @@
-import { ArrowRight, Download, FileText, User, Calendar, Star, AlertCircle, Mail, Building2, Clock, Edit3, Loader2 } from 'lucide-react';
+import { ArrowRight, Download, FileText, User, Calendar, Star, AlertCircle, Mail, Building2, Clock, Edit3, Loader2, Award, Eye as EyeIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardHeader, StatusBadge } from '../../../components/dashboard';
@@ -9,6 +9,7 @@ import { usersService } from '../../../services/users.service';
 import { researchRevisionsService, ResearchRevision } from '../../../services/research-revisions.service';
 import { downloadResearchPdf, downloadRevisionFile } from '../../../utils/downloadFile';
 import toast from 'react-hot-toast';
+import { PDFViewer } from '../../../components/PDFViewer';
 
 // Star Rating Display Component (Read-only)
 function StarRatingDisplay({ rating }: { rating: number }) {
@@ -200,6 +201,8 @@ export function PendingRevisionDetailsPage() {
   const [author, setAuthor] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -233,6 +236,41 @@ export function PendingRevisionDetailsPage() {
       setError(err instanceof Error ? err.message : 'حدث خطأ أثناء تحميل البيانات');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePreviewCertificate = () => {
+    if (!research) return;
+    const url = research.acceptance_certificate_cloudinary_secure_url || research.acceptance_certificate_url;
+    if (url) {
+      setPdfUrl(url);
+      setShowPDFViewer(true);
+    } else {
+      toast.error('لا يوجد خطاب قبول للمعاينة');
+    }
+  };
+
+  const handleDownloadCertificate = async () => {
+    if (!research) return;
+    const url = research.acceptance_certificate_cloudinary_secure_url || research.acceptance_certificate_url;
+    if (!url) {
+      toast.error('لا يوجد خطاب قبول للتحميل');
+      return;
+    }
+    
+    try {
+      toast.loading('جاري تحميل خطاب القبول...', { id: 'download-cert' });
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `acceptance-certificate-${research.research_number}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('تم بدء التحميل', { id: 'download-cert' });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('فشل تحميل خطاب القبول', { id: 'download-cert' });
     }
   };
 
@@ -408,59 +446,83 @@ export function PendingRevisionDetailsPage() {
         </div>
 
         {/* Download Buttons */}
-        <div className="p-6 bg-gray-50 flex gap-3">
-          {/* Download Original */}
-          <button
-            onClick={async () => {
-              try {
-                await downloadResearchPdf(
-                  research.cloudinary_secure_url,
-                  research.file_url,
-                  research.research_number,
-                  research.file_type
-                );
-                toast.success('تم بدء التحميل');
-              } catch (error) {
-                toast.error('فشل تحميل الملف');
-              }
-            }}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium"
-          >
-            <Download className="w-4 h-4" />
-            <span>تحميل النسخة الأصلية</span>
-          </button>
-          
-          {/* Download Revised Version (if exists) */}
-          {(() => {
-            const latestRevision = revisions
-              .filter(r => r.status === 'submitted' && r.file_url)
-              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+        <div className="p-6 bg-gray-50 space-y-3">
+          <div className="flex gap-3">
+            {/* Download Original */}
+            <button
+              onClick={async () => {
+                try {
+                  await downloadResearchPdf(
+                    research.cloudinary_secure_url,
+                    research.file_url,
+                    research.research_number,
+                    research.file_type
+                  );
+                  toast.success('تم بدء التحميل');
+                } catch (error) {
+                  toast.error('فشل تحميل الملف');
+                }
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D3B66] text-white rounded-lg hover:bg-[#0D3B66]/90 transition-colors font-medium"
+            >
+              <Download className="w-4 h-4" />
+              <span>تحميل النسخة الأصلية</span>
+            </button>
             
-            if (latestRevision) {
-              return (
-                <button
-                  onClick={async () => {
-                    try {
-                      await downloadRevisionFile(
-                        latestRevision.cloudinary_secure_url,
-                        latestRevision.file_url,
-                        latestRevision.revision_number,
-                        latestRevision.file_type
-                      );
-                      toast.success('تم بدء التحميل');
-                    } catch (error) {
-                      toast.error('فشل تحميل الملف');
-                    }
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>تحميل النسخة المعدلة</span>
-                </button>
-              );
-            }
-            return null;
-          })()}
+            {/* Download Revised Version (if exists) */}
+            {(() => {
+              const latestRevision = revisions
+                .filter(r => r.status === 'submitted' && r.file_url)
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+              
+              if (latestRevision) {
+                return (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await downloadRevisionFile(
+                          latestRevision.cloudinary_secure_url,
+                          latestRevision.file_url,
+                          latestRevision.revision_number,
+                          latestRevision.file_type
+                        );
+                        toast.success('تم بدء التحميل');
+                      } catch (error) {
+                        toast.error('فشل تحميل الملف');
+                      }
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>تحميل النسخة المعدلة</span>
+                  </button>
+                );
+              }
+              return null;
+            })()}
+          </div>
+
+          {/* Acceptance Certificate Buttons - Show for accepted/published research */}
+          {(research.status === 'accepted' || research.status === 'published') && 
+           (research.acceptance_certificate_cloudinary_secure_url || research.acceptance_certificate_url) && (
+            <div className="flex gap-3">
+              <button
+                onClick={handlePreviewCertificate}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-medium shadow-md hover:shadow-lg"
+              >
+                <Award className="w-5 h-5" />
+                <span>معاينة خطاب القبول</span>
+              </button>
+              
+              <button
+                onClick={handleDownloadCertificate}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                <Download className="w-4 h-4" />
+                <span>تحميل خطاب القبول</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -553,6 +615,15 @@ export function PendingRevisionDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* PDF Viewer Modal */}
+      {showPDFViewer && pdfUrl && (
+        <PDFViewer
+          pdfUrl={pdfUrl}
+          title={`معاينة خطاب القبول - ${research?.research_number || ''}`}
+          onClose={() => setShowPDFViewer(false)}
+        />
+      )}
     </div>
   );
 }

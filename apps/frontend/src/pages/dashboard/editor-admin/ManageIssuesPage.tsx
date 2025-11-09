@@ -181,16 +181,16 @@ function PublishIssueModal({ issue, onClose, onPublish }: { issue: IssueWithArti
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
             <h3 className="font-bold text-gray-800 mb-2">{issue.title}</h3>
             <div className="space-y-1 text-sm text-gray-600">
-              <p>📅 تاريخ النشر: {new Date(issue.publish_date || '').toLocaleDateString('ar-EG')}</p>
-              <p>📄 عدد المقالات: {issue.total_articles} مقال</p>
-              <p>📊 التقدم: {issue.progress_percentage}%</p>
+              <p>تاريخ النشر: {new Date(issue.publish_date || '').toLocaleDateString('ar-EG')}</p>
+              <p>عدد المقالات: {issue.total_articles} مقال</p>
+              <p>التقدم: {issue.progress_percentage}%</p>
             </div>
           </div>
 
           {/* Warning */}
           <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
             <div className="flex items-start gap-2">
-              <span className="text-amber-600 text-xl">⚠️</span>
+              <span className="text-amber-600 text-xl">•</span>
               <div className="flex-1">
                 <p className="text-sm text-amber-800">
                   <span className="font-semibold">ملاحظة:</span> بعد نشر العدد، سيكون متاحاً للقراء على الموقع الإلكتروني ولن يمكن التراجع عن هذا الإجراء.
@@ -394,7 +394,6 @@ export function ManageIssuesPage() {
           fontSize: '16px',
           fontWeight: 'bold',
         },
-        icon: '✅',
       });
       loadIssues(); // Reload issues
     } catch (error: any) {

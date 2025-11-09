@@ -56,6 +56,9 @@ export interface SiteSettings {
   submission_fee_currency?: string;
   payment_instructions?: string;
   acceptance_letter_content?: string;
+  editor_in_chief_name?: string;
+  official_stamp_url?: string;
+  official_stamp_cloudinary_public_id?: string;
   updated_at: string;
 }
 
@@ -98,6 +101,8 @@ export interface UpdateSiteSettingsDto {
   submission_fee_currency?: string;
   payment_instructions?: string;
   acceptance_letter_content?: string;
+  editor_in_chief_name?: string;
+  official_stamp_url?: string;
 }
 
 class SiteSettingsService {
@@ -208,6 +213,31 @@ class SiteSettingsService {
       return response.data;
     } catch (error) {
       console.error('Error uploading favicon:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Upload official stamp
+   * رفع الختم الرسمي
+   */
+  async uploadStamp(file: File): Promise<{ stamp_url: string }> {
+    try {
+      const formData = new FormData();
+      formData.append('stamp', file);
+
+      const response = await axiosInstance.post(
+        '/site-settings/upload-stamp',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading stamp:', error);
       throw error;
     }
   }

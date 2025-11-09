@@ -691,7 +691,10 @@ export class ResearchService {
   /**
    * Generate acceptance certificate for a research
    */
-  async generateAcceptanceCertificate(research_id: string): Promise<Research> {
+  async generateAcceptanceCertificate(
+    research_id: string,
+    customMessage?: string
+  ): Promise<Research> {
     const research = await this.findOne(research_id);
     const researcher = await this.userRepository.findOne({
       where: { id: research.user_id },
@@ -701,20 +704,22 @@ export class ResearchService {
       throw new NotFoundException('الباحث غير موجود');
     }
 
-    // Get site settings
-    const siteSettings = await this.siteSettingsRepository.findOne({
-      where: {},
-    });
+    // Get site settings for certificate content (get first/only record)
+    const siteSettings = await this.siteSettingsRepository
+      .createQueryBuilder('settings')
+      .orderBy('settings.id', 'ASC')
+      .getOne();
 
     if (!siteSettings) {
       throw new NotFoundException('إعدادات الموقع غير موجودة');
     }
 
-    // Generate PDF certificate
+    // Generate PDF certificate with optional custom message
     const pdfBuffer = await this.pdfGeneratorService.generateAcceptanceCertificate(
       research,
       researcher,
-      siteSettings
+      siteSettings,
+      customMessage
     );
 
     // Upload to Cloudinary as public file
@@ -734,6 +739,11 @@ export class ResearchService {
     research.acceptance_certificate_url = uploadResult.secure_url;
     research.acceptance_certificate_cloudinary_public_id = uploadResult.public_id;
     research.acceptance_certificate_cloudinary_secure_url = uploadResult.secure_url;
+    
+    // Save custom message if provided
+    if (customMessage) {
+      research.acceptance_certificate_custom_message = customMessage;
+    }
 
     return await this.researchRepository.save(research);
   }
@@ -763,7 +773,10 @@ export class ResearchService {
   /**
    * Regenerate acceptance certificate (if needed)
    */
-  async regenerateAcceptanceCertificate(research_id: string): Promise<Research> {
+  async regenerateAcceptanceCertificate(
+    research_id: string,
+    customMessage?: string
+  ): Promise<Research> {
     const research = await this.findOne(research_id);
 
     // Delete old certificate from Cloudinary if exists
@@ -774,11 +787,11 @@ export class ResearchService {
           'raw'
         );
       } catch (error) {
-        console.error('Failed to delete old certificate from Cloudinary:', error);
+        console.error('Error deleting old certificate:', error);
       }
     }
 
-    // Generate new certificate
-    return await this.generateAcceptanceCertificate(research_id);
+    // Generate new certificate with optional custom message
+    return await this.generateAcceptanceCertificate(research_id, customMessage);
   }
 }

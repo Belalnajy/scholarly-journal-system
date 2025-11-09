@@ -88,6 +88,10 @@ export class Research {
   @Column({ type: 'text', nullable: true })
   acceptance_certificate_cloudinary_secure_url!: string;
 
+  // Custom message for acceptance certificate (optional)
+  @Column({ type: 'text', nullable: true })
+  acceptance_certificate_custom_message!: string;
+
   // Status & Publication
   @Column({
     type: 'enum',

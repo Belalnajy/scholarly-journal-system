@@ -34,6 +34,7 @@ export interface Article {
   acceptance_certificate_url?: string;
   acceptance_certificate_cloudinary_public_id?: string;
   acceptance_certificate_cloudinary_secure_url?: string;
+  acceptance_certificate_custom_message?: string;
   status: ArticleStatus;
   views_count: number;
   downloads_count: number;
@@ -283,16 +284,16 @@ export const incrementArticleDownloads = async (id: string): Promise<void> => {
 /**
  * Generate acceptance certificate for article
  */
-export const generateAcceptanceCertificate = async (id: string): Promise<Article> => {
-  const response = await api.post(`/articles/${id}/generate-acceptance-certificate`);
+export const generateAcceptanceCertificate = async (id: string, customMessage?: string): Promise<Article> => {
+  const response = await api.post(`/articles/${id}/generate-acceptance-certificate`, { customMessage });
   return response.data;
 };
 
 /**
  * Regenerate acceptance certificate for article
  */
-export const regenerateAcceptanceCertificate = async (id: string): Promise<Article> => {
-  const response = await api.post(`/articles/${id}/regenerate-acceptance-certificate`);
+export const regenerateAcceptanceCertificate = async (id: string, customMessage?: string): Promise<Article> => {
+  const response = await api.post(`/articles/${id}/regenerate-acceptance-certificate`, { customMessage });
   return response.data;
 };
 

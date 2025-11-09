@@ -104,7 +104,8 @@ export class PdfGeneratorService {
     siteSettings: SiteSettings,
     logoBase64: string = '',
     journalLogoBase64: string = '',
-    qrCodeDataUrl: string = ''
+    qrCodeDataUrl: string = '',
+    customMessage?: string
   ): string {
     const acceptanceDate = research.evaluation_date || new Date();
     const formattedDate = new Intl.DateTimeFormat('ar-EG', {
@@ -633,20 +634,21 @@ export class PdfGeneratorService {
               research.research_number
             }</div>
             
-            ${this.generateLetterContent(siteSettings)}
+            ${this.generateLetterContent(siteSettings, customMessage)}
         </div>
         
         <div class="signature">
             ${
-              logoBase64
-                ? `<div class="official-stamp"><img src="${logoBase64}" alt="ختم رسمي"></div>`
+              // استخدام الختم من الإعدادات أو الختم الافتراضي
+              (siteSettings.official_stamp_url || logoBase64)
+                ? `<div class="official-stamp"><img src="${siteSettings.official_stamp_url || logoBase64}" alt="ختم رسمي"></div>`
                 : ''
             }
             <div class="signature-box">
                 <div class="signature-title">رئيس التحرير</div>
                 <div class="signature-line"></div>
                 <div class="signature-name">${
-                  siteSettings.site_name || 'مجلة الدراسات والبحوث'
+                  siteSettings.editor_in_chief_name || siteSettings.site_name || 'مجلة الدراسات والبحوث'
                 }</div>
             </div>
         </div>
@@ -661,13 +663,22 @@ export class PdfGeneratorService {
 </html>`;
   }
 
-  private generateLetterContent(siteSettings: SiteSettings): string {
-    // استخدام النص المخصص إذا كان موجوداً، وإلا استخدام النص الافتراضي
+  private generateLetterContent(siteSettings: SiteSettings, customMessage?: string): string {
+    // 1. استخدام المحتوى المخصص إذا كان موجوداً (أولوية قصوى)
+    if (customMessage && customMessage.trim()) {
+      const paragraphs = customMessage
+        .split('\n')
+        .filter((p) => p.trim())
+        .map((p) => `<p>${p.trim()}</p>`)
+        .join('\n            ');
+      return paragraphs;
+    }
+    
+    // 2. استخدام النص من إعدادات الموقع إذا كان موجوداً
     if (
       siteSettings.acceptance_letter_content &&
       siteSettings.acceptance_letter_content.trim()
     ) {
-      // تحويل النص إلى فقرات HTML
       const paragraphs = siteSettings.acceptance_letter_content
         .split('\n')
         .filter((p) => p.trim())
@@ -676,7 +687,7 @@ export class PdfGeneratorService {
       return paragraphs;
     }
 
-    // النص الافتراضي
+    // 3. النص الافتراضي
     return `
             <p>قد تم قبوله للنشر في مجلتنا بعد مراجعته من قبل المحكمين المختصين واستيفائه لجميع المعايير العلمية والأكاديمية المطلوبة.</p>
             
@@ -723,7 +734,8 @@ export class PdfGeneratorService {
   async generateAcceptanceCertificate(
     research: Research,
     researcher: User,
-    siteSettings: SiteSettings
+    siteSettings: SiteSettings,
+    customMessage?: string
   ): Promise<Buffer> {
     let browser;
 
@@ -766,7 +778,8 @@ export class PdfGeneratorService {
         siteSettings,
         logoBase64,
         journalLogoBase64,
-        qrCodeDataUrl
+        qrCodeDataUrl,
+        customMessage
       );
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
@@ -817,7 +830,8 @@ export class PdfGeneratorService {
    */
   async generateArticleAcceptanceCertificate(
     article: Article,
-    siteSettings: SiteSettings
+    siteSettings: SiteSettings,
+    customMessage?: string
   ): Promise<Buffer> {
     let browser;
 
@@ -871,7 +885,8 @@ export class PdfGeneratorService {
         siteSettings,
         logoBase64,
         journalLogoBase64,
-        qrCodeDataUrl
+        qrCodeDataUrl,
+        customMessage
       );
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 

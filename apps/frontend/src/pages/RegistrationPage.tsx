@@ -42,7 +42,7 @@ export function RegistrationPage() {
             { email: userData.email, role: userData.role }
           );
         } catch (logError) {
-          console.error('❗ Failed to log registration:', logError);
+          console.error('Failed to log registration:', logError);
         }
         
         toast.success('تم إنشاء الحساب وتسجيل الدخول بنجاح!');

@@ -578,7 +578,7 @@ export class ArticlesService {
   /**
    * Generate acceptance certificate for article
    */
-  async generateAcceptanceCertificate(id: string): Promise<Article> {
+  async generateAcceptanceCertificate(id: string, customMessage?: string): Promise<Article> {
     const article = await this.findOne(id);
 
     // Check if certificate already exists for this article
@@ -608,10 +608,11 @@ export class ArticlesService {
       throw new NotFoundException('إعدادات الموقع غير موجودة');
     }
 
-    // Generate PDF certificate
+    // Generate PDF certificate with optional custom message
     const pdfBuffer = await this.pdfGeneratorService.generateArticleAcceptanceCertificate(
       article,
-      siteSettings
+      siteSettings,
+      customMessage
     );
 
     // Upload to Cloudinary
@@ -630,14 +631,57 @@ export class ArticlesService {
     article.acceptance_certificate_url = uploadResult.url;
     article.acceptance_certificate_cloudinary_public_id = uploadResult.public_id;
     article.acceptance_certificate_cloudinary_secure_url = uploadResult.secure_url;
+    
+    // Save custom message if provided
+    if (customMessage) {
+      article.acceptance_certificate_custom_message = customMessage;
+    }
 
-    return await this.articleRepository.save(article);
+    await this.articleRepository.save(article);
+
+    // If article is linked to research, update research certificate too
+    if (article.research_id) {
+      try {
+        const research = await this.researchRepository.findOne({
+          where: { id: article.research_id },
+        });
+
+        if (research) {
+          // Delete old research certificate if exists
+          if (research.acceptance_certificate_cloudinary_public_id) {
+            try {
+              await this.cloudinaryService.deleteFile(
+                research.acceptance_certificate_cloudinary_public_id,
+                'raw'
+              );
+            } catch (error) {
+              console.error('فشل في حذف شهادة البحث القديمة:', error);
+            }
+          }
+
+          // Update research with same certificate
+          research.acceptance_certificate_url = uploadResult.url;
+          research.acceptance_certificate_cloudinary_public_id = uploadResult.public_id;
+          research.acceptance_certificate_cloudinary_secure_url = uploadResult.secure_url;
+          
+          if (customMessage) {
+            research.acceptance_certificate_custom_message = customMessage;
+          }
+
+          await this.researchRepository.save(research);
+        }
+      } catch (error) {
+        console.error('فشل في تحديث شهادة البحث المرتبط:', error);
+      }
+    }
+
+    return article;
   }
 
   /**
    * Regenerate acceptance certificate for article
    */
-  async regenerateAcceptanceCertificate(id: string): Promise<Article> {
+  async regenerateAcceptanceCertificate(id: string, customMessage?: string): Promise<Article> {
     const article = await this.findOne(id);
 
     // Delete old certificate from Cloudinary if exists
@@ -651,13 +695,83 @@ export class ArticlesService {
       }
     }
 
-    // Clear certificate fields
-    article.acceptance_certificate_url = null;
-    article.acceptance_certificate_cloudinary_public_id = null;
-    article.acceptance_certificate_cloudinary_secure_url = null;
+    // Get site settings
+    const siteSettings = await this.siteSettingsRepository
+      .createQueryBuilder('settings')
+      .orderBy('settings.id', 'ASC')
+      .getOne();
+
+    if (!siteSettings) {
+      throw new NotFoundException('إعدادات الموقع غير موجودة');
+    }
+
+    // Generate PDF certificate with optional custom message
+    const pdfBuffer = await this.pdfGeneratorService.generateArticleAcceptanceCertificate(
+      article,
+      siteSettings,
+      customMessage
+    );
+
+    // Upload to Cloudinary
+    const uploadResult = await this.cloudinaryService.uploadFile(
+      pdfBuffer,
+      'certificates',
+      'raw',
+      {
+        public_id: `${article.article_number}_acceptance_certificate`,
+        format: 'pdf',
+        access_mode: 'public',
+      }
+    );
+
+    // Update article with certificate info
+    article.acceptance_certificate_url = uploadResult.url;
+    article.acceptance_certificate_cloudinary_public_id = uploadResult.public_id;
+    article.acceptance_certificate_cloudinary_secure_url = uploadResult.secure_url;
+    
+    // Save custom message if provided
+    if (customMessage) {
+      article.acceptance_certificate_custom_message = customMessage;
+    }
+
     await this.articleRepository.save(article);
 
-    // Generate new certificate
-    return await this.generateAcceptanceCertificate(id);
+    // If article is linked to research, update research certificate too
+    if (article.research_id) {
+      try {
+        const research = await this.researchRepository.findOne({
+          where: { id: article.research_id },
+        });
+
+        if (research) {
+          // Delete old research certificate if exists
+          if (research.acceptance_certificate_cloudinary_public_id) {
+            try {
+              await this.cloudinaryService.deleteFile(
+                research.acceptance_certificate_cloudinary_public_id,
+                'raw'
+              );
+            } catch (error) {
+              console.error('فشل في حذف شهادة البحث القديمة:', error);
+            }
+          }
+
+          // Update research with same certificate
+          research.acceptance_certificate_url = uploadResult.url;
+          research.acceptance_certificate_cloudinary_public_id = uploadResult.public_id;
+          research.acceptance_certificate_cloudinary_secure_url = uploadResult.secure_url;
+          
+          if (customMessage) {
+            research.acceptance_certificate_custom_message = customMessage;
+          }
+
+          await this.researchRepository.save(research);
+        }
+      } catch (error) {
+        console.error('فشل في تحديث شهادة البحث المرتبط:', error);
+      }
+    }
+
+    return article;
   }
 }

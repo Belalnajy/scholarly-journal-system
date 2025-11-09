@@ -128,16 +128,13 @@ export function AssignReviewerPage() {
       await reviewerAssignmentsService.delete(assignmentId);
       await loadCurrentAssignments(selectedResearchId);
       toast.success('تم إزالة المحكم بنجاح', {
-        icon: '✅',
         style: {
           background: '#10B981',
           color: '#fff',
         },
       });
     } catch (err) {
-      toast.error('حدث خطأ أثناء إزالة المحكم', {
-        icon: '❌',
-      });
+      toast.error('حدث خطأ أثناء إزالة المحكم');
     }
   };
 
@@ -145,25 +142,25 @@ export function AssignReviewerPage() {
     if (!selectedResearchId) {
       const msg = 'يرجى اختيار البحث أولاً';
       setError(msg);
-      toast.error(msg, { icon: '⚠️' });
+      toast.error(msg);
       return;
     }
     if (selectedReviewers.length === 0) {
       const msg = 'يرجى اختيار محكم واحد على الأقل';
       setError(msg);
-      toast.error(msg, { icon: '⚠️' });
+      toast.error(msg);
       return;
     }
     if (!deadline) {
       const msg = 'يرجى تحديد الموعد النهائي للمراجعة';
       setError(msg);
-      toast.error(msg, { icon: '⚠️' });
+      toast.error(msg);
       return;
     }
     if (!user?.id) {
       const msg = 'خطأ في تحديد المستخدم';
       setError(msg);
-      toast.error(msg, { icon: '❌' });
+      toast.error(msg);
       return;
     }
 
@@ -206,14 +203,13 @@ export function AssignReviewerPage() {
             fontWeight: 'bold',
             padding: '16px',
           },
-          icon: '✅',
         }
       );
 
-      // Navigate back after a short delay to show the toast
-      setTimeout(() => {
-        navigate('/dashboard/manage-research');
-      }, 1500);
+      // Reset form
+      setSelectedReviewers([]);
+      setDeadline('');
+      await loadCurrentAssignments(selectedResearchId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء تعيين المحكمين';
       setError(errorMessage);
@@ -226,7 +222,6 @@ export function AssignReviewerPage() {
           fontWeight: 'bold',
           padding: '16px',
         },
-        icon: '❌',
       });
     } finally {
       setIsSubmitting(false);

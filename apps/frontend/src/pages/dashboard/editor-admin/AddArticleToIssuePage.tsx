@@ -198,8 +198,8 @@ export function AddArticleToIssuePage() {
                 : 'text-green-600'
             }`}>
               ({selectedResearches.length > (issue.max_articles - issue.total_articles) 
-                ? `⚠️ تجاوز الحد الأقصى بـ ${selectedResearches.length - (issue.max_articles - issue.total_articles)} مقال` 
-                : '✓ ضمن الحد المسموح'})
+                ? `تجاوز الحد الأقصى بـ ${selectedResearches.length - (issue.max_articles - issue.total_articles)} مقال` 
+                : 'ضمن الحد المسموح'})
             </span>
           )}
         </div>

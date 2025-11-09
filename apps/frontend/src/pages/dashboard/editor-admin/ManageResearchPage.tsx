@@ -221,6 +221,10 @@ export function ManageResearchPage() {
                         status={mapStatus(research.status)}
                         originalStatus={research.status}
                         hasCertificate={!!research.acceptance_certificate_cloudinary_public_id}
+                        certificateUrl={research.acceptance_certificate_cloudinary_secure_url || research.acceptance_certificate_url}
+                        researchTitle={research.title}
+                        researcherName={research.user?.name || 'الباحث'}
+                        currentCertificateMessage={research.acceptance_certificate_custom_message}
                         onCertificateGenerated={loadResearches}
                       />
                     </td>

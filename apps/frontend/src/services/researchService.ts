@@ -42,6 +42,7 @@ export interface Research {
   acceptance_certificate_url?: string;
   acceptance_certificate_cloudinary_public_id?: string;
   acceptance_certificate_cloudinary_secure_url?: string;
+  acceptance_certificate_custom_message?: string;
   published_article_id?: string;
   submission_date: string;
   evaluation_date?: string;
@@ -554,15 +555,15 @@ export const researchService = {
       throw new Error(getErrorMessage(error));
     }
   },
-
   /**
    * Generate acceptance certificate (admin/editor only)
    * POST /api/research/:id/generate-acceptance-certificate
    */
-  async generateAcceptanceCertificate(research_id: string): Promise<Research> {
+  async generateAcceptanceCertificate(research_id: string, customMessage?: string): Promise<Research> {
     try {
       const response = await api.post<Research>(
-        `/research/${research_id}/generate-acceptance-certificate`
+        `/research/${research_id}/generate-acceptance-certificate`,
+        { customMessage }
       );
       return response.data;
     } catch (error) {
@@ -574,10 +575,11 @@ export const researchService = {
    * Regenerate acceptance certificate (admin/editor only)
    * POST /api/research/:id/regenerate-acceptance-certificate
    */
-  async regenerateAcceptanceCertificate(research_id: string): Promise<Research> {
+  async regenerateAcceptanceCertificate(research_id: string, customMessage?: string): Promise<Research> {
     try {
       const response = await api.post<Research>(
-        `/research/${research_id}/regenerate-acceptance-certificate`
+        `/research/${research_id}/regenerate-acceptance-certificate`,
+        { customMessage }
       );
       return response.data;
     } catch (error) {

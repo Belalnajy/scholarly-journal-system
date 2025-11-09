@@ -99,6 +99,16 @@ export class SiteSettings {
   @Column({ type: 'text', nullable: true })
   acceptance_letter_content!: string;
 
+  // Acceptance Certificate Settings
+  @Column({ type: 'text', nullable: true })
+  editor_in_chief_name!: string;
+
+  @Column({ type: 'text', nullable: true })
+  official_stamp_url!: string;
+
+  @Column({ type: 'text', nullable: true })
+  official_stamp_cloudinary_public_id!: string;
+
   // Timestamps
   @UpdateDateColumn()
   updated_at!: Date;

@@ -280,10 +280,10 @@ export function ReviewerResearchViewPage() {
                   : 'text-blue-800'
               }`}>
                 {new Date(assignment.deadline) < new Date()
-                  ? '⚠️ تجاوز الموعد النهائي'
+                  ? 'تجاوز الموعد النهائي'
                   : new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-                  ? '⏰ الموعد النهائي قريب'
-                  : '📅 الموعد النهائي للمراجعة'}
+                  ? 'الموعد النهائي قريب'
+                  : 'الموعد النهائي للمراجعة'}
               </h3>
               <p className={`${
                 new Date(assignment.deadline) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
@@ -411,7 +411,7 @@ export function ReviewerResearchViewPage() {
                 {/* Original Abstract */}
                 <div className="bg-red-50 rounded-lg p-4 border border-red-200">
                   <h4 className="text-sm font-bold text-red-800 mb-2">
-                    ✖ الملخص الأصلي
+                    الملخص الأصلي
                   </h4>
                   <p className="text-sm text-gray-700 line-through opacity-75">
                     {revisions.find(
@@ -423,7 +423,7 @@ export function ReviewerResearchViewPage() {
                 {/* Current Abstract */}
                 <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                   <h4 className="text-sm font-bold text-green-800 mb-2">
-                    ✔ الملخص المعدل
+                    الملخص المعدل
                   </h4>
                   <p className="text-sm text-gray-700">{research.abstract}</p>
                 </div>
@@ -434,7 +434,7 @@ export function ReviewerResearchViewPage() {
                 )?.original_data?.keywords && (
                   <div className="bg-red-50 rounded-lg p-4 border border-red-200">
                     <h4 className="text-sm font-bold text-red-800 mb-2">
-                      ✖ الكلمات المفتاحية الأصلية:
+                      الكلمات المفتاحية الأصلية:
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {revisions
@@ -459,7 +459,7 @@ export function ReviewerResearchViewPage() {
                 {research.keywords && research.keywords.length > 0 && (
                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                     <h4 className="text-sm font-bold text-green-800 mb-2">
-                      ✔ الكلمات المفتاحية المعدلة:
+                      الكلمات المفتاحية المعدلة:
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {research.keywords.map((keyword, index) => (

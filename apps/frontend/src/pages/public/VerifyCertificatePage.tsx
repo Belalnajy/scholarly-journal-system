@@ -223,7 +223,7 @@ export function VerifyCertificatePage() {
                       verificationResult.isValid ? 'text-green-800' : 'text-red-800'
                     }`}
                   >
-                    {verificationResult.isValid ? 'شهادة صحيحة ✓' : 'شهادة غير صحيحة ✗'}
+                    {verificationResult.isValid ? 'شهادة صحيحة' : 'شهادة غير صحيحة'}
                   </h2>
                   <p
                     className={`text-lg ${

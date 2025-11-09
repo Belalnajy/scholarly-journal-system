@@ -35,7 +35,8 @@ export function SubmitResearchPage() {
   const [keywordInput, setKeywordInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [showCustomSpecialization, setShowCustomSpecialization] = useState(false);
+  const [showCustomSpecialization, setShowCustomSpecialization] =
+    useState(false);
   const [customSpecialization, setCustomSpecialization] = useState('');
   const [uploadedResearchId, setUploadedResearchId] = useState<string | null>(
     null
@@ -238,8 +239,10 @@ export function SubmitResearchPage() {
       return;
     }
 
-    const finalSpecialization = showCustomSpecialization ? customSpecialization.trim() : formData.specialization;
-    
+    const finalSpecialization = showCustomSpecialization
+      ? customSpecialization.trim()
+      : formData.specialization;
+
     if (!finalSpecialization) {
       toast.error('يرجى اختيار أو كتابة التخصص');
       return;
@@ -457,7 +460,7 @@ export function SubmitResearchPage() {
               <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-bold text-yellow-800 mb-1">
-                  ⚠️ ملاحظة هامة
+                  ملاحظة هامة
                 </p>
                 <p className="text-sm text-yellow-700">
                   بعد تقديم هذا البحث، سيتم إلغاء تفعيل حسابك تلقائياً. لتقديم
@@ -495,7 +498,11 @@ export function SubmitResearchPage() {
                 التخصص<span className="text-red-500">*</span>
               </label>
               <select
-                value={showCustomSpecialization ? 'أخرى (اكتب التخصص)' : formData.specialization}
+                value={
+                  showCustomSpecialization
+                    ? 'أخرى (اكتب التخصص)'
+                    : formData.specialization
+                }
                 onChange={(e) => handleSpecializationChange(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0D3B66] focus:border-[#0D3B66] transition-all appearance-none bg-white"
                 required={!showCustomSpecialization}
@@ -507,7 +514,7 @@ export function SubmitResearchPage() {
                   </option>
                 ))}
               </select>
-              
+
               {/* Custom Specialization Input */}
               {showCustomSpecialization && (
                 <div className="mt-3 animate-fadeIn">
@@ -521,7 +528,7 @@ export function SubmitResearchPage() {
                     autoFocus
                   />
                   <p className="text-xs text-gray-600 mt-1">
-                    💡 اكتب التخصص الدقيق لبحثك
+                    اكتب التخصص الدقيق لبحثك
                   </p>
                 </div>
               )}

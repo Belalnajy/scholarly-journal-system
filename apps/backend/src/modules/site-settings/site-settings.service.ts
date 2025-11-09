@@ -167,4 +167,39 @@ export class SiteSettingsService {
 
     return { favicon_url: result.secure_url };
   }
+
+  /**
+   * Upload official stamp to Cloudinary
+   */
+  async uploadStamp(file: Express.Multer.File): Promise<{ stamp_url: string }> {
+    if (!file) {
+      throw new BadRequestException('لم يتم تحديد ملف');
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new BadRequestException('نوع الملف غير مدعوم. يرجى رفع صورة (JPG, PNG, GIF, WEBP, SVG)');
+    }
+
+    // Upload to Cloudinary
+    const result = await this.cloudinaryService.uploadFile(
+      file.buffer,
+      'site-assets/stamp',
+      'image',
+      {
+        public_id: `stamp_${Date.now()}`,
+        overwrite: true,
+        access_mode: 'public',
+      }
+    );
+
+    // Update settings with new stamp URL
+    const settings = await this.getSettings();
+    settings.official_stamp_url = result.secure_url;
+    settings.official_stamp_cloudinary_public_id = result.public_id;
+    await this.siteSettingsRepository.save(settings);
+
+    return { stamp_url: result.secure_url };
+  }
 }

@@ -122,7 +122,6 @@ export function EditArticlePage() {
           fontSize: '16px',
           fontWeight: 'bold',
         },
-        icon: '✅',
       });
       
       setTimeout(() => navigate(`/dashboard/articles/${articleId}`), 1000);

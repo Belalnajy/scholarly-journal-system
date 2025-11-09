@@ -36,6 +36,7 @@ export function SiteSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [uploadingStamp, setUploadingStamp] = useState(false);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -78,6 +79,8 @@ export function SiteSettingsPage() {
     submission_fee_currency: 'ريال سعودي',
     payment_instructions: '',
     acceptance_letter_content: '',
+    editor_in_chief_name: '',
+    official_stamp_url: '',
   });
 
   const [newGoal, setNewGoal] = useState('');
@@ -129,6 +132,8 @@ export function SiteSettingsPage() {
         submission_fee_currency: data.submission_fee_currency || 'ريال سعودي',
         payment_instructions: data.payment_instructions || '',
         acceptance_letter_content: data.acceptance_letter_content || '',
+        editor_in_chief_name: data.editor_in_chief_name || '',
+        official_stamp_url: data.official_stamp_url || '',
       });
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -157,7 +162,6 @@ export function SiteSettingsPage() {
         type: 'success',
         text: 'تم حفظ الإعدادات بنجاح وتحديثها في جميع الصفحات!',
       });
-
       // Clear message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
@@ -165,6 +169,45 @@ export function SiteSettingsPage() {
       setMessage({ type: 'error', text: 'فشل في حفظ الإعدادات' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUploadStamp = async (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({
+        type: 'error',
+        text: 'يرجى اختيار ملف صورة صالح',
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({
+        type: 'error',
+        text: 'حجم الملف كبير جداً. الحد الأقصى 2 ميجابايت',
+      });
+      return;
+    }
+
+    try {
+      setUploadingStamp(true);
+      setMessage(null);
+      const result = await siteSettingsService.uploadStamp(file);
+      setFormData({ ...formData, official_stamp_url: result.stamp_url });
+
+      await refreshSettings();
+
+      setMessage({
+        type: 'success',
+        text: 'تم رفع الختم الرسمي بنجاح!',
+      });
+    } catch (error) {
+      console.error('Error uploading stamp:', error);
+      setMessage({ type: 'error', text: 'فشل في رفع الختم' });
+    } finally {
+      setUploadingStamp(false);
     }
   };
 
@@ -1259,6 +1302,65 @@ export function SiteSettingsPage() {
             </div>
             <p className="text-xs text-gray-500 mt-2">
               💡 نصيحة: هذا النص سيظهر في خطاب القبول بعد عنوان البحث ورقمه. اكتب نصاً رسمياً ومهنياً.
+            </p>
+          </div>
+
+          {/* Editor in Chief Name */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              اسم رئيس التحرير
+            </label>
+            <input
+              type="text"
+              value={formData.editor_in_chief_name}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  editor_in_chief_name: e.target.value,
+                })
+              }
+              placeholder="د. محمد أحمد (مثال)"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              💡 سيظهر هذا الاسم في توقيع خطاب القبول. إذا تركته فارغاً، سيظهر اسم المجلة.
+            </p>
+          </div>
+
+          {/* Official Stamp */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              الختم الرسمي لخطاب القبول
+            </label>
+            {formData.official_stamp_url && (
+              <div className="mb-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-600 mb-2">الختم الحالي:</p>
+                <img
+                  src={formData.official_stamp_url}
+                  alt="Official Stamp"
+                  className="w-32 h-32 object-contain"
+                />
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <label className="flex-1 cursor-pointer">
+                <div className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-blue-600 border-2 border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                  <Upload className="w-5 h-5" />
+                  <span className="font-medium">رفع ختم جديد</span>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUploadStamp(file);
+                  }}
+                  className="hidden"
+                />
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              💡 سيظهر هذا الختم في خطاب القبول. إذا لم ترفع ختماً، سيستخدم شعار المجلة.
             </p>
           </div>
         </div>
