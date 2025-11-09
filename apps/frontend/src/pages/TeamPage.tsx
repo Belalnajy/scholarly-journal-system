@@ -21,9 +21,12 @@ export function TeamPage() {
       setLoading(true);
       const sections = await teamService.getAllSections();
       setTeamSections(sections);
-      // Auto-expand first section if available
+      // Auto-expand first collapsible section if available
       if (sections.length > 0 && !expandedSection) {
-        setExpandedSection(sections[0].id);
+        const firstCollapsible = sections.find(s => s.is_collapsible);
+        if (firstCollapsible) {
+          setExpandedSection(firstCollapsible.id);
+        }
       }
     } catch (err: any) {
       console.error('Error fetching team sections:', err);
@@ -67,8 +70,11 @@ export function TeamPage() {
     );
   }
 
-  const toggleSection = (sectionId: string) => {
-    setExpandedSection(expandedSection === sectionId ? null : sectionId);
+  const toggleSection = (sectionId: string, isCollapsible: boolean) => {
+    // Only toggle if section is collapsible
+    if (isCollapsible) {
+      setExpandedSection(expandedSection === sectionId ? null : sectionId);
+    }
   };
 
   return (
@@ -115,7 +121,8 @@ export function TeamPage() {
         <div className="space-y-8">
           {teamSections.map((section, index) => {
             const Icon = getIconComponent(section.icon);
-            const isExpanded = expandedSection === section.id;
+            // Non-collapsible sections are always expanded
+            const isExpanded = !section.is_collapsible || expandedSection === section.id;
             const hasMembers = section.members && section.members.length > 0;
 
             return (
@@ -128,32 +135,38 @@ export function TeamPage() {
               >
                 {/* Section Header */}
                 <motion.button
-                  onClick={() => toggleSection(section.id)}
-                  className={`w-full bg-gradient-to-r ${section.color} p-8 text-right transition-all duration-300 hover:shadow-xl`}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
+                  onClick={() => toggleSection(section.id, section.is_collapsible)}
+                  className={`w-full bg-gradient-to-r ${section.color} p-8 text-right transition-all duration-300 ${
+                    section.is_collapsible ? 'hover:shadow-xl cursor-pointer' : 'cursor-default'
+                  }`}
+                  whileHover={section.is_collapsible ? { scale: 1.01 } : {}}
+                  whileTap={section.is_collapsible ? { scale: 0.99 } : {}}
                   dir="rtl"
                 >
                   <div className="flex flex-row-reverse items-center justify-between">
-                    <motion.div
-                      animate={{ rotate: isExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="text-white"
-                    >
-                      <svg
-                        className="h-6 w-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    {section.is_collapsible ? (
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-white"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </motion.div>
+                        <svg
+                          className="h-6 w-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </motion.div>
+                    ) : (
+                      <div className="w-6" /> // Spacer for non-collapsible sections
+                    )}
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <h2 className="mb-1 text-2xl font-bold text-white sm:text-3xl">

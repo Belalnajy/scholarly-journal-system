@@ -25,4 +25,8 @@ export class CreateTeamSectionDto {
   @IsBoolean()
   @IsOptional()
   is_active?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  is_collapsible?: boolean;
 }

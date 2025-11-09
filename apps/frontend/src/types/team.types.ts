@@ -23,6 +23,7 @@ export interface TeamSection {
   color: string;
   display_order: number;
   is_active: boolean;
+  is_collapsible: boolean;
   members: TeamMember[];
   created_at: string;
   updated_at: string;
@@ -35,6 +36,7 @@ export interface CreateTeamSectionDto {
   color: string;
   display_order?: number;
   is_active?: boolean;
+  is_collapsible?: boolean;
 }
 
 export interface UpdateTeamSectionDto {
@@ -44,6 +46,7 @@ export interface UpdateTeamSectionDto {
   color?: string;
   display_order?: number;
   is_active?: boolean;
+  is_collapsible?: boolean;
 }
 
 export interface CreateTeamMemberDto {

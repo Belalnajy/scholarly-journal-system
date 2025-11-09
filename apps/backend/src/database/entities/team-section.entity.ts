@@ -30,6 +30,9 @@ export class TeamSection {
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 
+  @Column({ type: 'boolean', default: true })
+  is_collapsible: boolean; // If false, section is always expanded
+
   @OneToMany('TeamMember', 'section')
   members: any[];
 

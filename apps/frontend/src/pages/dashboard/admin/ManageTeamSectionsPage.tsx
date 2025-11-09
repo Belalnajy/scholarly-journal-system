@@ -109,6 +109,11 @@ export function ManageTeamSectionsPage() {
                       <span>الأيقونة: {section.icon}</span>
                       <span>الترتيب: {section.display_order}</span>
                       <span>عدد الأعضاء: {section.members?.length || 0}</span>
+                      {!section.is_collapsible && (
+                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+                          مفتوح دائماً
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -169,6 +174,7 @@ function SectionFormModal({ section, onClose, onSuccess }: SectionFormModalProps
     color: section?.color || 'from-[#093059] to-[#0a4a7a]',
     display_order: section?.display_order || 0,
     is_active: section?.is_active ?? true,
+    is_collapsible: section?.is_collapsible ?? true,
   });
   const [saving, setSaving] = useState(false);
 
@@ -323,6 +329,27 @@ function SectionFormModal({ section, onClose, onSuccess }: SectionFormModalProps
             <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
               القسم نشط
             </label>
+          </div>
+
+          {/* Is Collapsible */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_collapsible"
+                checked={formData.is_collapsible}
+                onChange={(e) => setFormData({ ...formData, is_collapsible: e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300 text-[#093059] focus:ring-[#093059]"
+              />
+              <label htmlFor="is_collapsible" className="text-sm font-medium text-gray-700">
+                القسم قابل للطي (Toggle)
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-gray-600">
+              {formData.is_collapsible
+                ? '✓ الزوار يمكنهم فتح وإغلاق هذا القسم'
+                : '✗ القسم سيظهر مفتوحاً دائماً ولا يمكن إغلاقه'}
+            </p>
           </div>
 
           {/* Actions */}
